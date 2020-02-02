@@ -14,7 +14,9 @@ class Encoding:
     def __mul__(self, other: 'bigger.Encoding') -> 'bigger.Encoding':
         return Encoding(self.target, other.source, self.sequence + other.sequence)
     def __invert__(self) -> 'bigger.Encoding':
-        return Encoding(self.target, self.source, [~move for move in self.sequence])
+        return Encoding(self.target, self.source, [~move for move in self])
+    def __getitem__(self, index: int) -> 'bigger.Move':
+        return self.sequence[index]
     @overload  # noqa: F811
     def __call__(self, lamination: 'bigger.FinitelySupportedLamination') -> 'bigger.FinitelySupportedLamination':
         ...

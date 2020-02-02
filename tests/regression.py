@@ -15,4 +15,14 @@ class TestRegression(TestCase):
         oe = bigger.oedger(0)
         h = T.encode([~oe, oe])
         self.assertEqual(h.target.square(0), h.source.square(0))
+    
+    def test_basic_twist(self):
+        S = bigger.load.flute()
+        m = S.triangulation({1: -1})
+        self.assertEqual(S('A0.a0')(m), m)
+    
+    def test_twist(self):
+        S = bigger.load.flute()
+        m = S.triangulation(dict((i, -i) for i in range(10)))
+        self.assertEqual(S('A0.a0')(m), m)
 
