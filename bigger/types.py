@@ -1,5 +1,5 @@
 
-from typing import Union, Callable
+from typing import Union, Callable, TypeVar
 from fractions import Fraction
 
 import bigger  # noqa: F401  # pylint: disable=unused-import
@@ -12,4 +12,7 @@ Rational = Union[Fraction, int]
 
 Oedger = Union['bigger.OrientedEdge', int]
 Edger = Union['bigger.Edge', int]
+
+TypedLamination = TypeVar('TypedLamination', 'bigger.Lamination', 'bigger.FinitelySupportedLamination')
+Action = Callable[[TypedLamination], TypedLamination]
 

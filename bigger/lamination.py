@@ -59,14 +59,14 @@ class FinitelySupportedLamination(Lamination):
             complexity = best_complexity
             
             if time_since_last_progress > 3:
-                raise ValueError('FinitelySupportedLamination is not a non-isolating curve')
+                raise ValueError('{} is not a non-isolating curve'.format(lamination))
         
         return lamination, conjugator
     
     def is_short(self) -> bool:
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support)
     
-    def encode_twist(self) -> 'bigger.Encoding':  # pylint: disable=no-self-use
+    def encode_twist(self) -> 'bigger.Encoding':
         # Currently only works on non-isolating curves.
         short, conjugator = self.shorten()
         

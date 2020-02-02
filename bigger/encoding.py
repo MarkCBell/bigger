@@ -1,7 +1,20 @@
 
 from typing import List, Iterator, Union, overload
 
-import bigger  # pylint: disable=unused-import
+import bigger
+
+class Move:
+    def __init__(self, source: 'bigger.Triangulation', target: 'bigger.Triangulation', action: 'bigger.Action', inv_action: 'bigger.Action') -> None:
+        self.source = source
+        self.target = target
+        self.action = action
+        self.inv_action = inv_action
+    def __invert__(self) -> 'bigger.Move':
+        return Move(self.target, self.source, self.inv_action, self.action)
+    def __call__(self, lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
+        return self.action(lamination)
+    def encode(self) -> 'bigger.Encoding':
+        return bigger.Encoding(self.source, self.target, [self])
 
 class Encoding:
     def __init__(self, source: 'bigger.Triangulation', target: 'bigger.Triangulation', sequence: List['bigger.Move']) -> None:
