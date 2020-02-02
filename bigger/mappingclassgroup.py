@@ -8,9 +8,6 @@ class MappingClassGroup:  # pylint: disable=too-few-public-methods
         self.triangulation = triangulation
         self.generator = generator
     def __call__(self, strn: str) -> 'bigger.Encoding':
-        h = self.triangulation.encode_identity()
-        for name in strn.split('.'):
-            h = h * self.generator(name)
-        
-        return h
+        sequence = [item for name in strn.split('.') for item in self.generator(name).sequence]
+        return bigger.Encoding(self.triangulation, self.triangulation, sequence) if sequence else self.triangulation.encode_identity()
 
