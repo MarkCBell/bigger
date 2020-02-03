@@ -3,6 +3,11 @@ from unittest import TestCase
 import bigger
 
 class TestRegression(TestCase):
+    def assertEqualSquares(self, s1, s2):
+        ''' Return whether two squares are equal since they are only defined up to 180 degree rotation. '''
+        
+        return s1 == s2 or s1 == s2[2:] + s2[:2]
+    
     def test_flute(self):
         S = bigger.load.flute()
         a = S.triangulation({0: -1})
@@ -12,8 +17,8 @@ class TestRegression(TestCase):
     def test_flip(self):
         S = bigger.load.flute()
         T = S.triangulation
-        h = T.encode([0, 0])
-        self.assertEqual(h.target.neighbours(0), h.source.neighbours(0))
+        h = T.encode([{0}, {0}])
+        self.assertEqualSquares(h.target.neighbours(0), h.source.neighbours(0))
     
     def test_basic_twist(self):
         S = bigger.load.flute()

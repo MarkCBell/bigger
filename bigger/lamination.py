@@ -44,7 +44,7 @@ class FinitelySupportedLamination(Lamination):
             time_since_last_progress += 1
             best_complexity, best_h = complexity, lamination.triangulation.encode_identity()
             for edge in lamination.support:
-                h = lamination.triangulation.encode_flip(edge)
+                h = lamination.triangulation.encode_flip({edge})
                 image: FinitelySupportedLamination = h(lamination)
                 new_complexity = image.complexity()
                 if new_complexity <= best_complexity:
@@ -88,10 +88,10 @@ class FinitelySupportedLamination(Lamination):
         a, b, c, d = short.triangulation.neighbours(e)
         if short(b) == 1:
             assert b == d
-            twist = short.triangulation.encode([{e: b, b: e}, e])
+            twist = short.triangulation.encode([{e: b, b: e}, {e}])
         else:  # short(a) == 1:
             assert a == c
-            twist = short.triangulation.encode([{e: a, a: e}, e])
+            twist = short.triangulation.encode([{e: a, a: e}, {e}])
         
         return ~conjugator * twist * conjugator
 

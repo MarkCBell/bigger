@@ -17,7 +17,10 @@ class Triangulation:
         # neighbours(e) = (a, b, c, d, e)
         
         self.neighbours = neigbours
-    def encode_flip(self, edge: 'bigger.Edge') -> 'bigger.Encoding':
+    def encode_flip(self, edges: Set['bigger.Edge']) -> 'bigger.Encoding':
+        
+        def flipped(edgy: 'bigger.Edge') -> bool:
+            return edgy in edges
         
         # Use the following for reference:
         # #----a----#     #----a----#
@@ -28,39 +31,44 @@ class Triangulation:
         # |/        |     |        \|
         # #----c----#     #----c----#
         
-        e = edge  # Shorter name.
-        a, b, c, d = self.neighbours(e)
-        aa, ab, ac, ad = self.neighbours(a)
-        ba, bb, bc, bd = self.neighbours(b)
-        ca, cb, cc, cd = self.neighbours(c)
-        da, db, dc, dd = self.neighbours(d)
-        # Rotate to ensure e is in a known position
-        if ad != e: aa, ab, ac, ad = ac, ad, aa, ab
-        if bc != e: ba, bb, bc, bd = bc, bd, ba, bb
-        if cd != e: ca, cb, cc, cd = cc, cd, ca, cb
-        if dc != e: da, db, dc, dd = dc, dd, da, db
-        assert ad == e and bc == e and cd == e and dc == e
-        pairs = {
-            a: (aa, ab, e, d),
-            b: (ba, bb, c, e),
-            c: (ca, cb, e, b),
-            d: (da, db, a, e),
-            e: (d, a, b, c),
-            }
-        
         def neighbours(edgy: 'bigger.Edge') -> 'bigger.Square':
-            return pairs.get(edgy, self.neighbours(edgy))
+            a, b, c, d = self.neighbours(edgy)
+            if flipped(edgy):
+                return (b, c, d, a)
+            if flipped(a):
+                aa, ab, ac, ad = self.neighbours(a)
+                if ad != edgy: aa, ab, ac, ad = ac, ad, aa, ab
+                w, x = aa, a
+            elif flipped(b):
+                ba, bb, bc, bd = self.neighbours(b)
+                if bc != edgy: ba, bb, bc, bd = bc, bd, ba, bb
+                w, x = b, bb
+            else:
+                w, x = a, b
+            
+            if flipped(c):
+                ca, cb, cc, cd = self.neighbours(c)
+                if cd != edgy: ca, cb, cc, cd = cc, cd, ca, cb
+                y, z = ca, c
+            elif flipped(d):
+                da, db, dc, dd = self.neighbours(d)
+                if dc != edgy: da, db, dc, dd = dc, dd, da, db
+                y, z = d, db
+            else:
+                y, z = c, d
+            
+            return (w, x, y, z)
         
         target = Triangulation(neighbours)
         
         def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edgy: 'bigger.Edge') -> int:
-                if edgy != edge:
+                if not flipped(edgy):
                     return lamination(edgy)
                 
                 # Compute fi.
-                ei = lamination(edge)
-                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in self.neighbours(edge)]
+                ei = lamination(edgy)
+                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in self.neighbours(edgy)]
                 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -81,17 +89,17 @@ class Triangulation:
                 else:
                     return max(ai0 + ci0, bi0 + di0) - ei
             # Determine support.
-            support = lamination.support.difference([edge]).union([edge] if weight(edge) else []) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
+            support = set(edge for support in lamination.support for edge in (target.neighbours(support) + (support,)) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return target(weight, support)
         
         def inv_action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edgy: 'bigger.Edge') -> int:
-                if edgy != edge:
+                if not flipped(edgy):
                     return lamination(edgy)
                 
                 # Compute fi.
-                ei = lamination(edge)
-                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in target.neighbours(edge)]
+                ei = lamination(edgy)
+                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in target.neighbours(edgy)]
                 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -112,7 +120,7 @@ class Triangulation:
                 else:
                     return max(ai0 + ci0, bi0 + di0) - ei
             # Determine support.
-            support = lamination.support.difference([edge]).union([edge] if weight(edge) else []) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
+            support = set(edge for support in lamination.support for edge in (self.neighbours(support) + (support,)) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return self(weight, support)
         
         return bigger.Move(self, target, action, inv_action).encode()
@@ -135,7 +143,7 @@ class Triangulation:
         def inv_action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edge: 'bigger.Edge') -> int:
                 return lamination(isom(edge))
-            support = {isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
+            support = {inv_isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return self(weight, support)
         
         return bigger.Move(self, target, action, inv_action).encode()
@@ -165,7 +173,7 @@ class Triangulation:
     
     def __call__(self, weights: Union[Dict['bigger.Edge', int], 'bigger.Weight'], support: Optional[Set['bigger.Edge']] = None) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811  # Can be removed once flake8 updates https://github.com/PyCQA/pyflakes/pull/435#issuecomment-570738527
         if isinstance(weights, dict):
-            weight_dict = dict((key, value) for key, value in weights.items())
+            weight_dict = dict((key, value) for key, value in weights.items() if value)
             
             def weight(edge: 'bigger.Edge') -> int:
                 return weight_dict.get(edge, 0)
@@ -176,12 +184,12 @@ class Triangulation:
         else:
             return bigger.Lamination(self, weights)
     
-    def encode(self, sequence: List[Union['bigger.Move', 'bigger.Edge', Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
+    def encode(self, sequence: List[Union['bigger.Edge', Set['bigger.Edge'], Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
         h = self.encode_identity()
         for term in reversed(sequence):
-            if isinstance(term, bigger.Move):
-                move = term.encode()
-            elif isinstance(term, int):
+            if isinstance(term, int):
+                move = h.target.encode_flip({term})
+            elif isinstance(term, set):
                 move = h.target.encode_flip(term)
             elif isinstance(term, dict):
                 move = h.target.encode_isometry_from_dict(term)
