@@ -7,11 +7,11 @@ class Half:
     @overload
     def __mul__(self, other: Fraction) -> Fraction:
         ...
-    @overload  # noqa: F811  # Can be removed once flake8 updates https://github.com/PyCQA/pyflakes/pull/435#issuecomment-570738527
-    def __mul__(self, other: int) -> int:
+    @overload
+    def __mul__(self, other: int) -> int:  # noqa: F811
         ...
     
-    def __mul__(self, other: Union[Fraction, int]) -> Union[Fraction, int]:  # noqa: F811  # Can be removed once flake8 updates https://github.com/PyCQA/pyflakes/pull/435#issuecomment-570738527
+    def __mul__(self, other: Union[Fraction, int]) -> Union[Fraction, int]:  # noqa: F811
         if isinstance(other, int):
             result = other // 2
         else:

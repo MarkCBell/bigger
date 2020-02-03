@@ -33,11 +33,11 @@ class Encoding:
             return Encoding(self.sequence[index])
         else:
             return self.sequence[index]
-    @overload  # noqa: F811
+    @overload
     def __call__(self, lamination: 'bigger.FinitelySupportedLamination') -> 'bigger.FinitelySupportedLamination':
         ...
-    @overload  # noqa: F811
-    def __call__(self, lamination: 'bigger.Lamination') -> 'bigger.Lamination':
+    @overload
+    def __call__(self, lamination: 'bigger.Lamination') -> 'bigger.Lamination':  # noqa: F811
         ...
     def __call__(self, lamination: Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811
         for move in self:
