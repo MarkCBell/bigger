@@ -1,72 +1,58 @@
 
-from typing import Any, Tuple, Union, Dict, Optional, Set, List, overload
+from typing import Union, Dict, Optional, Set, List, overload
 
 import bigger
 
-class OrientedEdge:
-    def __init__(self, label: int, orientation: int) -> None:
-        self.label = label
-        self.orientation = orientation
-    def __repr__(self) -> str:
-        return 'OrientedEdge({}, {})'.format(self.label, self.orientation)
-    def __hash__(self) -> int:
-        return hash((self.label, self.orientation))
-    def __eq__(self, other: Any) -> bool:
-        return self.label == other.label and self.orientation == other.orientation
-    def __invert__(self) -> 'bigger.OrientedEdge':
-        return OrientedEdge(self.label, -self.orientation)
-    def unorient(self) -> 'bigger.Edge':
-        return Edge(self.label)
-
-class Edge:  # pylint: disable=too-few-public-methods
-    def __init__(self, label: int) -> None:
-        self.label = label
-    def __repr__(self) -> str:
-        return 'Edge({})'.format(self.label)
-    def __hash__(self) -> int:
-        return hash(self.label)
-    def __eq__(self, other: Any) -> bool:
-        return self.label == other.label
-    def orient(self, orientation: int = +1) -> 'bigger.OrientedEdge':
-        return OrientedEdge(self.label, orientation)
-
-def oedger(data: 'bigger.Oedger') -> OrientedEdge:
-    return data if isinstance(data, OrientedEdge) else OrientedEdge(data, +1)
-def edger(data: 'bigger.Edger') -> Edge:
-    return data if isinstance(data, Edge) else Edge(data)
-
 class Triangulation:
-    def __init__(self, adjacent: 'bigger.Adjacency') -> None:
-        self.adjacent = adjacent
-    def left(self, oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-        oedge = oedger(oedge)
-        return self.adjacent(oedge)
-    def right(self, oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-        oedge = oedger(oedge)
-        return self.adjacent(self.adjacent(oedge))
-    def square(self, oedge: 'bigger.OrientedEdge') -> Tuple['bigger.OrientedEdge', ...]:
-        oedge = oedger(oedge)
-        return (self.left(oedge), self.right(oedge), self.left(~oedge), self.right(~oedge), oedge)
-    def encode_flip(self, oedge: 'bigger.Oedger') -> 'bigger.Encoding':
+    def __init__(self, neigbours: 'bigger.Neighbours') -> None:
+        # Use the following for reference:
+        # #----a----#
+        # |        /|
+        # |      /  |
+        # b    e    d
+        # |  /      |
+        # |/        |
+        # #----c----#
+        #
+        # neighbours(e) = (a, b, c, d, e)
+        
+        self.neighbours = neigbours
+    def encode_flip(self, edge: 'bigger.Edge') -> 'bigger.Encoding':
         
         # Use the following for reference:
-        # #<--------#     #---------#
-        # |    a   ^^     |\   a    |
+        # #----a----#     #----a----#
+        # |        /|     |\        |
         # |      /  |     |  \      |
-        # |b  e/   d| --> |b   \e' d|
+        # b    e    d --> b    e    d
         # |  /      |     |      \  |
-        # V/   c    |     |    c   V|
-        # #-------->#     #---------#
+        # |/        |     |        \|
+        # #----c----#     #----c----#
         
-        oedge = oedger(oedge)
-        a, b, c, d, e = self.square(oedge)
-        pairs = {a: e, e: d, d: a, c: ~e, ~e: b, b: c}
+        e = edge  # Shorter name.
+        a, b, c, d = self.neighbours(e)
+        aa, ab, ac, ad = self.neighbours(a)  # pylint: disable=unused-variable
+        ba, bb, bc, bd = self.neighbours(b)  # pylint: disable=unused-variable
+        ca, cb, cc, cd = self.neighbours(c)  # pylint: disable=unused-variable
+        da, db, dc, dd = self.neighbours(d)  # pylint: disable=unused-variable
+        # Rotate to ensure e is in a known position
+        if ad != e: aa, ab, ac, ad = ac, ad, aa, ab
+        if bc != e: ba, bb, bc, bd = bc, bd, ba, bb
+        if cd != e: ca, cb, cc, cd = cc, cd, ca, cb
+        if dc != e: da, db, dc, dd = dc, dd, da, db
+        assert ad == e and bc == e and cd == e and dc == e
+        # FIXME
+        pairs = {
+            a: (aa, ab, e, d),
+            b: (ba, bb, c, e),
+            c: (ca, cb, e, b),
+            d: (da, db, a, e),
+            e: (d, a, b, c),
+            }
         
-        def adjacent(oedgy: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-            return pairs[oedgy] if oedgy in pairs else self.adjacent(oedgy)
+        def neighbours(edgy: 'bigger.Edge') -> 'bigger.Square':
+            return pairs.get(edgy, self.neighbours(edgy))
         
-        target = Triangulation(adjacent)
-        edge = oedge.unorient()
+        target = Triangulation(neighbours)
         
         def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edgy: 'bigger.Edge') -> int:
@@ -75,7 +61,7 @@ class Triangulation:
                 
                 # Compute fi.
                 ei = lamination(edge)
-                ai0, bi0, ci0, di0, _ = [max(lamination(edgy), 0) for edgy in self.square(edge.orient())]
+                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in self.neighbours(edge)]
                 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -106,7 +92,7 @@ class Triangulation:
                 
                 # Compute fi.
                 ei = lamination(edge)
-                ai0, bi0, ci0, di0, _ = [max(lamination(edgy), 0) for edgy in target.square(edge.orient())]
+                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in target.neighbours(edge)]
                 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -133,34 +119,35 @@ class Triangulation:
         return bigger.Move(self, target, action, inv_action).encode()
     
     def relabel(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Triangulation':
-        def adjacent(oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-            return isom(self.adjacent(inv_isom(oedge)))
+        def neighbours(edge: 'bigger.Edge') -> 'bigger.Square':
+            a, b, c, d = self.neighbours(inv_isom(edge))
+            return (isom(a), isom(b), isom(c), isom(d))
         
-        return Triangulation(adjacent)
+        return Triangulation(neighbours)
     def encode_isometry(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Encoding':
         target = self.relabel(isom, inv_isom)
         
         def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edge: 'bigger.Edge') -> int:
-                return lamination(inv_isom(edge.orient()))
-            support = {isom(arc.orient()).unorient() for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
+                return lamination(inv_isom(edge))
+            support = {isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return target(weight, support)
         
         def inv_action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edge: 'bigger.Edge') -> int:
-                return lamination(isom(edge.orient()))
-            support = {isom(arc.orient()).unorient() for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
+                return lamination(isom(edge))
+            support = {isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return self(weight, support)
         
         return bigger.Move(self, target, action, inv_action).encode()
-    def encode_isometry_from_dict(self, isom_dict: Dict['bigger.OrientedEdge', 'bigger.OrientedEdge']) -> 'bigger.Encoding':
+    def encode_isometry_from_dict(self, isom_dict: Dict['bigger.Edge', 'bigger.Edge']) -> 'bigger.Encoding':
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
         
-        def isom(oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-            return isom_dict.get(oedge, oedge)
+        def isom(edge: 'bigger.Edge') -> 'bigger.Edge':
+            return isom_dict.get(edge, edge)
         
-        def inv_isom(oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-            return inv_isom_dict.get(oedge, oedge)
+        def inv_isom(edge: 'bigger.Edge') -> 'bigger.Edge':
+            return inv_isom_dict.get(edge, edge)
         
         return self.encode_isometry(isom, inv_isom)
     
@@ -168,7 +155,7 @@ class Triangulation:
         return self.encode_isometry_from_dict(dict())
     
     @overload
-    def __call__(self, weights: Dict['bigger.Edger', int], support: None = None) -> 'bigger.FinitelySupportedLamination':
+    def __call__(self, weights: Dict['bigger.Edge', int], support: None = None) -> 'bigger.FinitelySupportedLamination':
         ...
     @overload  # noqa: F811  # Can be removed once flake8 updates https://github.com/PyCQA/pyflakes/pull/435#issuecomment-570738527
     def __call__(self, weights: 'bigger.Weight', support: Set['bigger.Edge']) -> 'bigger.FinitelySupportedLamination':
@@ -177,9 +164,9 @@ class Triangulation:
     def __call__(self, weights: 'bigger.Weight', support: None) -> 'bigger.Lamination':
         ...
     
-    def __call__(self, weights: Union[Dict['bigger.Edger', int], 'bigger.Weight'], support: Optional[Set['bigger.Edge']] = None) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811  # Can be removed once flake8 updates https://github.com/PyCQA/pyflakes/pull/435#issuecomment-570738527
+    def __call__(self, weights: Union[Dict['bigger.Edge', int], 'bigger.Weight'], support: Optional[Set['bigger.Edge']] = None) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811  # Can be removed once flake8 updates https://github.com/PyCQA/pyflakes/pull/435#issuecomment-570738527
         if isinstance(weights, dict):
-            weight_dict = dict((edger(key), value) for key, value in weights.items())
+            weight_dict = dict((key, value) for key, value in weights.items())
             
             def weight(edge: 'bigger.Edge') -> int:
                 return weight_dict.get(edge, 0)
@@ -190,12 +177,12 @@ class Triangulation:
         else:
             return bigger.Lamination(self, weights)
     
-    def encode(self, sequence: List[Union['bigger.Move', 'bigger.OrientedEdge', Dict['bigger.OrientedEdge', 'bigger.OrientedEdge']]]) -> 'bigger.Encoding':
+    def encode(self, sequence: List[Union['bigger.Move', 'bigger.Edge', Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
         h = self.encode_identity()
         for term in reversed(sequence):
             if isinstance(term, bigger.Move):
                 move = term.encode()
-            elif isinstance(term, OrientedEdge):
+            elif isinstance(term, int):
                 move = h.target.encode_flip(term)
             elif isinstance(term, dict):
                 move = h.target.encode_isometry_from_dict(term)

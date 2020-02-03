@@ -5,24 +5,28 @@ import bigger
 
 def flute() -> 'bigger.MCG':
     
-    #  ---#---------#---------#---------#---
-    #     |    2   /|    5   /|    8   /|
+    #  ---#----2----#----5----#----8----#---
+    #     |        /|        /|        /|
     #     |      /  |      /  |      /  |
-    # ... |0  1/    |3  4/    |6  7/    | ...
+    # ... 0    1    3    4    6    7    9 ...
     #     |  /      |  /      |  /      |
-    #     |/   ~2   |/  ~5    |/  ~8    |
-    #  ---#-------->#---------#---------#---
+    #     |/        |/        |/        |
+    #  ---#----2--->#----5----#----8----#---
     
-    def adjacent(oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-        p = oedge.label + (-2 if oedge.label % 3 == 2 else +1)
-        return bigger.OrientedEdge(p, oedge.orientation)
-    T = bigger.Triangulation(adjacent)
+    def neighbours(edge: 'bigger.Edge') -> 'bigger.Square':
+        if edge % 3 == 0:
+            return (edge-2, edge-1, edge+1, edge+2)
+        elif edge % 3 == 1:
+            return (edge+1, edge-1, edge+1, edge+2)
+        else:  # edge % 3 == 2:
+            return (edge+1, edge-1, edge-2, edge-1)
+    T = bigger.Triangulation(neighbours)
     
-    def shift_isom(oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-        return bigger.OrientedEdge(oedge.label + 3, oedge.orientation)
+    def shift_isom(edge: 'bigger.Edge') -> 'bigger.Edge':
+        return edge + 3
     
-    def shift_inv_isom(oedge: 'bigger.OrientedEdge') -> 'bigger.OrientedEdge':
-        return bigger.OrientedEdge(oedge.label - 3, oedge.orientation)
+    def shift_inv_isom(edge: 'bigger.Edge') -> 'bigger.Edge':
+        return edge - 3
     shift = T.encode_isometry(shift_isom, shift_inv_isom)
     
     twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>\d+)$')
