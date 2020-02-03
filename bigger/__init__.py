@@ -14,3 +14,6 @@ MCG = MappingClassGroup
 if TYPE_CHECKING:
     from .types import *  # noqa: F401, F403
 
+import pkg_resources
+__version__ = pkg_resources.get_distribution('curver').version
+
