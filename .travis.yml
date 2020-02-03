@@ -1,33 +1,29 @@
 language: python
-
 install:
-  - pip install tox
-
+- pip install tox
 script:
-  - tox -e $TOX_ENV -- --hypothesis-profile=ci --durations=20
-
+- tox -e $TOX_ENV -- --hypothesis-profile=ci --durations=20
 jobs:
   include:
-    - stage: test
-      python: "3.8"
-      env: TOX_ENV="docs"
-    - python: "3.8"
-      env: TOX_ENV="lint"
-    - python: "3.6"
-      env: TOX_ENV="py36"
-    - python: "3.7"
-      env: TOX_ENV="py37"
-    - python: "3.8"
-      env: TOX_ENV="py38"
-
-    - stage: deploy
-      install: skip
-      script: skip
-      deploy:
-        provider: pypi
-        user: mark_bell
-        password:
-          secure: "cRA4Rx0sgsamI/9ayvbrgkOZ2jMDLPUohdlOk4JyhCEWLrmPtcjuOftfXC1WYeAXTmPcGMCIlvAiGxgq0Lmr3KvFnR9Wtseb4+G5aollKZgzqOXts3n5tyUHfJNt9kvW5piNSMmhzDclKieis1//xE0+lx7DPWyU9r0pOQtoqawdK7Z1+vZfkKWEjjJhdyQkgJO2Vd5n7uAiaQigaSDdDbQMG8sW22dQgTid1711By2fzCvNSIVH01YdenTCGchxsC870RQekys8JtNI//sgaxeKFLuHw3UxG6PbN8htTkQqDOC3PeLnqIZnd7gmArrCitL5pbR3dHLq09PHN2dWbloSQpJIh8o8ZWHVB+4xucsDCvQR8noLHWyTk35oRn+bHeNoLpSsrI19iknmaLXvgd8URKx+QrGx0YKzoHA34JmI3jeb8PxtrW4IFKUpDcl4bZghOQX9/k9rC8sYa9oyinb/ewdt2yT8jvTXY8BGcPyGQlY9FUD7/CvasZr5IFzJLcZGo1aM6TJq8hWWrAAWPijKeeiAmSpA2XkqYpAa2biSBXGy3k7xmMgwAW6H9pXGm9beJ5ZzcOxItHk6+3jZteS1/AXxPOiAM0MfWyYLwqoyldwQKwTm6QTOrVxZCP7kwZDBAF0E85qIvt9pZAtX/C6H6tEUhYAty2Xhd7+vztg="
-        on:
-          tags: true
+  - stage: test
+    python: '3.8'
+    env: TOX_ENV="docs"
+  - python: '3.8'
+    env: TOX_ENV="lint"
+  - python: '3.6'
+    env: TOX_ENV="py36"
+  - python: '3.7'
+    env: TOX_ENV="py37"
+  - python: '3.8'
+    env: TOX_ENV="py38"
+  - stage: deploy
+    install: skip
+    script: skip
+    deploy:
+      provider: pypi
+      user: mark_bell
+      password:
+        secure: "EtJY3PaS1l+1K0hHFA7MHHOZGodi/QXU3+IquksAj+TBWOH0Q8dq/OKUNyBamuGkolJEwhvt5h+v6+ff+j3TAWTC4hgb/TJhx1CpIsxV07MKRVytgKAiIGBnFkdpeFU0WptdqRxiTyrLwBK2NS5c5IXqAACHPa783nmZ5T8I/yQwLsQnaV4AwOGrHPb7Wmmd7JEj2AVEXC3bM+d32hSjBEYksq05qhdAkH6Jl+m6L8rD+O4raWcCHMZ5ytEJC0Wtaee4+0ESYwyvw8AcUtV7paL92/tuEIsKouBOhs+mZ1arg5GTGYQk5YCyQ8E5bIFCWM/UiYCRF/9f64m+TJycD89CBi3LzTNaDoX+PK5amBo/pwrlWMa5imtJ+VC6g7cp0zfJk2QKzcHQROn86TS+g3P/2adDqyaq6WiJv6V5I0MYn87ddiBytGgNikRxVDaFGlwgdefy3aI5RvkGRlA9roXXkeX0KksV/O4vz8oSDFFLDF1O6SjvwGdGsOS6VR2CTP2SpwZ7z/l0t1OFrWC9XxAj/992UTKTWCK/8XbtrbDyMF5mPz7/KoW/39KNYbd1uDISIbCuaHY9OxJFUQb1gNqs8xHAti9zHG/EjvtcqTVrr8cjtcf/CwPdzh69H48OnVal7fBrK7GnmQjXzRK98cZ+uO2+L23+3ZFJM5B9MH8="
+      on:
+        tags: true
 
