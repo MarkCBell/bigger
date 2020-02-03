@@ -30,17 +30,16 @@ class Triangulation:
         
         e = edge  # Shorter name.
         a, b, c, d = self.neighbours(e)
-        aa, ab, ac, ad = self.neighbours(a)  # pylint: disable=unused-variable
-        ba, bb, bc, bd = self.neighbours(b)  # pylint: disable=unused-variable
-        ca, cb, cc, cd = self.neighbours(c)  # pylint: disable=unused-variable
-        da, db, dc, dd = self.neighbours(d)  # pylint: disable=unused-variable
+        aa, ab, ac, ad = self.neighbours(a)
+        ba, bb, bc, bd = self.neighbours(b)
+        ca, cb, cc, cd = self.neighbours(c)
+        da, db, dc, dd = self.neighbours(d)
         # Rotate to ensure e is in a known position
         if ad != e: aa, ab, ac, ad = ac, ad, aa, ab
         if bc != e: ba, bb, bc, bd = bc, bd, ba, bb
         if cd != e: ca, cb, cc, cd = cc, cd, ca, cb
         if dc != e: da, db, dc, dd = dc, dd, da, db
         assert ad == e and bc == e and cd == e and dc == e
-        # FIXME
         pairs = {
             a: (aa, ab, e, d),
             b: (ba, bb, c, e),
