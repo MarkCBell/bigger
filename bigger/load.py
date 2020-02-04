@@ -13,21 +13,9 @@ def flute() -> 'bigger.MCG':
     #     |/        |/        |/        |
     #  ---#----2--->#----5----#----8----#---
     
-    def neighbours(edge: 'bigger.Edge') -> 'bigger.Square':
-        if edge % 3 == 0:
-            return (edge-2, edge-1, edge+1, edge+2)
-        elif edge % 3 == 1:
-            return (edge+1, edge-1, edge+1, edge+2)
-        else:  # edge % 3 == 2:
-            return (edge+1, edge-1, edge-2, edge-1)
-    T = bigger.Triangulation(neighbours)
+    T = bigger.Triangulation(lambda edge: [(edge-2, edge-1, edge+1, edge+2), (edge+1, edge-1, edge+1, edge+2), (edge+1, edge-1, edge-2, edge-1)][edge % 3])
     
-    def shift_isom(edge: 'bigger.Edge') -> 'bigger.Edge':
-        return edge + 3
-    
-    def shift_inv_isom(edge: 'bigger.Edge') -> 'bigger.Edge':
-        return edge - 3
-    shift = T.encode_isometry(shift_isom, shift_inv_isom)
+    shift = T.encode_isometry(lambda edge: edge+3, lambda edge: edge-3)
     
     twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>\d+)$')
     
