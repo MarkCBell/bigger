@@ -21,7 +21,7 @@ class TestRegression(TestCase):
     
     def test_flip(self):
         h = self.S.triangulation.encode([{0}, {0}])
-        self.assertEqualSquares(h.target.neighbours(0), h.source.neighbours(0))
+        self.assertEqualSquares(h.target.link(0), h.source.link(0))
     
     def test_explicit(self):
         self.assertEqual((self.S('a0')**1)(self.b), {2: 1})

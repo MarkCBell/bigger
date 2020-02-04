@@ -11,7 +11,8 @@ Edge = int
 Weight = Callable[['bigger.Edge'], int]
 Isom = Callable[['bigger.Edge'], 'bigger.Edge']
 Square = Tuple['bigger.Edge', 'bigger.Edge', 'bigger.Edge', 'bigger.Edge']
-Neighbours = Callable[['bigger.Edge'], Square]
+Neighbourhood = Tuple['bigger.Edge', 'bigger.Edge', 'bigger.Edge', 'bigger.Edge', 'bigger.Edge']
+Link = Callable[['bigger.Edge'], Square]
 
 TypedLamination = TypeVar('TypedLamination', 'bigger.Lamination', 'bigger.FinitelySupportedLamination')
 Action = Callable[[TypedLamination], TypedLamination]

@@ -4,7 +4,7 @@ from typing import Callable, Union, Tuple, Dict, Optional, Set, List, overload
 import bigger
 
 class Triangulation:
-    def __init__(self, neigbours: 'bigger.Neighbours') -> None:
+    def __init__(self, link: 'bigger.Link') -> None:
         # Use the following for reference:
         # #----a----#
         # |        /|
@@ -14,9 +14,12 @@ class Triangulation:
         # |/        |
         # #----c----#
         #
-        # neighbours(e) = (a, b, c, d, e)
+        # link(e) = (a, b, c, d, e)
         
-        self.neighbours = neigbours
+        self.link = link
+    
+    def star(self, edge: 'bigger.Edge') -> 'bigger.Neighbourhood':
+        return self.link(edge) + (edge,)
     def encode_flip(self, is_flipped: Union[Callable[['bigger.Edge'], bool], Set['bigger.Edge']]) -> 'bigger.Encoding':
         
         if isinstance(is_flipped, set):
@@ -33,27 +36,27 @@ class Triangulation:
         # |/        |     |        \|
         # #----c----#     #----c----#
         
-        def neighbours(edgy: 'bigger.Edge') -> 'bigger.Square':
-            a, b, c, d = self.neighbours(edgy)
+        def link(edgy: 'bigger.Edge') -> 'bigger.Square':
+            a, b, c, d = self.link(edgy)
             if flipped(edgy):
                 return (b, c, d, a)
             if flipped(a):
-                aa, ab, ac, ad = self.neighbours(a)
+                aa, ab, ac, ad = self.link(a)
                 if ad != edgy: aa, ab, ac, ad = ac, ad, aa, ab
                 w, x = aa, a
             elif flipped(b):
-                ba, bb, bc, bd = self.neighbours(b)
+                ba, bb, bc, bd = self.link(b)
                 if bc != edgy: ba, bb, bc, bd = bc, bd, ba, bb
                 w, x = b, bb
             else:
                 w, x = a, b
             
             if flipped(c):
-                ca, cb, cc, cd = self.neighbours(c)
+                ca, cb, cc, cd = self.link(c)
                 if cd != edgy: ca, cb, cc, cd = cc, cd, ca, cb
                 y, z = ca, c
             elif flipped(d):
-                da, db, dc, dd = self.neighbours(d)
+                da, db, dc, dd = self.link(d)
                 if dc != edgy: da, db, dc, dd = dc, dd, da, db
                 y, z = d, db
             else:
@@ -61,7 +64,7 @@ class Triangulation:
             
             return (w, x, y, z)
         
-        target = Triangulation(neighbours)
+        target = Triangulation(link)
         
         def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edgy: 'bigger.Edge') -> int:
@@ -70,7 +73,7 @@ class Triangulation:
                 
                 # Compute fi.
                 ei = lamination(edgy)
-                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in self.neighbours(edgy)]
+                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in self.link(edgy)]
                 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -91,7 +94,7 @@ class Triangulation:
                 else:
                     return max(ai0 + ci0, bi0 + di0) - ei
             # Determine support.
-            support = set(edge for support in lamination.support for edge in (target.neighbours(support) + (support,)) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
+            support = set(edge for support in lamination.support for edge in target.star(support) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return target(weight, support)
         
         def inv_action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
@@ -101,7 +104,7 @@ class Triangulation:
                 
                 # Compute fi.
                 ei = lamination(edgy)
-                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in target.neighbours(edgy)]
+                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in target.link(edgy)]
                 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -122,17 +125,17 @@ class Triangulation:
                 else:
                     return max(ai0 + ci0, bi0 + di0) - ei
             # Determine support.
-            support = set(edge for support in lamination.support for edge in (self.neighbours(support) + (support,)) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
+            support = set(edge for support in lamination.support for edge in self.star(support) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return self(weight, support)
         
         return bigger.Move(self, target, action, inv_action).encode()
     
     def relabel(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Triangulation':
-        def neighbours(edge: 'bigger.Edge') -> 'bigger.Square':
-            a, b, c, d = self.neighbours(inv_isom(edge))
+        def link(edge: 'bigger.Edge') -> 'bigger.Square':
+            a, b, c, d = self.link(inv_isom(edge))
             return (isom(a), isom(b), isom(c), isom(d))
         
-        return Triangulation(neighbours)
+        return Triangulation(link)
     def encode_isometry(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Encoding':
         target = self.relabel(isom, inv_isom)
         

@@ -17,7 +17,7 @@ def flute() -> 'bigger.MCG':
     
     shift = T.encode_isometry(lambda edge: edge+3, lambda edge: edge-3)
     
-    twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>\d+)$')
+    twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>-?\d+)$')
     
     def generator(name: str) -> 'bigger.Encoding':
         twist_match = twist_re.match(name)
@@ -46,3 +46,5 @@ def flute() -> 'bigger.MCG':
     
     return bigger.MCG(T, generator)
 
+def tree3() -> 'bigger.MCG':
+    pass

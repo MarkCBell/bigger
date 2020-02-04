@@ -85,7 +85,7 @@ class FinitelySupportedLamination(Lamination):
         # #-------->#     #-------->#
         
         e, _ = short.support
-        a, b, c, d = short.triangulation.neighbours(e)
+        a, b, c, d = short.triangulation.link(e)
         if short(b) == 1:
             assert b == d
             twist = short.triangulation.encode([{e: b, b: e}, {e}])
