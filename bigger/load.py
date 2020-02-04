@@ -36,7 +36,12 @@ def flute() -> 'bigger.MCG':
         if name in ('s', 'shift'):
             return shift
         elif name in ('S', 'SHIFT'):
-            return ~shift
+            return ~generator('shift')
+        elif name == 't':
+            isom = lambda edge: edge + [0, +1, -1][edge % 3]
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
+        elif name == 'T':
+            return ~generator('t')
         elif twist_match is not None:
             parameters = twist_match.groupdict()
             n = int(parameters['number'])

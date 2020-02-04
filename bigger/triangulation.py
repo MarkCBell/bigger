@@ -1,5 +1,5 @@
 
-from typing import Union, Dict, Optional, Set, List, overload
+from typing import Callable, Union, Tuple, Dict, Optional, Set, List, overload
 
 import bigger
 
@@ -17,10 +17,12 @@ class Triangulation:
         # neighbours(e) = (a, b, c, d, e)
         
         self.neighbours = neigbours
-    def encode_flip(self, edges: Set['bigger.Edge']) -> 'bigger.Encoding':
+    def encode_flip(self, is_flipped: Union[Callable[['bigger.Edge'], bool], Set['bigger.Edge']]) -> 'bigger.Encoding':
         
-        def flipped(edgy: 'bigger.Edge') -> bool:
-            return edgy in edges
+        if isinstance(is_flipped, set):
+            flipped = lambda edgy: edgy in is_flipped
+        else:
+            flipped = is_flipped
         
         # Use the following for reference:
         # #----a----#     #----a----#
@@ -161,6 +163,21 @@ class Triangulation:
     def encode_identity(self) -> 'bigger.Encoding':
         return self.encode_isometry_from_dict(dict())
     
+    def encode(self, sequence: List[Union[Tuple['bigger.Isom', 'bigger.Isom'], Callable[['bigger.Edge'], bool], 'bigger.Edge', Set['bigger.Edge'], Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
+        h = self.encode_identity()
+        for term in reversed(sequence):
+            if isinstance(term, int):
+                move = h.target.encode_flip({term})
+            elif isinstance(term, set) or callable(term):
+                move = h.target.encode_flip(term)
+            elif isinstance(term, dict):
+                move = h.target.encode_isometry_from_dict(term)
+            elif isinstance(term, tuple) and len(term) == 2:
+                move = h.target.encode_isometry(*term)
+            h = move * h
+        
+        return h
+    
     @overload
     def __call__(self, weights: Dict['bigger.Edge', int], support: None = None) -> 'bigger.FinitelySupportedLamination':
         ...
@@ -183,17 +200,4 @@ class Triangulation:
             return bigger.FinitelySupportedLamination(self, weights, support)
         else:
             return bigger.Lamination(self, weights)
-    
-    def encode(self, sequence: List[Union['bigger.Edge', Set['bigger.Edge'], Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
-        h = self.encode_identity()
-        for term in reversed(sequence):
-            if isinstance(term, int):
-                move = h.target.encode_flip({term})
-            elif isinstance(term, set):
-                move = h.target.encode_flip(term)
-            elif isinstance(term, dict):
-                move = h.target.encode_isometry_from_dict(term)
-            h = move * h
-        
-        return h
 

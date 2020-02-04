@@ -1,4 +1,5 @@
 
+import sys
 from typing import TYPE_CHECKING
 
 import pkg_resources
@@ -17,4 +18,4 @@ if TYPE_CHECKING:
     from .types import *  # noqa: F401, F403
 
 __version__ = pkg_resources.get_distribution('bigger').version
-
+sys.setrecursionlimit(10000)  # We may need a large stack.
