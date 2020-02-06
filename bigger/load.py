@@ -6,6 +6,9 @@ import re
 import bigger
 
 def biflute() -> 'bigger.MCG':
+    ''' Return the infinitely punctured sphere with punctures that accumulate in two directions.
+    
+    Comes with a shift map (s) and infinite twist (t) maps along with twists about the nth parallel curve (an). '''
     
     #  ---#----2----#----5----#----8----#---
     #     |        /|        /|        /|

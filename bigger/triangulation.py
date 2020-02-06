@@ -183,13 +183,23 @@ class Triangulation:
         return self.encode_isometry_from_dict(dict())
     
     def encode(self, sequence: List[Union[Tuple['bigger.Isom', 'bigger.Isom'], Callable[['bigger.Edge'], bool], 'bigger.Edge', Set['bigger.Edge'], Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
+        ''' Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
+        
+        There are several conventions that allow these to be specified by a smaller amount of information:
+        
+         - A set or callable is used to flip those edges.
+         - A dict is used to encode an isomety.
+         - A pair of callables
+         - Otherwise, it is assumed to be the label of an edge to flip.
+        
+        The sequence is read in reverse in order to respect composition. '''
         h = self.encode_identity()
         for term in reversed(sequence):
             if isinstance(term, set) or callable(term):
                 move = h.target.encode_flip(term)
             elif isinstance(term, dict):
                 move = h.target.encode_isometry_from_dict(term)
-            elif isinstance(term, tuple) and len(term) == 2 and all(isinstance(item, dict) for item in term):
+            elif isinstance(term, tuple) and len(term) == 2 and all(callable(item) for item in term):
                 move = h.target.encode_isometry(*term)
             else:  # Assume term is the label of an edge to flip.
                 move = h.target.encode_flip({term})
