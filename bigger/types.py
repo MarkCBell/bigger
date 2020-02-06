@@ -1,4 +1,6 @@
 
+''' Type annotation classes for bigger. '''
+
 from typing import Union, Callable, TypeVar, Tuple
 from fractions import Fraction
 
@@ -6,7 +8,7 @@ import bigger  # noqa: F401  # pylint: disable=unused-import
 
 Rational = Union[Fraction, int]
 
-Edge = int
+Edge = TypeVar('Edge')
 
 Weight = Callable[['bigger.Edge'], int]
 Isom = Callable[['bigger.Edge'], 'bigger.Edge']

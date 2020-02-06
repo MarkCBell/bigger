@@ -1,9 +1,11 @@
 
+''' Functions for building example mapping class groups. '''
+
 import re
 
 import bigger
 
-def flute() -> 'bigger.MCG':
+def biflute() -> 'bigger.MCG':
     
     #  ---#----2----#----5----#----8----#---
     #     |        /|        /|        /|
@@ -46,5 +48,4 @@ def flute() -> 'bigger.MCG':
     
     return bigger.MCG(T, generator)
 
-def tree3() -> 'bigger.MCG':
-    pass
+

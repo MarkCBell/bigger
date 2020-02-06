@@ -18,8 +18,6 @@ Bigger Package API
     ~encoding.Encoding
     ~lamination.FinitelySupportedLamination
     ~lamination.Lamination
-    ~triangulation.Edge
-    ~triangulation.OrientedEdge
     ~triangulation.Triangulation
     ~mappingclassgroup.MappingClassGroup
 

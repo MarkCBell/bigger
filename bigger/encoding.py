@@ -1,9 +1,12 @@
 
+''' A module for representing and manipulating maps between Triangulations. '''
+
 from typing import List, Iterator, Union, overload
 
 import bigger
 
 class Move:
+    ''' A function that takes :class:`Laminations <bigger.lamination.Lamination>` on one :class:`~bigger.triangulation.Triangulation` to another. '''
     def __init__(self, source: 'bigger.Triangulation', target: 'bigger.Triangulation', action: 'bigger.Action', inv_action: 'bigger.Action') -> None:
         self.source = source
         self.target = target
@@ -14,9 +17,11 @@ class Move:
     def __call__(self, lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
         return self.action(lamination)
     def encode(self) -> 'bigger.Encoding':
+        ''' Return the :class:`~bigger.encoding.Encoding` consisting of only this Move. '''
         return bigger.Encoding([self])
 
 class Encoding:
+    ''' A sequence of :class:`Moves <bigger.encoding.Move>` to apply to a :class:`~bigger.lamination.Lamination`. '''
     def __init__(self, sequence: List['bigger.Move']) -> None:
         self.sequence = sequence
         self.source = self.sequence[-1].source

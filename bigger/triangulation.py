@@ -1,9 +1,15 @@
 
+''' A module for representing a triangulation of a punctured surface. '''
+
 from typing import Callable, Union, Tuple, Dict, Optional, Set, List, overload
 
 import bigger
 
 class Triangulation:
+    ''' A triangulation of a (possibly infinite type) surface.
+    
+    The triangulation is specified via a function which takes an edge to its link.
+    Note that this cannot be used to define S_{1,1} since its edge links are invariant under the hyperelliptic involution. '''
     def __init__(self, link: 'bigger.Link') -> None:
         # Use the following for reference:
         # #----a----#
@@ -19,8 +25,14 @@ class Triangulation:
         self.link = link
     
     def star(self, edge: 'bigger.Edge') -> 'bigger.Neighbourhood':
+        ''' Return the link of an Edge together with the Edge itself. '''
+        
         return self.link(edge) + (edge,)
     def encode_flip(self, is_flipped: Union[Callable[['bigger.Edge'], bool], Set['bigger.Edge']]) -> 'bigger.Encoding':
+        ''' Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
+        
+        Alternatively, this can be given a set of Edges and will use membership of this set to test which edges flip.
+        Note that if :attr:`is_flipped` is True for an Edge then it must be False for all edge in its link. '''
         
         if isinstance(is_flipped, set):
             flipped = lambda edgy: edgy in is_flipped
@@ -131,12 +143,14 @@ class Triangulation:
         return bigger.Move(self, target, action, inv_action).encode()
     
     def relabel(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Triangulation':
+        ''' Return an :class:`~bigger.encoding.Triangulation` obtained by relabelling the edges of this Triangulation. '''
         def link(edge: 'bigger.Edge') -> 'bigger.Square':
             a, b, c, d = self.link(inv_isom(edge))
             return (isom(a), isom(b), isom(c), isom(d))
         
         return Triangulation(link)
     def encode_isometry(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Encoding':
+        ''' Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. '''
         target = self.relabel(isom, inv_isom)
         
         def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
@@ -153,6 +167,7 @@ class Triangulation:
         
         return bigger.Move(self, target, action, inv_action).encode()
     def encode_isometry_from_dict(self, isom_dict: Dict['bigger.Edge', 'bigger.Edge']) -> 'bigger.Encoding':
+        ''' Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. '''
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
         
         def isom(edge: 'bigger.Edge') -> 'bigger.Edge':
@@ -164,19 +179,20 @@ class Triangulation:
         return self.encode_isometry(isom, inv_isom)
     
     def encode_identity(self) -> 'bigger.Encoding':
+        ''' Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class. '''
         return self.encode_isometry_from_dict(dict())
     
     def encode(self, sequence: List[Union[Tuple['bigger.Isom', 'bigger.Isom'], Callable[['bigger.Edge'], bool], 'bigger.Edge', Set['bigger.Edge'], Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
         h = self.encode_identity()
         for term in reversed(sequence):
-            if isinstance(term, int):
-                move = h.target.encode_flip({term})
-            elif isinstance(term, set) or callable(term):
+            if isinstance(term, set) or callable(term):
                 move = h.target.encode_flip(term)
             elif isinstance(term, dict):
                 move = h.target.encode_isometry_from_dict(term)
-            elif isinstance(term, tuple) and len(term) == 2:
+            elif isinstance(term, tuple) and len(term) == 2 and all(isinstance(item, dict) for item in term):
                 move = h.target.encode_isometry(*term)
+            else:  # Assume term is the label of an edge to flip.
+                move = h.target.encode_flip({term})
             h = move * h
         
         return h

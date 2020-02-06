@@ -3,7 +3,7 @@ from unittest import TestCase
 import bigger
 
 class TestRegression(TestCase):
-    S = bigger.load.flute()
+    S = bigger.load.biflute()
     a = S.triangulation({0: -1})
     b = S.triangulation({1: -1})
     m = S.triangulation({1: -1})

@@ -1,9 +1,14 @@
 
+''' A module for representing laminations on Triangulations. '''
+
 from typing import Any, Set, Iterable, Tuple
 
 import bigger
 
 class Lamination:
+    ''' A measured lamination on a :class:`~bigger.triangulation.Triangulation`.
+    
+    The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure. '''
     def __init__(self, triangulation: 'bigger.Triangulation', weight: 'bigger.Weight') -> None:
         self.triangulation = triangulation
         self.weight = weight
@@ -14,9 +19,11 @@ class Lamination:
     def __repr__(self) -> str:
         return str(self)
     def show(self, edges: Iterable['bigger.Edge']) -> str:
+        ''' Return a string describing this Lamination on the given edges. '''
         return ', '.join('{}: {}'.format(edge, self(edge)) for edge in edges)
 
 class FinitelySupportedLamination(Lamination):
+    ''' A Lamination which assigns non-zero measure to only finitely many edges of its underlying :class:`~bigger.triangulation.Triangulation`. '''
     def __init__(self, triangulation: 'bigger.Triangulation', weight: 'bigger.Weight', support: Set['bigger.Edge']) -> None:
         super().__init__(triangulation, weight)
         self.support = support
@@ -32,9 +39,12 @@ class FinitelySupportedLamination(Lamination):
     def __repr__(self) -> str:
         return str(self)
     def complexity(self) -> int:
-        return sum(self(edge) for edge in self.support)
+        ''' Return the number of intersections between this Lamination and its underlying Triangulation. '''
+        return sum(max(self(edge), 0) for edge in self.support)
     def shorten(self) -> Tuple['bigger.FinitelySupportedLamination', bigger.Encoding]:
-        ''' Return an encoding that minimises self.complexity. '''
+        ''' Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
+        
+        Note that in the future this should do curvers full Lamination shortening algorithm. '''
         
         lamination = self
         complexity = lamination.complexity()
@@ -61,10 +71,15 @@ class FinitelySupportedLamination(Lamination):
         return lamination, conjugator
     
     def is_short(self) -> bool:
+        ''' Return whether this Lamination intersects its underlying Triangulation exactly twice.
+        
+        Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short. '''
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support)
     
     def encode_twist(self) -> 'bigger.Encoding':
-        # Currently only works on non-isolating curves.
+        ''' Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this FinitelySupportedLamination.
+        
+        Note that this currently only works on non-isolating curves. '''
         short, conjugator = self.shorten()
         
         # Use the following for reference:

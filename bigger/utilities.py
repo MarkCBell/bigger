@@ -1,4 +1,6 @@
 
+''' A module of useful, generic functions. '''
+
 from fractions import Fraction
 from typing import Union, overload
 

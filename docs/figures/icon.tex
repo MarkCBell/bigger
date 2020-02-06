@@ -1,0 +1,23 @@
+\documentclass[convert={outfile=\jobname.svg}]{standalone}
+\usepackage{tikz}
+\tikzset{dot/.style={draw,shape=circle,fill=black,scale=0.4}}
+
+\begin{document}
+\begin{tikzpicture}[scale=2, very thick]
+    \draw (0, 0) circle (1);
+    \begin{scope}[shift={(0, 0.5)}]
+    \draw (0, 0) circle (0.5);
+    \end{scope}
+    
+    \begin{scope}[shift={(0, 0.25)}]
+        \foreach \i/\s in {120/0.05, 135/0.1, 157.5/0.15, 180/0.3, 215/0.5, 270/0.75, 325/0.5, 0/0.3, 22.5/0.15, 45/0.1, 60/0.05} {
+        \begin{scope}[shift={(\i: 0.75)}]
+            \begin{scope}[scale=\s]
+                \draw (-0.5,0.05) to [out=-30,in=180+30] (0.5,0.05);
+                \draw (-0.3,-0.05) to [out=30,in=180-30] (0.3,-0.05);
+            \end{scope}
+        \end{scope}
+        }
+    \end{scope}
+\end{tikzpicture}
+\end{document}

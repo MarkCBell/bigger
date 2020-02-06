@@ -149,8 +149,8 @@ html_theme = 'alabaster'
 # of the docs.  This file should be a Windows icon file (.ico) being
 # 16x16 or 32x32 pixels large.
 #html_favicon = None
-html_favicon = '../bigger/application/icon/icon.ico'
-html_logo = '../bigger/application/icon/icon.svg'
+html_favicon = 'figures/icon.ico'
+html_logo = 'figures/icon.svg'
 
 # Add any paths that contain custom static files (such as style sheets)
 # here, relative to this directory. They are copied after the builtin

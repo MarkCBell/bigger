@@ -1,4 +1,6 @@
 
+''' Bigger is a program for studying mapping classes and laminations on infinite type surfaces. '''
+
 import sys
 from typing import TYPE_CHECKING
 
@@ -19,3 +21,4 @@ if TYPE_CHECKING:
 
 __version__ = pkg_resources.get_distribution('bigger').version
 sys.setrecursionlimit(10000)  # We may need a large stack.
+

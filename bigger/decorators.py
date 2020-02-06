@@ -1,4 +1,6 @@
 
+''' A module for decorators. '''
+
 import inspect
 from typing import Callable, TypeVar, Any
 
