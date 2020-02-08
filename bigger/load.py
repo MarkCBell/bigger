@@ -1,14 +1,66 @@
 
 ''' Functions for building example mapping class groups. '''
 
+from typing import Tuple
+
 import re
 
 import bigger
 
-def biflute() -> 'bigger.MCG':
-    ''' Return the infinitely punctured sphere with punctures that accumulate in two directions.
+def flute() -> 'bigger.MCG':
+    ''' The infinitely punctured sphere, with punctures that accumulate in one direction.
     
-    Comes with a shift map (s) and infinite twist (t) maps along with twists about the nth parallel curve (an). '''
+    With mapping classes:
+    
+     - an which twists about the curve parallel to edges n and n+1
+     - bn which twists about the curve which separates punctures n and n+1
+     - t which twists about all a curves simultaneously
+    '''
+    
+    #             #----2----#----5----#----8----#---
+    #            /|        /|        /|        /|
+    #         -1  |      /  |      /  |      /  |
+    #        #    0    1    3    4    6    7    9 ...
+    #         -1  |  /      |  /      |  /      |
+    #            \|/        |/        |/        |
+    #             #----2----#----5----#----8----#---
+    
+    T = bigger.Triangulation(
+        lambda edge:
+        (0, -1, -1, 0) if edge == -1 else
+        (-1, -1, 1, 2) if edge == 0 else
+        [(edge-2, edge-1, edge+1, edge+2), (edge+1, edge-1, edge+1, edge+2), (edge+1, edge-1, edge-2, edge-1)][edge % 3]
+        )
+    
+    twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>\d+)$')
+    
+    def generator(name: str) -> 'bigger.Encoding':
+        twist_match = twist_re.match(name)
+        if name == 't':
+            isom = lambda edge: -1 if edge == -1 else edge + [0, +1, -1][edge % 3]
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
+        elif twist_match is not None:
+            parameters = twist_match.groupdict()
+            n = int(parameters['number'])
+            if parameters['curve'] == 'a':
+                return T({3*n+1: 1, 3*n+2: 1}).encode_twist()
+            if parameters['curve'] == 'b':
+                return T({3*n-2: 1, 3*n-1: 1, 3*n+0: 2, 3*n+1: 2, 3*n+3: 2, 3*n+4: 1, 3*n+5: 1}).encode_twist()
+        
+        raise ValueError('Unknown mapping class {}'.format(name))
+    
+    return bigger.MCG(T, generator)
+
+def biflute() -> 'bigger.MCG':
+    ''' The infinitely punctured sphere, with punctures that accumulate in two directions.
+    
+    With mapping classes:
+    
+     - an which twists about the curve parallel to edges n and n+1
+     - bn which twists about the curve which separates punctures n and n+1
+     - s which shifts the surface down
+     - t which twists about all a curves simultaneously
+    '''
     
     #  ---#----2----#----5----#----8----#---
     #     |        /|        /|        /|
@@ -16,7 +68,7 @@ def biflute() -> 'bigger.MCG':
     # ... 0    1    3    4    6    7    9 ...
     #     |  /      |  /      |  /      |
     #     |/        |/        |/        |
-    #  ---#----2--->#----5----#----8----#---
+    #  ---#----2----#----5----#----8----#---
     
     T = bigger.Triangulation(lambda edge: [(edge-2, edge-1, edge+1, edge+2), (edge+1, edge-1, edge+1, edge+2), (edge+1, edge-1, edge-2, edge-1)][edge % 3])
     
@@ -28,27 +80,81 @@ def biflute() -> 'bigger.MCG':
         twist_match = twist_re.match(name)
         if name in ('s', 'shift'):
             return shift
-        elif name in ('S', 'SHIFT'):
-            return ~generator('shift')
         elif name == 't':
             isom = lambda edge: edge + [0, +1, -1][edge % 3]
             return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
-        elif name == 'T':
-            return ~generator('t')
         elif twist_match is not None:
             parameters = twist_match.groupdict()
             n = int(parameters['number'])
             if parameters['curve'] == 'a':
                 return T({3*n+1: 1, 3*n+2: 1}).encode_twist()
-            if parameters['curve'] == 'A':
-                return T({3*n+1: 1, 3*n+2: 1}).encode_twist()**-1
             if parameters['curve'] == 'b':
                 return T({3*n-2: 1, 3*n-1: 1, 3*n+0: 2, 3*n+1: 2, 3*n+3: 2, 3*n+4: 1, 3*n+5: 1}).encode_twist()
-            if parameters['curve'] == 'B':
-                return T({3*n-2: 1, 3*n-1: 1, 3*n+0: 2, 3*n+1: 2, 3*n+3: 2, 3*n+4: 1, 3*n+5: 1}).encode_twist()**-1
         
         raise ValueError('Unknown mapping class {}'.format(name))
     
     return bigger.MCG(T, generator)
 
+def ladder() -> 'bigger.MCG':
+    ''' The infinite-genus, two-ended surface.
+    
+    With mapping classes:
+    
+     - an which twists about the curve parallel to edges n and n+1
+     - bn which twists about the curve which separates punctures n and n+1
+     - s which shifts the surface down
+     - t which twists about all a curves simultaneously
+    '''
+    
+    #  #---n,0---#---n,8---#
+    #  |        /|        /|
+    #  |      /  |      /  |
+    # n,1  n,2  n,4  n,7  n+1,0
+    #  |  /      |  /      |
+    #  |/        |/        |
+    #  #---n,3---#---n,8---#
+    #  |        /|
+    #  |      /  |
+    # n,5  n,6  n,5
+    #  |  /      |
+    #  |/        |
+    #  #--n+1,1--#
+    
+    def link(edge: Tuple[int, int]) -> 'bigger.Square':
+        n, k = edge
+        return {
+            0: ((n, 1), (n, 2), (n-1, 7), (n-1, 8)),
+            1: ((n-1, 5), (n-1, 6), (n, 2), (n, 0)),
+            2: ((n, 0), (n, 1), (n, 3), (n, 4)),
+            3: ((n, 4), (n, 2), (n, 5), (n, 6)),
+            4: ((n, 2), (n, 3), (n, 7), (n, 8)),
+            5: ((n, 6), (n, 3), (n, 6), (n+1, 1)),
+            6: ((n, 3), (n, 5), (n+1, 1), (n, 5)),
+            7: ((n, 8), (n, 4), (n, 8), (n+1, 0)),
+            8: ((n+1, 0), (n, 7), (n, 4), (n, 7))
+        }[k]
+    T = bigger.Triangulation(link)
+    
+    shift = T.encode_isometry(lambda edge: (edge[0]+1, edge[1]), lambda edge: (edge[0]-1, edge[1]))
+    
+    twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>-?\d+)$')
+    
+    def generator(name: str) -> 'bigger.Encoding':
+        twist_match = twist_re.match(name)
+        if name in ('s', 'shift'):
+            return shift
+        elif name == 't':
+            isom = lambda edge: edge + [0, +1, -1][edge % 3]
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
+        elif twist_match is not None:
+            parameters = twist_match.groupdict()
+            n = int(parameters['number'])
+            if parameters['curve'] == 'a':
+                return T({(n, 7): 1, (n, 8): 1}).encode_twist()
+            if parameters['curve'] == 'b':
+                return T({(n, 5): 1, (n, 6): 1}).encode_twist()
+        
+        raise ValueError('Unknown mapping class {}'.format(name))
+    
+    return bigger.MCG(T, generator)
 

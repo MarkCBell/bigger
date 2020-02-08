@@ -3,18 +3,20 @@ Surfaces
 ========
 
 Bigger comes with a number of pre-made surfaces.
+These available within :mod:`bigger.load`
+
+Flute
+-----
+
+.. autofunction:: bigger.load.flute
 
 Biflute
 -------
 
-This surface is a sphere with an infinite number of punctures which accumulate in two directions.
+.. autofunction:: bigger.load.biflute
 
-Load via the method :func:`bigger.load.biflute`.
+Ladder
+------
 
-Tree3
------
-
-This surface is a sphere with infinitely many ends.
-
-Load via the method :func:`bigger.load.tree3`.
+.. autofunction:: bigger.load.ladder
 
