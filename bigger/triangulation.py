@@ -188,8 +188,7 @@ class Triangulation:
         There are several conventions that allow these to be specified by a smaller amount of information:
         
          - A set or callable is used to flip those edges.
-         - A dict is used to encode an isomety.
-         - A pair of callables
+         - A dict or pair of callables is used to encode an isomety.
          - Otherwise, it is assumed to be the label of an edge to flip.
         
         The sequence is read in reverse in order to respect composition. '''
