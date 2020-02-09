@@ -142,16 +142,16 @@ class Triangulation:
         
         return bigger.Move(self, target, action, inv_action).encode()
     
-    def relabel(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Triangulation':
-        ''' Return an :class:`~bigger.encoding.Triangulation` obtained by relabelling the edges of this Triangulation. '''
+    def encode_isometry(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Encoding':
+        ''' Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. '''
+        
+        # Define the new triangulation.
+        
         def link(edge: 'bigger.Edge') -> 'bigger.Square':
             a, b, c, d = self.link(inv_isom(edge))
             return (isom(a), isom(b), isom(c), isom(d))
         
-        return Triangulation(link)
-    def encode_isometry(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Encoding':
-        ''' Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. '''
-        target = self.relabel(isom, inv_isom)
+        target = Triangulation(link)
         
         def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
             def weight(edge: 'bigger.Edge') -> int:
