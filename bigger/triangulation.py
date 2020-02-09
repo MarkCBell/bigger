@@ -1,6 +1,7 @@
 
 ''' A module for representing a triangulation of a punctured surface. '''
 
+from functools import partial
 from typing import Callable, Union, Tuple, Dict, Optional, Set, List, overload
 
 import bigger
@@ -35,7 +36,7 @@ class Triangulation:
         Note that if :attr:`is_flipped` is True for an Edge then it must be False for all edge in its link. '''
         
         if isinstance(is_flipped, set):
-            flipped = lambda edgy: edgy in is_flipped
+            flipped = lambda edge: edge in is_flipped
         else:
             flipped = is_flipped
         
@@ -48,28 +49,30 @@ class Triangulation:
         # |/        |     |        \|
         # #----c----#     #----c----#
         
-        def link(edgy: 'bigger.Edge') -> 'bigger.Square':
-            a, b, c, d = self.link(edgy)
-            if flipped(edgy):
+        # Define the new triangulation.
+        
+        def link(edge: 'bigger.Edge') -> 'bigger.Square':
+            a, b, c, d = self.link(edge)
+            if flipped(edge):
                 return (b, c, d, a)
             if flipped(a):
                 aa, ab, ac, ad = self.link(a)
-                if ad != edgy: aa, ab, ac, ad = ac, ad, aa, ab
+                if ad != edge: aa, ab, ac, ad = ac, ad, aa, ab
                 w, x = aa, a
             elif flipped(b):
                 ba, bb, bc, bd = self.link(b)
-                if bc != edgy: ba, bb, bc, bd = bc, bd, ba, bb
+                if bc != edge: ba, bb, bc, bd = bc, bd, ba, bb
                 w, x = b, bb
             else:
                 w, x = a, b
             
             if flipped(c):
                 ca, cb, cc, cd = self.link(c)
-                if cd != edgy: ca, cb, cc, cd = cc, cd, ca, cb
+                if cd != edge: ca, cb, cc, cd = cc, cd, ca, cb
                 y, z = ca, c
             elif flipped(d):
                 da, db, dc, dd = self.link(d)
-                if dc != edgy: da, db, dc, dd = dc, dd, da, db
+                if dc != edge: da, db, dc, dd = dc, dd, da, db
                 y, z = d, db
             else:
                 y, z = c, d
@@ -78,14 +81,15 @@ class Triangulation:
         
         target = Triangulation(link)
         
-        def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
-            def weight(edgy: 'bigger.Edge') -> int:
-                if not flipped(edgy):
-                    return lamination(edgy)
+        # Since the action and inv_action are so similar, we define both at once and just use a partial function to set the correct source / target.
+        def helper(source: 'bigger.Triangulation', target: 'bigger.Triangulation', lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
+            def weight(edge: 'bigger.Edge') -> int:
+                if not flipped(edge):
+                    return lamination(edge)
                 
                 # Compute fi.
-                ei = lamination(edgy)
-                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in self.link(edgy)]
+                ei = lamination(edge)
+                ai0, bi0, ci0, di0 = [max(lamination(edge), 0) for edge in source.link(edge)]
                 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -109,36 +113,8 @@ class Triangulation:
             support = set(edge for support in lamination.support for edge in target.star(support) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return target(weight, support)
         
-        def inv_action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
-            def weight(edgy: 'bigger.Edge') -> int:
-                if not flipped(edgy):
-                    return lamination(edgy)
-                
-                # Compute fi.
-                ei = lamination(edgy)
-                ai0, bi0, ci0, di0 = [max(lamination(edgy), 0) for edgy in target.link(edgy)]
-                
-                if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
-                    return ai0 + bi0 - ei
-                elif ei >= ci0 + di0 and di0 >= ai0 and ci0 >= bi0:  # CASE: A(cd)
-                    return ci0 + di0 - ei
-                elif ei <= 0 and ai0 >= bi0 and di0 >= ci0:  # CASE: D(ad)
-                    return ai0 + di0 - ei
-                elif ei <= 0 and bi0 >= ai0 and ci0 >= di0:  # CASE: D(bc)
-                    return bi0 + ci0 - ei
-                elif ei >= 0 and ai0 >= bi0 + ei and di0 >= ci0 + ei:  # CASE: N(ad)
-                    return ai0 + di0 - 2*ei
-                elif ei >= 0 and bi0 >= ai0 + ei and ci0 >= di0 + ei:  # CASE: N(bc)
-                    return bi0 + ci0 - 2*ei
-                elif ai0 + bi0 >= ei and bi0 + ei >= 2*ci0 + ai0 and ai0 + ei >= 2*di0 + bi0:  # CASE: N(ab)
-                    return bigger.half(ai0 + bi0 - ei)
-                elif ci0 + di0 >= ei and di0 + ei >= 2*ai0 + ci0 and ci0 + ei >= 2*bi0 + di0:  # CASE: N(cd)
-                    return bigger.half(ci0 + di0 - ei)
-                else:
-                    return max(ai0 + ci0, bi0 + di0) - ei
-            # Determine support.
-            support = set(edge for support in lamination.support for edge in self.star(support) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
-            return self(weight, support)
+        action = partial(helper, self, target)
+        inv_action = partial(helper, target, self)
         
         return bigger.Move(self, target, action, inv_action).encode()
     
