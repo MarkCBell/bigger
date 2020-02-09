@@ -29,6 +29,7 @@ class Triangulation:
         ''' Return the link of an Edge together with the Edge itself. '''
         
         return self.link(edge) + (edge,)
+    
     def encode_flip(self, is_flipped: Union[Callable[['bigger.Edge'], bool], Set['bigger.Edge']]) -> 'bigger.Encoding':
         ''' Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
         
@@ -142,6 +143,7 @@ class Triangulation:
             return self(weight, support)
         
         return bigger.Move(self, target, action, inv_action).encode()
+    
     def encode_isometry_from_dict(self, isom_dict: Dict['bigger.Edge', 'bigger.Edge']) -> 'bigger.Encoding':
         ''' Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. '''
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
