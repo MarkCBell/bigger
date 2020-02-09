@@ -49,6 +49,6 @@ External Links
 .. _Azure: https://dev.azure.com/MarkCBell/bigger
 .. _GitHub: https://github.com/MarkCBell/bigger
 .. _PyPI: https://pypi.python.org/pypi/bigger
-.. _ReadTheDocs: http://bigger.readthedocs.io
+.. _ReadTheDocs: http://biggermcg.readthedocs.io
 .. _Travis: https://travis-ci.com/MarkCBell/bigger
 
