@@ -16,7 +16,7 @@ Bigger is available on `PyPI`_, so it can be installed via::
 Once installed, try it inside of Python::
 
     >>> import bigger
-    >>> S = bigger.load.flute()  # The two-ended infinitely punctured sphere.
+    >>> S = bigger.load.biflute()  # The two-ended infinitely punctured sphere.
     >>> a = S.triangulation({1: -1})  # An arc.
     >>> a
     1: -1
