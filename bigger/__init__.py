@@ -2,7 +2,6 @@
 ''' Bigger is a program for studying mapping classes and laminations on infinite type surfaces. '''
 
 import sys
-from typing import TYPE_CHECKING
 
 import pkg_resources
 
@@ -15,9 +14,6 @@ from .utilities import half  # noqa: F401
 
 # Aliases.
 MCG = MappingClassGroup
-
-if TYPE_CHECKING:
-    from .types import *  # noqa: F401, F403
 
 __version__ = pkg_resources.get_distribution('bigger').version
 sys.setrecursionlimit(10000)  # We may need a large stack.

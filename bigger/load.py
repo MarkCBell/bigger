@@ -120,7 +120,9 @@ def ladder() -> 'bigger.MCG':
     #  |/        |
     #  #--n+1,1--#
     
-    def link(edge: Tuple[int, int]) -> 'bigger.Square':
+    Edge = Tuple[int, int]
+    
+    def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
         n, k = edge
         return {
             0: ((n, 1), (n, 2), (n-1, 7), (n-1, 8)),
@@ -143,9 +145,6 @@ def ladder() -> 'bigger.MCG':
         twist_match = twist_re.match(name)
         if name in ('s', 'shift'):
             return shift
-        elif name == 't':
-            isom = lambda edge: edge + [0, +1, -1][edge % 3]
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
         elif twist_match is not None:
             parameters = twist_match.groupdict()
             n = int(parameters['number'])

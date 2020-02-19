@@ -2,16 +2,19 @@
 ''' A module for representing a triangulation of a punctured surface. '''
 
 from functools import partial
-from typing import Callable, Union, Tuple, Dict, Optional, Set, List, overload
+from typing import Callable, Union, Tuple, Dict, Optional, Set, List, overload, TypeVar, Generic, Mapping
 
 import bigger
 
-class Triangulation:
+Edge = TypeVar('Edge')
+TypedLamination = TypeVar('TypedLamination', 'bigger.Lamination', 'bigger.FinitelySupportedLamination')
+
+class Triangulation(Generic[Edge]):
     ''' A triangulation of a (possibly infinite type) surface.
     
     The triangulation is specified via a function which takes an edge to its link.
     Note that this cannot be used to define S_{1,1} since its edge links are invariant under the hyperelliptic involution. '''
-    def __init__(self, link: 'bigger.Link') -> None:
+    def __init__(self, link: Callable[[Edge], Tuple[Edge, Edge, Edge, Edge]]) -> None:
         # Use the following for reference:
         # #----a----#
         # |        /|
@@ -25,21 +28,22 @@ class Triangulation:
         
         self.link = link
     
-    def star(self, edge: 'bigger.Edge') -> 'bigger.Neighbourhood':
+    def star(self, edge: Edge) -> Tuple[Edge, Edge, Edge, Edge, Edge]:
         ''' Return the link of an Edge together with the Edge itself. '''
         
         return self.link(edge) + (edge,)
     
-    def encode_flip(self, is_flipped: Union[Callable[['bigger.Edge'], bool], Set['bigger.Edge']]) -> 'bigger.Encoding':
+    def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> 'bigger.Encoding':
         ''' Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
         
         Alternatively, this can be given a set of Edges and will use membership of this set to test which edges flip.
         Note that if :attr:`is_flipped` is True for an Edge then it must be False for all edge in its link. '''
         
         if isinstance(is_flipped, set):
-            flipped = lambda edge: edge in is_flipped
-        else:
-            flipped = is_flipped
+            # Start again with the function lambda edge: edge in is_flipped.
+            return self.encode_flip(is_flipped.__contains__)
+        
+        flipped = is_flipped
         
         # Use the following for reference:
         # #----a----#     #----a----#
@@ -51,8 +55,7 @@ class Triangulation:
         # #----c----#     #----c----#
         
         # Define the new triangulation.
-        
-        def link(edge: 'bigger.Edge') -> 'bigger.Square':
+        def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
             a, b, c, d = self.link(edge)
             if flipped(edge):
                 return (b, c, d, a)
@@ -83,8 +86,8 @@ class Triangulation:
         target = Triangulation(link)
         
         # Since the action and inv_action are so similar, we define both at once and just use a partial function to set the correct source / target.
-        def helper(source: 'bigger.Triangulation', target: 'bigger.Triangulation', lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
-            def weight(edge: 'bigger.Edge') -> int:
+        def helper(source: 'bigger.Triangulation', target: 'bigger.Triangulation', lamination: TypedLamination) -> TypedLamination:
+            def weight(edge: Edge) -> int:
                 if not flipped(edge):
                     return lamination(edge)
                 
@@ -119,39 +122,38 @@ class Triangulation:
         
         return bigger.Move(self, target, action, inv_action).encode()
     
-    def encode_isometry(self, isom: 'bigger.Isom', inv_isom: 'bigger.Isom') -> 'bigger.Encoding':
+    def encode_isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> 'bigger.Encoding':
         ''' Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. '''
         
         # Define the new triangulation.
-        
-        def link(edge: 'bigger.Edge') -> 'bigger.Square':
+        def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
             a, b, c, d = self.link(inv_isom(edge))
             return (isom(a), isom(b), isom(c), isom(d))
         
         target = Triangulation(link)
         
-        def action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
-            def weight(edge: 'bigger.Edge') -> int:
+        def action(lamination: TypedLamination) -> TypedLamination:
+            def weight(edge: Edge) -> int:
                 return lamination(inv_isom(edge))
             support = {isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return target(weight, support)
         
-        def inv_action(lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
-            def weight(edge: 'bigger.Edge') -> int:
+        def inv_action(lamination: TypedLamination) -> TypedLamination:
+            def weight(edge: Edge) -> int:
                 return lamination(isom(edge))
             support = {inv_isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
             return self(weight, support)
         
         return bigger.Move(self, target, action, inv_action).encode()
     
-    def encode_isometry_from_dict(self, isom_dict: Dict['bigger.Edge', 'bigger.Edge']) -> 'bigger.Encoding':
+    def encode_isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> 'bigger.Encoding':
         ''' Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. '''
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
         
-        def isom(edge: 'bigger.Edge') -> 'bigger.Edge':
+        def isom(edge: Edge) -> Edge:
             return isom_dict.get(edge, edge)
         
-        def inv_isom(edge: 'bigger.Edge') -> 'bigger.Edge':
+        def inv_isom(edge: Edge) -> Edge:
             return inv_isom_dict.get(edge, edge)
         
         return self.encode_isometry(isom, inv_isom)
@@ -160,7 +162,7 @@ class Triangulation:
         ''' Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class. '''
         return self.encode_isometry_from_dict(dict())
     
-    def encode(self, sequence: List[Union[Tuple['bigger.Isom', 'bigger.Isom'], Callable[['bigger.Edge'], bool], 'bigger.Edge', Set['bigger.Edge'], Dict['bigger.Edge', 'bigger.Edge']]]) -> 'bigger.Encoding':
+    def encode(self, sequence: List[Union[Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Callable[[Edge], bool], Edge, Set[Edge], Mapping[Edge, Edge]]]) -> 'bigger.Encoding':
         ''' Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
         
         There are several conventions that allow these to be specified by a smaller amount of information:
@@ -185,20 +187,20 @@ class Triangulation:
         return h
     
     @overload
-    def __call__(self, weights: Dict['bigger.Edge', int], support: None = None) -> 'bigger.FinitelySupportedLamination':
+    def __call__(self, weights: Dict[Edge, int], support: None = None) -> 'bigger.FinitelySupportedLamination':
         ...
     @overload
-    def __call__(self, weights: 'bigger.Weight', support: Set['bigger.Edge']) -> 'bigger.FinitelySupportedLamination':  # noqa: F811
+    def __call__(self, weights: Callable[[Edge], int], support: Set[Edge]) -> 'bigger.FinitelySupportedLamination':  # noqa: F811
         ...
     @overload
-    def __call__(self, weights: 'bigger.Weight', support: None) -> 'bigger.Lamination':  # noqa: F811
+    def __call__(self, weights: Callable[[Edge], int], support: None) -> 'bigger.Lamination':  # noqa: F811
         ...
     
-    def __call__(self, weights: Union[Dict['bigger.Edge', int], 'bigger.Weight'], support: Optional[Set['bigger.Edge']] = None) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811
+    def __call__(self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Optional[Set[Edge]] = None) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
             
-            def weight(edge: 'bigger.Edge') -> int:
+            def weight(edge: Edge) -> int:
                 return weight_dict.get(edge, 0)
             
             return bigger.FinitelySupportedLamination(self, weight, set(weight_dict))

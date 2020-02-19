@@ -1,20 +1,23 @@
 
 ''' A module for representing and manipulating maps between Triangulations. '''
 
-from typing import List, Iterator, Union, overload
+from typing import List, Iterator, Union, TypeVar, Callable, overload
 
 import bigger
 
+TypedLamination = TypeVar('TypedLamination', 'bigger.Lamination', 'bigger.FinitelySupportedLamination')
+Action = Callable[[TypedLamination], TypedLamination]
+
 class Move:
     ''' A function that takes :class:`Laminations <bigger.lamination.Lamination>` on one :class:`~bigger.triangulation.Triangulation` to another. '''
-    def __init__(self, source: 'bigger.Triangulation', target: 'bigger.Triangulation', action: 'bigger.Action', inv_action: 'bigger.Action') -> None:
+    def __init__(self, source: 'bigger.Triangulation', target: 'bigger.Triangulation', action: Action, inv_action: Action) -> None:
         self.source = source
         self.target = target
         self.action = action
         self.inv_action = inv_action
     def __invert__(self) -> 'bigger.Move':
         return Move(self.target, self.source, self.inv_action, self.action)
-    def __call__(self, lamination: 'bigger.TypedLamination') -> 'bigger.TypedLamination':
+    def __call__(self, lamination: TypedLamination) -> TypedLamination:
         return self.action(lamination)
     def encode(self) -> 'bigger.Encoding':
         ''' Return the :class:`~bigger.encoding.Encoding` consisting of only this Move. '''

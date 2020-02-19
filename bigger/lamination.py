@@ -1,30 +1,28 @@
 
 ''' A module for representing laminations on Triangulations. '''
 
-from typing import Any, Set, Iterable, Tuple
+from typing import Any, Set, Iterable, Tuple, TypeVar, Generic, Callable
 
 import bigger
 
-class Lamination:
+Edgy = TypeVar('Edgy')
+
+class Lamination(Generic[Edgy]):
     ''' A measured lamination on a :class:`~bigger.triangulation.Triangulation`.
     
     The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure. '''
-    def __init__(self, triangulation: 'bigger.Triangulation', weight: 'bigger.Weight') -> None:
+    def __init__(self, triangulation: 'bigger.Triangulation[Edgy]', weight: Callable[[Edgy], int]) -> None:
         self.triangulation = triangulation
         self.weight = weight
-    def __call__(self, edge: 'bigger.Edge') -> int:
+    def __call__(self, edge: Edgy) -> int:
         return self.weight(edge)
-    def __str__(self) -> str:
-        return self.show([bigger.Edge(label) for label in range(10)]) + ' ...'
-    def __repr__(self) -> str:
-        return str(self)
-    def show(self, edges: Iterable['bigger.Edge']) -> str:
+    def show(self, edges: Iterable[Edgy]) -> str:
         ''' Return a string describing this Lamination on the given edges. '''
         return ', '.join('{}: {}'.format(edge, self(edge)) for edge in edges)
 
-class FinitelySupportedLamination(Lamination):
+class FinitelySupportedLamination(Lamination[Edgy]):
     ''' A Lamination which assigns non-zero measure to only finitely many edges of its underlying :class:`~bigger.triangulation.Triangulation`. '''
-    def __init__(self, triangulation: 'bigger.Triangulation', weight: 'bigger.Weight', support: Set['bigger.Edge']) -> None:
+    def __init__(self, triangulation: 'bigger.Triangulation', weight: Callable[[Edgy], int], support: Set[Edgy]) -> None:
         super().__init__(triangulation, weight)
         self.support = support
     def __eq__(self, other: Any) -> bool:
