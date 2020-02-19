@@ -48,7 +48,7 @@ External Links
 .. _AppVeyor: https://ci.appveyor.com/project/MarkCBell/bigger
 .. _Azure: https://dev.azure.com/MarkCBell/bigger
 .. _GitHub: https://github.com/MarkCBell/bigger
-.. _PyPI: https://pypi.python.org/pypi/bigger
+.. _PyPI: https://pypi.org/project/bigger
 .. _ReadTheDocs: http://biggermcg.readthedocs.io
 .. _Travis: https://travis-ci.com/MarkCBell/bigger
 
