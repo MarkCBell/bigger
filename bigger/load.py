@@ -14,7 +14,7 @@ def flute() -> 'bigger.MCG':
     
      - an which twists about the curve parallel to edges n and n+1
      - bn which twists about the curve which separates punctures n and n+1
-     - t which twists about all a curves simultaneously
+     - a which twists about all an curves simultaneously
     '''
     
     #             #----2----#----5----#----8----#---
@@ -36,7 +36,7 @@ def flute() -> 'bigger.MCG':
     
     def generator(name: str) -> 'bigger.Encoding':
         twist_match = twist_re.match(name)
-        if name == 't':
+        if name == 'a':
             isom = lambda edge: -1 if edge == -1 else edge + [0, +1, -1][edge % 3]
             return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
         elif twist_match is not None:
@@ -58,8 +58,8 @@ def biflute() -> 'bigger.MCG':
     
      - an which twists about the curve parallel to edges n and n+1
      - bn which twists about the curve which separates punctures n and n+1
+     - a which twists about all an curves simultaneously
      - s which shifts the surface down
-     - t which twists about all a curves simultaneously
     '''
     
     #  ---#----2----#----5----#----8----#---
@@ -80,7 +80,7 @@ def biflute() -> 'bigger.MCG':
         twist_match = twist_re.match(name)
         if name in ('s', 'shift'):
             return shift
-        elif name == 't':
+        elif name == 'a':
             isom = lambda edge: edge + [0, +1, -1][edge % 3]
             return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
         elif twist_match is not None:
@@ -102,8 +102,9 @@ def ladder() -> 'bigger.MCG':
     
      - an which twists about the curve parallel to edges n and n+1
      - bn which twists about the curve which separates punctures n and n+1
+     - a which twists about all an curves simultaneously
+     - b which twists about all bn curves simultaneously
      - s which shifts the surface down
-     - t which twists about all a curves simultaneously
     '''
     
     #  #---n,0---#---n,8---#
@@ -145,6 +146,12 @@ def ladder() -> 'bigger.MCG':
         twist_match = twist_re.match(name)
         if name in ('s', 'shift'):
             return shift
+        elif name == 'a':
+            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]])
+            return T.encode([(isom, isom), lambda edge: edge[1] == 7])
+        elif name == 'b':
+            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]])
+            return T.encode([(isom, isom), lambda edge: edge[1] == 6])
         elif twist_match is not None:
             parameters = twist_match.groupdict()
             n = int(parameters['number'])

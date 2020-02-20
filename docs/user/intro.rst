@@ -11,7 +11,7 @@ The underlying framework of bigger is similar to that of `curver <https://pypy.o
 This means that bigger can do many of the things that curver and flipper can, however, bigger has several advantages including:
 
     - The ability to handle infinite type surfaces
-    - Handle mapping classes with infinite support
+    - Handle mapping classes and laminations with infinite support
 
 Of course this comes at the cost of:
 

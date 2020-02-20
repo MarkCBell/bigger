@@ -16,24 +16,21 @@ Bigger is available on `PyPI`_, so it can be installed via::
 Once installed, try it inside of Python::
 
     >>> import bigger
-    >>> S = bigger.load.biflute()  # The two-ended infinitely punctured sphere.
-    >>> a = S.triangulation({1: -1})  # An arc.
+    >>> S = bigger.load.ladder()  # The infinite-genus two-ended surface
+    >>> a = S.triangulation({(0, 5): -1})  # An arc
     >>> a
-    1: -1
+    (0, 5): -1
     >>> a == a
     True
-    >>> b = S('shift.shift')(a)  # Shift everthing down twice.
+    >>> b = S('shift.shift')(a)  # Shift everything down twice
     >>> a == b
     False
     >>> b
-    7: -1
-    >>> S('SHIFT.shift')(a) == a  # Shift and then shift back.
+    (2, 5): -1
+    >>> S('SHIFT.shift')(a) == a  # Shift and then shift back
     True
-    >>> m = S.triangulation({0: -1, 1: -1, 2: -1})  # A multiarc.
-    >>> m
-    0: -1, 1: -1, 2: -1
-    >>> S('shift.a0.a0')(m)  # Twist then shift.
-    3: -1, 4: 1, 5: 3
+    >>> S('shift.b.b.b.b')(a)  # Twist then shift
+    (1, 6): 2, (1, 5): 3
 
 External Links
 --------------
