@@ -31,7 +31,7 @@ class TestRegression(TestCase):
 
     def test_infinite_twist_commutes(self):
         s = self.S('s')
-        t = self.S('t')
+        t = self.S('a')
         self.assertEqual((t * s**1)(self.b), (s**1 * t)(self.b))
         self.assertEqual((t * s**10)(self.b), (s**10 * t)(self.b))
 
