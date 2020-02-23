@@ -3,7 +3,7 @@
 
 from typing import Any, Iterable, Tuple, TypeVar, Generic, Callable
 
-import bigger
+import bigger  # pylint: disable=unused-import
 
 Edge = TypeVar('Edge')
 
