@@ -7,7 +7,7 @@ import pkg_resources
 
 from . import load  # noqa: F401
 from .encoding import Move, Encoding  # noqa: F401
-from .lamination import FinitelySupportedLamination, Lamination  # noqa: F401
+from .lamination import Lamination  # noqa: F401
 from .triangulation import Triangulation  # noqa: F401
 from .mappingclassgroup import MappingClassGroup  # noqa: F401
 from .utilities import half  # noqa: F401

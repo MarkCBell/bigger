@@ -16,7 +16,6 @@ Bigger Package API
 
     ~encoding.Move
     ~encoding.Encoding
-    ~lamination.FinitelySupportedLamination
     ~lamination.Lamination
     ~triangulation.Triangulation
     ~mappingclassgroup.MappingClassGroup

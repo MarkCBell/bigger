@@ -1,57 +1,50 @@
 
 ''' A module for representing and manipulating maps between Triangulations. '''
 
-from typing import List, Iterator, Union, TypeVar, Callable, overload
+from typing import List, Iterator, TypeVar, Callable, Generic
 
 import bigger
 
-TypedLamination = TypeVar('TypedLamination', 'bigger.Lamination', 'bigger.FinitelySupportedLamination')
-Action = Callable[[TypedLamination], TypedLamination]
+Edge = TypeVar('Edge')
 
-class Move:
+class Move(Generic[Edge]):
     ''' A function that takes :class:`Laminations <bigger.lamination.Lamination>` on one :class:`~bigger.triangulation.Triangulation` to another. '''
-    def __init__(self, source: 'bigger.Triangulation', target: 'bigger.Triangulation', action: Action, inv_action: Action) -> None:
+    def __init__(self, source: 'bigger.Triangulation[Edge]', target: 'bigger.Triangulation[Edge]', action: Callable[['bigger.Lamination[Edge]'], 'bigger.Lamination[Edge]'], inv_action: Callable[['bigger.Lamination[Edge]'], 'bigger.Lamination[Edge]']) -> None:
         self.source = source
         self.target = target
         self.action = action
         self.inv_action = inv_action
-    def __invert__(self) -> 'bigger.Move':
+    def __invert__(self) -> 'bigger.Move[Edge]':
         return Move(self.target, self.source, self.inv_action, self.action)
-    def __call__(self, lamination: TypedLamination) -> TypedLamination:
+    def __call__(self, lamination: 'bigger.Lamination[Edge]') -> 'bigger.Lamination[Edge]':
         return self.action(lamination)
-    def encode(self) -> 'bigger.Encoding':
+    def encode(self) -> 'bigger.Encoding[Edge]':
         ''' Return the :class:`~bigger.encoding.Encoding` consisting of only this Move. '''
         return bigger.Encoding([self])
 
-class Encoding:
+class Encoding(Generic[Edge]):
     ''' A sequence of :class:`Moves <bigger.encoding.Move>` to apply to a :class:`~bigger.lamination.Lamination`. '''
-    def __init__(self, sequence: List['bigger.Move']) -> None:
+    def __init__(self, sequence: List['bigger.Move[Edge]']) -> None:
         self.sequence = sequence
         self.source = self.sequence[-1].source
         self.target = self.sequence[0].target
-    def __iter__(self) -> Iterator['bigger.Move']:
+    def __iter__(self) -> Iterator['bigger.Move[Edge]']:
         # Iterate through self.sequence in application order (i.e. reverse).
         return iter(reversed(self.sequence))
-    def __mul__(self, other: 'bigger.Encoding') -> 'bigger.Encoding':
+    def __mul__(self, other: 'bigger.Encoding[Edge]') -> 'bigger.Encoding[Edge]':
         return Encoding(self.sequence + other.sequence)
-    def __invert__(self) -> 'bigger.Encoding':
+    def __invert__(self) -> 'bigger.Encoding[Edge]':
         return Encoding([~move for move in self])
-    def __getitem__(self, index: int) -> 'bigger.Move':
+    def __getitem__(self, index: int) -> 'bigger.Move[Edge]':
         if isinstance(index, slice):
             return Encoding(self.sequence[index])
         else:
             return self.sequence[index]
-    @overload
-    def __call__(self, lamination: 'bigger.FinitelySupportedLamination') -> 'bigger.FinitelySupportedLamination':
-        ...
-    @overload
-    def __call__(self, lamination: 'bigger.Lamination') -> 'bigger.Lamination':  # noqa: F811
-        ...
-    def __call__(self, lamination: Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811
+    def __call__(self, lamination: 'bigger.Lamination[Edge]') -> 'bigger.Lamination[Edge]':  # noqa: F811
         for move in self:
             lamination = move(lamination)
         return lamination
-    def __pow__(self, power: int) -> 'bigger.Encoding':
+    def __pow__(self, power: int) -> 'bigger.Encoding[Edge]':
         if power == 0:
             return self.source.encode_identity()
         abs_power = Encoding(self.sequence * abs(power))

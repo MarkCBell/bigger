@@ -2,12 +2,11 @@
 ''' A module for representing a triangulation of a punctured surface. '''
 
 from functools import partial
-from typing import Callable, Union, Tuple, Dict, Optional, Set, List, overload, TypeVar, Generic, Mapping
+from typing import Callable, Union, Tuple, Dict, Optional, Set, List, TypeVar, Generic, Mapping, Iterable
 
 import bigger
 
 Edge = TypeVar('Edge')
-TypedLamination = TypeVar('TypedLamination', 'bigger.Lamination', 'bigger.FinitelySupportedLamination')
 
 class Triangulation(Generic[Edge]):
     ''' A triangulation of a (possibly infinite type) surface.
@@ -33,7 +32,7 @@ class Triangulation(Generic[Edge]):
         
         return self.link(edge) + (edge,)
     
-    def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> 'bigger.Encoding':
+    def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> 'bigger.Encoding[Edge]':
         ''' Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
         
         Alternatively, this can be given a set of Edges and will use membership of this set to test which edges flip.
@@ -86,7 +85,7 @@ class Triangulation(Generic[Edge]):
         target = Triangulation(link)
         
         # Since the action and inv_action are so similar, we define both at once and just use a partial function to set the correct source / target.
-        def helper(source: 'bigger.Triangulation', target: 'bigger.Triangulation', lamination: TypedLamination) -> TypedLamination:
+        def helper(source: 'bigger.Triangulation[Edge]', target: 'bigger.Triangulation[Edge]', lamination: 'bigger.Lamination[Edge]') -> 'bigger.Lamination[Edge]':
             def weight(edge: Edge) -> int:
                 if not flipped(edge):
                     return lamination(edge)
@@ -113,16 +112,25 @@ class Triangulation(Generic[Edge]):
                     return bigger.half(ci0 + di0 - ei)
                 else:
                     return max(ai0 + ci0, bi0 + di0) - ei
+            
             # Determine support.
-            support = set(edge for support in lamination.support for edge in target.star(support) if weight(edge)) if isinstance(lamination, bigger.FinitelySupportedLamination) else None
-            return target(weight, support)
+            def supporty() -> Iterable[Edge]:
+                for arc in lamination.support():
+                    for edge in target.star(arc):
+                        if weight(edge):
+                            yield edge
+            
+            if isinstance(lamination.support(), set):
+                return target(weight, lambda: set(supporty()))
+            
+            return target(weight, supporty)
         
         action = partial(helper, self, target)
         inv_action = partial(helper, target, self)
         
         return bigger.Move(self, target, action, inv_action).encode()
     
-    def encode_isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> 'bigger.Encoding':
+    def encode_isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> 'bigger.Encoding[Edge]':
         ''' Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. '''
         
         # Define the new triangulation.
@@ -132,21 +140,35 @@ class Triangulation(Generic[Edge]):
         
         target = Triangulation(link)
         
-        def action(lamination: TypedLamination) -> TypedLamination:
+        def action(lamination: 'bigger.Lamination[Edge]') -> 'bigger.Lamination[Edge]':
             def weight(edge: Edge) -> int:
                 return lamination(inv_isom(edge))
-            support = {isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
-            return target(weight, support)
+            
+            def supporty() -> Iterable[Edge]:
+                for arc in lamination.support():
+                    yield isom(arc)
+            
+            if isinstance(lamination.support(), set):
+                return target(weight, lambda: set(supporty()))
+            
+            return target(weight, supporty)
         
-        def inv_action(lamination: TypedLamination) -> TypedLamination:
+        def inv_action(lamination: 'bigger.Lamination[Edge]') -> 'bigger.Lamination[Edge]':
             def weight(edge: Edge) -> int:
                 return lamination(isom(edge))
-            support = {inv_isom(arc) for arc in lamination.support} if isinstance(lamination, bigger.FinitelySupportedLamination) else None
-            return self(weight, support)
+            
+            def supporty() -> Iterable[Edge]:
+                for arc in lamination.support():
+                    yield inv_isom(arc)
+            
+            if isinstance(lamination.support(), set):
+                return self(weight, lambda: set(supporty()))
+            
+            return self(weight, supporty)
         
         return bigger.Move(self, target, action, inv_action).encode()
     
-    def encode_isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> 'bigger.Encoding':
+    def encode_isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> 'bigger.Encoding[Edge]':
         ''' Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. '''
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
         
@@ -158,11 +180,11 @@ class Triangulation(Generic[Edge]):
         
         return self.encode_isometry(isom, inv_isom)
     
-    def encode_identity(self) -> 'bigger.Encoding':
+    def encode_identity(self) -> 'bigger.Encoding[Edge]':
         ''' Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class. '''
         return self.encode_isometry_from_dict(dict())
     
-    def encode(self, sequence: List[Union[Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Callable[[Edge], bool], Edge, Set[Edge], Mapping[Edge, Edge]]]) -> 'bigger.Encoding':
+    def encode(self, sequence: List[Union[Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Callable[[Edge], bool], Edge, Set[Edge], Dict[Edge, Edge]]]) -> 'bigger.Encoding[Edge]':
         ''' Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
         
         There are several conventions that allow these to be specified by a smaller amount of information:
@@ -178,7 +200,7 @@ class Triangulation(Generic[Edge]):
                 move = h.target.encode_flip(term)
             elif isinstance(term, dict):
                 move = h.target.encode_isometry_from_dict(term)
-            elif isinstance(term, tuple) and len(term) == 2 and all(callable(item) for item in term):
+            elif isinstance(term, tuple):  # and len(term) == 2 and all(callable(item) for item in term):
                 move = h.target.encode_isometry(*term)
             else:  # Assume term is the label of an edge to flip.
                 move = h.target.encode_flip({term})
@@ -186,26 +208,17 @@ class Triangulation(Generic[Edge]):
         
         return h
     
-    @overload
-    def __call__(self, weights: Dict[Edge, int], support: None = None) -> 'bigger.FinitelySupportedLamination':
-        ...
-    @overload
-    def __call__(self, weights: Callable[[Edge], int], support: Set[Edge]) -> 'bigger.FinitelySupportedLamination':  # noqa: F811
-        ...
-    @overload
-    def __call__(self, weights: Callable[[Edge], int], support: None) -> 'bigger.Lamination':  # noqa: F811
-        ...
-    
-    def __call__(self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Optional[Set[Edge]] = None) -> Union['bigger.Lamination', 'bigger.FinitelySupportedLamination']:  # noqa: F811
+    def __call__(self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None) -> 'bigger.Lamination[Edge]':  # noqa: F811
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
             
             def weight(edge: Edge) -> int:
                 return weight_dict.get(edge, 0)
             
-            return bigger.FinitelySupportedLamination(self, weight, set(weight_dict))
-        elif support is not None:
-            return bigger.FinitelySupportedLamination(self, weights, support)
-        else:
-            return bigger.Lamination(self, weights)
+            return bigger.Lamination(self, weight, lambda: set(weight_dict))
+        
+        if support is None:
+            raise ValueError('Support needed')
+        
+        return bigger.Lamination(self, weights, support)
 
