@@ -2,11 +2,18 @@
 ''' A module for representing a triangulation of a punctured surface. '''
 
 from functools import partial
-from typing import Callable, Union, Tuple, Dict, Optional, Set, List, TypeVar, Generic, Mapping, Iterable
+from typing import Callable, Union, Tuple, Dict, Optional, Set, List, TypeVar, Generic, Mapping, Iterable, Iterator
 
 import bigger
 
 Edge = TypeVar('Edge')
+
+class Support(Generic[Edge]):  # pylint: disable=too-few-public-methods
+    ''' An iterable that yields edges from its given function. '''
+    def __init__(self, f: Callable[[], Iterable[Edge]]) -> None:
+        self.f = f
+    def __iter__(self) -> Iterator[Edge]:
+        return iter(self.f())
 
 class Triangulation(Generic[Edge]):
     ''' A triangulation of a (possibly infinite type) surface.
@@ -114,16 +121,10 @@ class Triangulation(Generic[Edge]):
                     return max(ai0 + ci0, bi0 + di0) - ei
             
             # Determine support.
-            def supporty() -> Iterable[Edge]:
-                for arc in lamination.support():
-                    for edge in target.star(arc):
-                        if weight(edge):
-                            yield edge
+            if isinstance(lamination.support, set):
+                return target(weight, set(edge for arc in lamination.support for edge in target.star(arc) if weight(edge)))
             
-            if isinstance(lamination.support(), set):
-                return target(weight, lambda: set(supporty()))
-            
-            return target(weight, supporty)
+            return target(weight, Support(lambda: (edge for arc in lamination.support for edge in target.star(arc) if weight(edge))))
         
         action = partial(helper, self, target)
         inv_action = partial(helper, target, self)
@@ -144,27 +145,19 @@ class Triangulation(Generic[Edge]):
             def weight(edge: Edge) -> int:
                 return lamination(inv_isom(edge))
             
-            def supporty() -> Iterable[Edge]:
-                for arc in lamination.support():
-                    yield isom(arc)
+            if isinstance(lamination.support, set):
+                return self(weight, set(isom(arc) for arc in lamination.support))
             
-            if isinstance(lamination.support(), set):
-                return target(weight, lambda: set(supporty()))
-            
-            return target(weight, supporty)
+            return target(weight, Support(lambda: (isom(arc) for arc in lamination.support)))
         
         def inv_action(lamination: 'bigger.Lamination[Edge]') -> 'bigger.Lamination[Edge]':
             def weight(edge: Edge) -> int:
                 return lamination(isom(edge))
             
-            def supporty() -> Iterable[Edge]:
-                for arc in lamination.support():
-                    yield inv_isom(arc)
+            if isinstance(lamination.support, set):
+                return self(weight, set(inv_isom(arc) for arc in lamination.support))
             
-            if isinstance(lamination.support(), set):
-                return self(weight, lambda: set(supporty()))
-            
-            return self(weight, supporty)
+            return self(weight, Support(lambda: (inv_isom(arc) for arc in lamination.support)))
         
         return bigger.Move(self, target, action, inv_action).encode()
     
@@ -208,14 +201,14 @@ class Triangulation(Generic[Edge]):
         
         return h
     
-    def __call__(self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None) -> 'bigger.Lamination[Edge]':  # noqa: F811
+    def __call__(self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Optional[Iterable[Edge]] = None) -> 'bigger.Lamination[Edge]':  # noqa: F811
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
             
             def weight(edge: Edge) -> int:
                 return weight_dict.get(edge, 0)
             
-            return bigger.Lamination(self, weight, lambda: set(weight_dict))
+            return bigger.Lamination(self, weight, set(weight_dict))
         
         if support is None:
             raise ValueError('Support needed')

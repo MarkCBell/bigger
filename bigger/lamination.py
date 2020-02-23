@@ -11,7 +11,7 @@ class Lamination(Generic[Edge]):
     ''' A measured lamination on a :class:`~bigger.triangulation.Triangulation`.
     
     The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure. '''
-    def __init__(self, triangulation: 'bigger.Triangulation[Edge]', weight: Callable[[Edge], int], support: Callable[[], Iterable[Edge]]) -> None:
+    def __init__(self, triangulation: 'bigger.Triangulation[Edge]', weight: Callable[[Edge], int], support: Iterable[Edge]) -> None:
         self.triangulation = triangulation
         self.weight = weight
         self.support = support
@@ -23,7 +23,7 @@ class Lamination(Generic[Edge]):
     
     def is_finitely_supported(self) -> bool:
         ''' Return whether this lamination is supported on finitely many edges of the underlying Triangulation. '''
-        return isinstance(self.support(), set)
+        return isinstance(self.support, set)
     
     def __eq__(self, other: Any) -> bool:
         if not self.is_finitely_supported():
@@ -32,26 +32,26 @@ class Lamination(Generic[Edge]):
         if isinstance(other, Lamination):
             if not other.is_finitely_supported():
                 raise ValueError('Can only determine equality between finitely supported laminations')
-            return self.support() == other.support() and all(self(edge) == other(edge) for edge in self.support())
+            return self.support == other.support and all(self(edge) == other(edge) for edge in self.support)
         elif isinstance(other, dict):
-            return self.support() == set(other) and all(self(edge) == other[edge] for edge in self.support())
+            return self.support == set(other) and all(self(edge) == other[edge] for edge in self.support)
         
         return NotImplemented
     def __str__(self) -> str:
         if not self.is_finitely_supported():
             raise ValueError('Can only str finitely supported laminations, use .show({edges}) instead')
-        return self.show(self.support())
+        return self.show(self.support)
     def __repr__(self) -> str:
         return str(self)
     def complexity(self) -> int:
         ''' Return the number of intersections between this Lamination and its underlying Triangulation. '''
-        return sum(max(self(edge), 0) for edge in self.support())
+        return sum(max(self(edge), 0) for edge in self.support)
     
     def is_short(self) -> bool:
         ''' Return whether this Lamination intersects its underlying Triangulation exactly twice.
         
         Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short. '''
-        return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support())
+        return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support)
     
     def shorten(self) -> Tuple['bigger.Lamination[Edge]', bigger.Encoding]:
         ''' Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
@@ -65,7 +65,7 @@ class Lamination(Generic[Edge]):
         while not lamination.is_short():
             time_since_last_progress += 1
             best_complexity, best_h = complexity, lamination.triangulation.encode_identity()
-            for edge in lamination.support():
+            for edge in lamination.support:
                 h = lamination.triangulation.encode_flip({edge})
                 new_complexity = h(lamination).complexity()
                 if new_complexity <= best_complexity:
@@ -104,7 +104,7 @@ class Lamination(Generic[Edge]):
         # v/   c|   |     v    c   V|
         # #-------->#     #-------->#
         
-        e, _ = short.support()
+        e, _ = short.support
         a, b, c, d = short.triangulation.link(e)
         if short(b) == 1:
             assert b == d
