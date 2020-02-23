@@ -1,13 +1,12 @@
 
 ''' Functions for building example mapping class groups. '''
 
-from typing import Tuple
-
 import re
+from typing import Tuple
 
 import bigger
 
-def flute() -> 'bigger.MCG':
+def flute() -> 'bigger.MCG[int]':
     ''' The infinitely punctured sphere, with punctures that accumulate in one direction.
     
     With mapping classes:
@@ -34,7 +33,7 @@ def flute() -> 'bigger.MCG':
     
     twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>\d+)$')
     
-    def generator(name: str) -> 'bigger.Encoding':
+    def generator(name: str) -> 'bigger.Encoding[int]':
         twist_match = twist_re.match(name)
         if name == 'a':
             isom = lambda edge: -1 if edge == -1 else edge + [0, +1, -1][edge % 3]
@@ -51,7 +50,7 @@ def flute() -> 'bigger.MCG':
     
     return bigger.MCG(T, generator)
 
-def biflute() -> 'bigger.MCG':
+def biflute() -> 'bigger.MCG[int]':
     ''' The infinitely punctured sphere, with punctures that accumulate in two directions.
     
     With mapping classes:
@@ -76,7 +75,7 @@ def biflute() -> 'bigger.MCG':
     
     twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>-?\d+)$')
     
-    def generator(name: str) -> 'bigger.Encoding':
+    def generator(name: str) -> 'bigger.Encoding[int]':
         twist_match = twist_re.match(name)
         if name in ('s', 'shift'):
             return shift
@@ -95,7 +94,7 @@ def biflute() -> 'bigger.MCG':
     
     return bigger.MCG(T, generator)
 
-def ladder() -> 'bigger.MCG':
+def ladder() -> 'bigger.MCG[Tuple[int, int]]':
     ''' The infinite-genus, two-ended surface.
     
     With mapping classes:
@@ -142,16 +141,16 @@ def ladder() -> 'bigger.MCG':
     
     twist_re = re.compile(r'(?P<curve>[aAbB])(?P<number>-?\d+)$')
     
-    def generator(name: str) -> 'bigger.Encoding':
+    def generator(name: str) -> 'bigger.Encoding[Tuple[int, int]]':
         twist_match = twist_re.match(name)
         if name in ('s', 'shift'):
             return shift
         elif name == 'a':
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]])
-            return T.encode([(isom, isom), lambda edge: edge[1] == 7])
+            a_isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]])
+            return T.encode([(a_isom, a_isom), lambda edge: edge[1] == 7])
         elif name == 'b':
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]])
-            return T.encode([(isom, isom), lambda edge: edge[1] == 6])
+            b_isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]])
+            return T.encode([(b_isom, b_isom), lambda edge: edge[1] == 6])
         elif twist_match is not None:
             parameters = twist_match.groupdict()
             n = int(parameters['number'])

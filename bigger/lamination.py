@@ -32,6 +32,7 @@ class Lamination(Generic[Edge]):
         if isinstance(other, Lamination):
             if not other.is_finitely_supported():
                 raise ValueError('Can only determine equality between finitely supported laminations')
+            
             return self.support == other.support and all(self(edge) == other(edge) for edge in self.support)
         elif isinstance(other, dict):
             return self.support == set(other) and all(self(edge) == other[edge] for edge in self.support)
@@ -53,7 +54,7 @@ class Lamination(Generic[Edge]):
         Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short. '''
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support)
     
-    def shorten(self) -> Tuple['bigger.Lamination[Edge]', bigger.Encoding]:
+    def shorten(self) -> Tuple['bigger.Lamination[Edge]', 'bigger.Encoding[Edge]']:
         ''' Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
         
         Note that in the future this should do curvers full Lamination shortening algorithm. '''
@@ -81,7 +82,7 @@ class Lamination(Generic[Edge]):
         
         return lamination, conjugator
     
-    def encode_twist(self) -> 'bigger.Encoding':
+    def encode_twist(self) -> 'bigger.Encoding[Edge]':
         ''' Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
         
         Note that this currently only works on non-isolating curves. '''

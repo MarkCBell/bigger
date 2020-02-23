@@ -9,7 +9,7 @@ import bigger
 Edge = TypeVar('Edge')
 
 class Support(Generic[Edge]):  # pylint: disable=too-few-public-methods
-    ''' An iterable that yields edges from its given function. '''
+    ''' A restartable iterable that yields Edges. '''
     def __init__(self, f: Callable[[], Iterable[Edge]]) -> None:
         self.f = f
     def __iter__(self) -> Iterator[Edge]:

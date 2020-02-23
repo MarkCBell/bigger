@@ -1,7 +1,7 @@
 
 ''' A module for representing and manipulating maps between Triangulations. '''
 
-from typing import List, Iterator, TypeVar, Callable, Generic
+from typing import List, Iterator, Union, TypeVar, Callable, Generic, overload
 
 import bigger
 
@@ -35,7 +35,13 @@ class Encoding(Generic[Edge]):
         return Encoding(self.sequence + other.sequence)
     def __invert__(self) -> 'bigger.Encoding[Edge]':
         return Encoding([~move for move in self])
-    def __getitem__(self, index: int) -> 'bigger.Move[Edge]':
+    @overload
+    def __getitem__(self, index: slice) -> 'bigger.Encoding[Edge]':
+        ...
+    @overload
+    def __getitem__(self, index: int) -> 'bigger.Move[Edge]':  # noqa: F811
+        ...
+    def __getitem__(self, index: Union[int, slice]) -> Union['bigger.Move[Edge]', 'bigger.Encoding[Edge]']:  # noqa: F811
         if isinstance(index, slice):
             return Encoding(self.sequence[index])
         else:
