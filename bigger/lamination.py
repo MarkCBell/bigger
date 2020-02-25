@@ -4,6 +4,7 @@ from itertools import islice
 from typing import Any, Iterable, Tuple, TypeVar, Generic, Callable
 
 import bigger  # pylint: disable=unused-import
+from bigger.decorators import memoize
 
 Edge = TypeVar("Edge")
 
@@ -18,6 +19,7 @@ class Lamination(Generic[Edge]):
         self.weight = weight
         self.support = support
 
+    @memoize
     def __call__(self, edge: Edge) -> int:
         return self.weight(edge)
 
