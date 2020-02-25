@@ -20,8 +20,8 @@ def flute() -> "bigger.MCG[int]":
 
     With mapping classes:
 
-     - an which twists about the curve parallel to edges n and n+1
-     - bn which twists about the curve which separates punctures n and n+1
+     - a_n which twists about the curve parallel to edges n and n+1
+     - b_n which twists about the curve which separates punctures n and n+1
      - a which twists about all an curves simultaneously
     """
 
@@ -42,7 +42,7 @@ def flute() -> "bigger.MCG[int]":
         else [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
     )
 
-    twist_re = re.compile(r"(?P<curve>[aAbB])(?P<number>\d+)$")
+    twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>\d+)$")
 
     def generator(name: str) -> "bigger.Encoding[int]":
         twist_match = twist_re.match(name)
@@ -51,7 +51,7 @@ def flute() -> "bigger.MCG[int]":
             return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
         elif twist_match is not None:
             parameters = twist_match.groupdict()
-            n = int(parameters["number"])
+            n = int(parameters["n"])
             if parameters["curve"] == "a":
                 return T({3 * n + 1: 1, 3 * n + 2: 1}).encode_twist()
             if parameters["curve"] == "b":
