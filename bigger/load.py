@@ -1,7 +1,7 @@
 """ Functions for building example mapping class groups. """
 
 import re
-from itertools import count, product
+from itertools import count
 from typing import Tuple, Iterable
 
 import bigger
@@ -122,10 +122,10 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
 
     With mapping classes:
 
-     - an which twists about the curve parallel to edges n and n+1
-     - bn which twists about the curve which separates punctures n and n+1
-     - a which twists about all an curves simultaneously
-     - b which twists about all bn curves simultaneously
+     - a_n which twists about the curve parallel to edges n and n+1
+     - b_n which twists about the curve which separates punctures n and n+1
+     - a which twists about all a_n curves simultaneously
+     - b which twists about all b_n curves simultaneously
      - s which shifts the surface down
     """
 
@@ -159,11 +159,11 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
             8: ((n + 1, 0), (n, 7), (n, 4), (n, 7)),
         }[k]
 
-    T = bigger.Triangulation(lambda: product(integers(), range(9)), link)
+    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(9)), link)
 
     shift = T.encode_isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
-    twist_re = re.compile(r"(?P<curve>[aAbB])(?P<number>-?\d+)$")
+    twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>-?\d+)$")
 
     def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
         twist_match = twist_re.match(name)
@@ -177,12 +177,73 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
             return T.encode([(b_isom, b_isom), lambda edge: edge[1] == 6])
         elif twist_match is not None:
             parameters = twist_match.groupdict()
-            n = int(parameters["number"])
+            n = int(parameters["n"])
             if parameters["curve"] == "a":
                 return T({(n, 7): 1, (n, 8): 1}).encode_twist()
             if parameters["curve"] == "b":
                 return T({(n, 5): 1, (n, 6): 1}).encode_twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
+
+    return bigger.MCG(T, generator)
+
+
+def tree3() -> "bigger.MCG[Tuple[int, int]]":
+    """ The uncountably-punctured sphere.
+
+    With mapping classes:
+
+     - a_n which twists about the curve across square n
+     - a which twists about all a_n curves simultaneously
+    """
+
+    #       #
+    #      / \
+    # 2n+3,2 2n+4,2
+    #    /     \
+    #   /       \
+    #  #---n,3---#
+    #  |        /|
+    #  |      /  |
+    # n,1  n,0  n,1
+    #  |  /      |
+    #  |/        |
+    #  #---n,2---#
+
+    Edge = Tuple[int, int]
+
+    def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
+        n, k = edge
+        # Down:
+        X, Y = ((n - 3) // 2, 3), (n + 1, 2) if n % 2 == 1 else ((n - 1, 2), ((n - 3) // 2, 3))
+        # Three special down edges (squares 0, 1, & 2).
+        if k == 2 and 0 <= n < 3:
+            return {
+                0: ((0, 1), (0, 0), (2, 2), (1, 2)),
+                1: ((1, 1), (1, 0), (0, 2), (2, 2)),
+                2: ((2, 1), (2, 0), (1, 2), (0, 2)),
+                }[n]
+
+        return {
+            0: ((n, 3), (n, 1), (n, 2), (n, 1)),
+            1: ((n, 0), (n, 3), (n, 0), (n, 2)),
+            2: ((n, 1), (n, 0), X, Y),
+            3: ((n, 1), (n, 0), (2 * n + 4, 2), (2 * n + 3, 2)),
+        }[k]
+
+    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(4)), link)
+
+    twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>-?\d+)$")
+
+    def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
+        twist_match = twist_re.match(name)
+        if name == "a":
+            a_isom = lambda edge: (edge[0], [1, 0, 2, 3][edge[1]])
+            return T.encode([(a_isom, a_isom), lambda edge: edge[1] == 0])
+        elif twist_match is not None:
+            parameters = twist_match.groupdict()
+            n = int(parameters["n"])
+            if parameters["curve"] == "a":
+                return T({(n, 0): 1, (n, 1): 1}).encode_twist()
 
     return bigger.MCG(T, generator)
