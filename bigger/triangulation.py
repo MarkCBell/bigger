@@ -21,7 +21,11 @@ class IterableStore(Generic[Edge]):  # pylint: disable=too-few-public-methods
 class Triangulation(Generic[Edge]):
     """ A triangulation of a (possibly infinite type) surface.
 
-    The triangulation is specified via a function which takes an edge to its link.
+    The triangulation is specified via two functions:
+
+     - edges: which returns an iterable over the edges of the triangulation, and
+     - link: which maps an edge to its link.
+
     Note that this cannot be used to define S_{1,1} since its edge links are invariant under the hyperelliptic involution. """
 
     def __init__(self, edges: Union[Iterable[Edge], Callable[[], Iterable[Edge]]], link: Callable[[Edge], Tuple[Edge, Edge, Edge, Edge]]) -> None:
