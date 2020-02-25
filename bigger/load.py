@@ -1,19 +1,18 @@
 """ Functions for building example mapping class groups. """
 
 import re
-from itertools import count
+from itertools import count, product
 from typing import Tuple, Iterable
 
 import bigger
 
 
-def iter_integers() -> Iterable[int]:
+def integers() -> Iterable[int]:
     """ Return an iterable that yields all of the integers. """
 
     for i in count():
-        for s in [+1, -1]:
-            if i > 0 or s == +1:
-                yield i * s
+        yield i
+        yield ~i
 
 
 def flute() -> "bigger.MCG[int]":
@@ -35,7 +34,7 @@ def flute() -> "bigger.MCG[int]":
     #             #----2----#----5----#----8----#---
 
     T = bigger.Triangulation(
-        iter_integers,
+        integers,
         lambda edge: (0, -1, -1, 0)
         if edge == -1
         else (-1, -1, 1, 2)
@@ -85,7 +84,7 @@ def biflute() -> "bigger.MCG[int]":
     #  ---#----2----#----5----#----8----#---
 
     T = bigger.Triangulation(
-        iter_integers, lambda edge: [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
+        integers, lambda edge: [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
     )
 
     shift = T.encode_isometry(lambda edge: edge + 3, lambda edge: edge - 3)
@@ -160,7 +159,7 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
             8: ((n + 1, 0), (n, 7), (n, 4), (n, 7)),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((i, k) for i in iter_integers() for k in range(9)), link)
+    T = bigger.Triangulation(lambda: product(integers(), range(9)), link)
 
     shift = T.encode_isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
