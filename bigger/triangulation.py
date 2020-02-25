@@ -75,6 +75,11 @@ class Triangulation(Generic[Edge]):
         def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
             a, b, c, d = self.link(edge)
             if flipped(edge):
+                assert not flipped(a), "Flipping edges {} and {} which do not have disjoint support".format(edge, a)
+                assert not flipped(b), "Flipping edges {} and {} which do not have disjoint support".format(edge, b)
+                assert not flipped(c), "Flipping edges {} and {} which do not have disjoint support".format(edge, c)
+                assert not flipped(d), "Flipping edges {} and {} which do not have disjoint support".format(edge, d)
+
                 return (b, c, d, a)
             if flipped(a):
                 aa, ab, ac, ad = self.link(a)
