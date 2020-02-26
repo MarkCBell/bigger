@@ -13,13 +13,14 @@ This means that bigger can do many of the things that curver and flipper can, ho
     - The ability to handle infinite type surfaces
     - Handle mapping classes and laminations with infinite support
 
-Of course this comes at the cost of:
+It achieves this by through having laminations (and their underlying triangulations) that are lazily evaluated.
+Of course this comes at variety of costs including:
 
     - Not being able to solve the word and conjugacy problems
     - Not being able to determine veering triangulations or mapping tori
     - Efficiency
 
-If you are looking for a basic framework for manipulating curves, arcs and mapping classes and are not interested in infinite support surfaces then you should probably base your code on curver.
+If you are looking for a basic framework for manipulating curves, arcs and mapping classes and are not interested in infinite surfaces then you should probably base your code on curver.
 
 Bigger License
 --------------
