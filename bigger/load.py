@@ -215,7 +215,7 @@ def tree3() -> "bigger.MCG[Tuple[int, int]]":
     def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
         n, k = edge
         # Down:
-        X, Y = ((n - 3) // 2, 3), (n + 1, 2) if n % 2 == 1 else ((n - 1, 2), ((n - 3) // 2, 3))
+        X, Y = (((n - 3) // 2, 3), (n + 1, 2)) if n % 2 == 1 else ((n - 1, 2), ((n - 3) // 2, 3))
         # Three special down edges (squares 0, 1, & 2).
         if k == 2 and 0 <= n < 3:
             return {0: ((0, 1), (0, 0), (2, 2), (1, 2)), 1: ((1, 1), (1, 0), (0, 2), (2, 2)), 2: ((2, 1), (2, 0), (1, 2), (0, 2))}[n]
@@ -236,5 +236,7 @@ def tree3() -> "bigger.MCG[Tuple[int, int]]":
             n = int(parameters["n"])
             if parameters["curve"] == "a":
                 return T({(n, 0): 1, (n, 1): 1}).encode_twist()
+
+        raise ValueError("Unknown mapping class {}".format(name))
 
     return bigger.MCG(T, generator)
