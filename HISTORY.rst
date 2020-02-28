@@ -2,9 +2,9 @@
 History
 =======
 
-0.1.0 (2020-02-01)
+0.1.0 (2020-02-28)
 ------------------
 
-* First full release.
-* Test release on PyPI.
+* Initial test release.
+* Added flute, biflute, ladder and tree3 example surfaces.
 
