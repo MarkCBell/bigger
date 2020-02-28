@@ -116,6 +116,9 @@ class Lamination(Generic[Edge]):
         # v/   c|   |     v    c   V|
         # #-------->#     #-------->#
 
+        assert isinstance(short.support, set)
+        assert len(short.support) == 2
+
         e, _ = short.support
         a, b, c, d = short.triangulation.link(e)
         if short(b) == 1:
