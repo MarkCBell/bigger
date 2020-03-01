@@ -1,6 +1,6 @@
 """ A module for representing triangulations along with laminations and mapping classes on them. """
 
-from typing import Callable, Generic, TypeVar, Iterable
+from typing import Callable, Generic, TypeVar, Iterable, List
 
 import bigger  # pylint: disable=unused-import
 
@@ -9,7 +9,7 @@ Edge = TypeVar("Edge")
 
 def splitter(strn: str) -> Iterable[str]:
     """ Break strn into words on .'s except when they are inside braces. """
-    word = []
+    word: List[str] = []
     brackets = 0
     for letter in strn:
         if letter == "." and brackets == 0:
