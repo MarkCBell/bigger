@@ -12,14 +12,17 @@ def splitter(strn: str) -> Iterable[str]:
     word = []
     brackets = 0
     for letter in strn:
-        word.append(letter)
         if letter == "." and brackets == 0:
             yield "".join(word)
             word = []
         elif letter == "{":
             brackets += 1
+            word.append(letter)
         elif letter == "}":
             brackets -= 1
+            word.append(letter)
+        else:
+            word.append(letter)
     yield "".join(word)
 
 
