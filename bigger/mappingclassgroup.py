@@ -1,6 +1,6 @@
 """ A module for representing triangulations along with laminations and mapping classes on them. """
 
-from typing import Callable, Generic, TypeVar, Iterable, List
+from typing import Callable, Generic, TypeVar, Iterable
 
 import bigger  # pylint: disable=unused-import
 
@@ -9,21 +9,17 @@ Edge = TypeVar("Edge")
 
 def splitter(strn: str) -> Iterable[str]:
     """ Break strn into words on .'s except when they are inside braces. """
-    word: List[str] = []
+    start = 0
     brackets = 0
-    for letter in strn:
+    for index, letter in enumerate(strn):
         if letter == "." and brackets == 0:
-            yield "".join(word)
-            word = []
+            yield strn[start:index]
+            start = index+1
         elif letter == "{":
             brackets += 1
-            word.append(letter)
         elif letter == "}":
             brackets -= 1
-            word.append(letter)
-        else:
-            word.append(letter)
-    yield "".join(word)
+    yield strn[start:]
 
 
 class MappingClassGroup(Generic[Edge]):  # pylint: disable=too-few-public-methods
