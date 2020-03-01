@@ -2,7 +2,7 @@
 
 import re
 from itertools import count
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, Callable
 
 import bigger
 
@@ -69,7 +69,8 @@ def biflute() -> "bigger.MCG[int]":
 
      - a_n which twists about the curve parallel to edges n and n+1
      - b_n which twists about the curve which separates punctures n and n+1
-     - a[p, k] which twists about all an curves where n mod p == k simultaneously
+     - a[p, k] which twists about all a_n curves where n mod p == k simultaneously
+     - a{expr n} which twists about all a_n curves when expr(n) is True
      - s which shifts the surface down
 
     Note: a[p] == a[p, 0] and a == a[1].
@@ -91,10 +92,12 @@ def biflute() -> "bigger.MCG[int]":
 
     twist_re = re.compile(r"(?P<curve>[ab])_(?P<n>-?\d+)$")
     twist_mod_re = re.compile(r"a(\[(?P<p>\d+)(, *(?P<k>-?\d+))?\])?$")
+    twist_expr_re = re.compile(r"a\{(?P<expr>.*)\}$")
 
     def generator(name: str) -> "bigger.Encoding[int]":
         twist_match = twist_re.match(name)
         twist_mod_match = twist_mod_re.match(name)
+        twist_expr_match = twist_expr_re.match(name)
         if name in ("s", "shift"):
             return shift
         elif twist_match is not None:
@@ -111,6 +114,11 @@ def biflute() -> "bigger.MCG[int]":
 
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge // 3 % p == k else edge
             return T.encode([(isom, isom), lambda edge: edge % 3 == 1 and edge // 3 % p == k])
+        elif twist_expr_match is not None:
+            parameters = twist_expr_match.groupdict()
+            test: Callable[[int], bool] = lambda edge: eval(parameters["expr"])  # pylint: disable=eval-used
+            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 1 and test(edge // 3)])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
