@@ -14,7 +14,7 @@ def splitter(strn: str) -> Iterable[str]:
     for index, letter in enumerate(strn):
         if letter == "." and brackets == 0:
             yield strn[start:index]
-            start = index+1
+            start = index + 1
         elif letter == "{":
             brackets += 1
         elif letter == "}":
