@@ -235,9 +235,8 @@ class Triangulation(Generic[Edge]):
             return bigger.Lamination(self, weight, set(weight_dict))
 
         if support is None:
-            raise ValueError("Support needed")
-
-        if callable(support):
+            support = self.edges
+        elif callable(support):
             support = IterableStore(support)
 
         return bigger.Lamination(self, weights, support)

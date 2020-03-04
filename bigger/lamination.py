@@ -49,7 +49,7 @@ class Lamination(Generic[Edge]):
         if not self.is_finitely_supported():
             return "Infinitely supported lamination {} ...".format(self.show(islice(self.support, 10)))
 
-        return self.show(self.support)
+        return "Lamination {}".format(self.show(self.support))
 
     def __repr__(self) -> str:
         return str(self)

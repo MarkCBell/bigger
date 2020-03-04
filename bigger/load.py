@@ -116,7 +116,7 @@ def biflute() -> "bigger.MCG[int]":
             return T.encode([(isom, isom), lambda edge: edge % 3 == 1 and edge // 3 % p == k])
         elif twist_expr_match is not None:
             parameters = twist_expr_match.groupdict()
-            test: Callable[[int], bool] = lambda edge: eval(parameters["expr"])  # pylint: disable=eval-used
+            test: Callable[[int], bool] = lambda n: eval(parameters["expr"], globals(), locals())  # pylint: disable=eval-used
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
             return T.encode([(isom, isom), lambda edge: edge % 3 == 1 and test(edge // 3)])
 

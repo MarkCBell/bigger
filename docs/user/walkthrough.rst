@@ -27,25 +27,33 @@ This builds the :class:`mapping class group <bigger.mappingclassgroup.MappingCla
 Laminations
 -----------
 
-The lamination is specified by a function that returns the number of times that it intersects each edge of the underlying triangulation.
+A lamination is specified by a function that returns the number of times that it intersects each edge of the underlying triangulation.
 As usual, if a lamination has :math:`k` components that are parallel to an edge then their intersection is :math:`-k`.
 We can create a :class:`~bigger.lamination.Lamination` by giving a dictionary to the underlying triangulation of the mapping class group.
 This dictionary maps some of the triangulations edges to the weight assigned to them by the lamination::
 
     >>> c = S.triangulation({1: -1})
     >>> c
-    1: -1
+    Lamination 1: -1
+    >>> c(1), c(3), c(10000), c(-22)
+    1, 0, 0, 0
 
 Of course, many laminations do not have finite support and so cannot be specified this way.
-More generally, we can pass a weight function to the mapping class groups underlying triangulations.
-In this case we also need to provide an iterator over the support of the lamination::
+More generally, we can pass a weight function to the mapping class groups underlying triangulations::
+
+    >>> a = S.triangulation(lambda e: -1 if e >= 0 and e % 2 == 1 else 0)
+    >>> a(0), a(1), a(2), a(3)
+    (0, -1, 0, -1)
+    >>> a
+    Infinitely supported lamination 0: 0, -1: 0, 1: -1, -2: 0, 2: 0, -3: 0, 3: -1, -4: 0, 4: 0, -5: 0 ...
+
+By default this assumes that the lamination is supported by all of the triangulation.
+If we know better then we can also provide an iterator over the support of the lamination::
 
     >>> from itertools import count
     >>> a = S.triangulation(
     ... lambda e: -1 if e >= 0 and e % 2 == 1 else 0,
     ... support=lambda: (2*i + 1 for i in count()))
-    >>> a(0), a(1), a(2), a(3)
-    (0, -1, 0, -1)
     >>> a
     Infinitely supported lamination 1: -1, 3: -1, 5: -1, 7: -1, 9: -1, 11: -1, 13: -1, 15: -1, 17: -1, 19: -1 ...
 
@@ -67,7 +75,7 @@ And, since the support of these laminations is finite and known, we can test whe
     >>> S('a_1')(c) == c
     True
 
-We can even compute the imagee of infinitely supported laminations::
+We can even compute the image of infinitely supported laminations::
 
     >>> h(a)
     Infinitely supported lamination 1: 1, 2: 2, 5: -1, 3: -1, 2: 2, 2: 2, 1: 1, 2: 2, 2: 2, 1: 1 ...
@@ -81,7 +89,6 @@ Of course, in this case we cannot tell whether two such laminations are equal (o
         raise ValueError("Can only determine equality between finitely supported laminations")
     ValueError: Can only determine equality between finitely supported laminations
 
-
 Operations on mapping classes
 -----------------------------
 
@@ -89,9 +96,9 @@ Bigger also allows us to compose together or take powers of existing mapping cla
 
     >>> g = h * S('b_1')
     >>> g(c)
-    1: 2, 2: 3, 3: 1, 4: 2, 6: 2, 7: 1, 8: 1
+    Lamination 1: 2, 2: 3, 3: 1, 4: 2, 6: 2, 7: 1, 8: 1
     >>> (g**2)(c)
-    1: 5, 2: 6, 3: 3, 4: 4, 6: 4, 7: 2, 8: 2
+    Lamination 1: 5, 2: 6, 3: 3, 4: 4, 6: 4, 7: 2, 8: 2
 
 Building new mapping classes
 ----------------------------
@@ -100,7 +107,7 @@ Since  it can manipulate curves, bigger can create the Dehn twist about a curve 
 
     >>> twist = S.triangulation({1: 1, 2: 1}).encode_twist()
     >>> twist(c), (twist * twist)(c), (twist**3)(c)
-    (2: 1, 1: 1, 2: 2, 1: 2, 2: 3)
+    (Lamination 2: 1, Lamination 1: 1, 2: 2, Lamination 1: 2, 2: 3)
 
 Visualisations
 --------------
