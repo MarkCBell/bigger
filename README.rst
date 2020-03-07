@@ -2,7 +2,7 @@
 Bigger
 ======
 
-Bigger is a program for computing big mapping classes and their actions on laminations via ideal triangulation coordinates.
+Bigger is a program for computing big mapping classes and their actions on non-compact laminations via ideal triangulation coordinates.
 
 Bigger officially supports Python 3.5 -- 3.8.
 
