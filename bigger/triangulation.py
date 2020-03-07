@@ -50,7 +50,7 @@ class Triangulation(Generic[Edge]):
 
         return self.link(edge) + (edge,)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges)
 
     def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> "bigger.Encoding[Edge]":
