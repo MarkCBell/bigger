@@ -38,12 +38,12 @@ class Triangulation(Generic[Edge]):
         # |/        |
         # #----c----#
         #
-        # link(e) = (a, b, c, d, e)
+        # link(e) = (a, b, c, d)
 
-        self.link = link
         if callable(edges):
             edges = IterableStore(edges)
         self.edges = edges
+        self.link = link
 
     def star(self, edge: Edge) -> Tuple[Edge, Edge, Edge, Edge, Edge]:
         """ Return the link of an Edge together with the Edge itself. """
