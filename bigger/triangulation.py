@@ -50,6 +50,9 @@ class Triangulation(Generic[Edge]):
 
         return self.link(edge) + (edge,)
 
+    def __iter__(self):
+        return iter(self.edges)
+
     def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> "bigger.Encoding[Edge]":
         """ Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
@@ -244,4 +247,4 @@ class Triangulation(Generic[Edge]):
     def as_lamination(self) -> "bigger.Lamination[Edge]":
         """ Return this Triangulation as a Lamination on self. """
 
-        return self(lambda edge: -1, self.edges)
+        return self(lambda edge: -1)
