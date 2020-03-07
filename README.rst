@@ -19,18 +19,18 @@ Once installed, try it inside of Python::
     >>> S = bigger.load.ladder()  # The infinite-genus two-ended surface
     >>> a = S.triangulation({(0, 5): -1})  # An arc
     >>> a
-    (0, 5): -1
+    Lamination (0, 5): -1
     >>> a == a
     True
     >>> b = S('shift.shift')(a)  # Shift everything down twice
     >>> a == b
     False
     >>> b
-    (2, 5): -1
+    Lamination (2, 5): -1
     >>> S('SHIFT.shift')(a) == a  # Shift and then shift back
     True
     >>> S('shift.b.b.b.b')(a)  # Twist then shift
-    (1, 6): 2, (1, 5): 3
+    Lamination (1, 6): 2, (1, 5): 3
 
 External Links
 --------------

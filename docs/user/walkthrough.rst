@@ -68,7 +68,7 @@ We can build a :class:`mapping class <bigger.encoding.Encoding>` from these::
 We can compute the image of a lamination under a mapping class::
 
     >>> h(c)
-    1: 1, 2: 2
+    Lamination 1: 1, 2: 2
 
 And, since the support of these laminations is finite and known, we can test whether two such laminations are equal::
 
