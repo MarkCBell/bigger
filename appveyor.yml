@@ -3,12 +3,6 @@ build: false
 
 environment:
   matrix:
-    - PYTHON: "C:\\Python38"
-      TOX_ENV: "lint"
-
-    - PYTHON: "C:\\Python36"
-      TOX_ENV: "py36"
-
     - PYTHON: "C:\\Python37"
       TOX_ENV: "py37"
 

@@ -230,7 +230,7 @@ def tree3() -> "bigger.MCG[Tuple[int, int]]":
 
         return {0: ((n, 3), (n, 1), (n, 2), (n, 1)), 1: ((n, 0), (n, 3), (n, 0), (n, 2)), 2: ((n, 1), (n, 0), X, Y), 3: ((n, 1), (n, 0), (2 * n + 4, 2), (2 * n + 3, 2))}[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(4)), link)
+    T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in range(4)), link)
 
     twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>-?\d+)$")
 
