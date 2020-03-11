@@ -18,13 +18,13 @@ class TestFlute(TestCase):
         self.assertEqual(repr(self.L), str(self.L))
     
     def test_twist(self):
-        self.assertEqual(self.S('b_1')(self.L).show(range(10)), '0: -1, 1: 6, 2: 7, 3: 14, 4: 19, 5: -1, 6: 14, 7: 6, 8: 7, 9: -1')
+        self.assertEqual(self.S('b_1')(self.L).show(range(10)), '0: -1, 1: 8, 2: 7, 3: 16, 4: 11, 5: -1, 6: 16, 7: 8, 8: 7, 9: -1')
         self.assertEqual(self.S('a')(self.L).show(range(10)), '0: -1, 1: -1, 2: 1, 3: -1, 4: -1, 5: 1, 6: -1, 7: -1, 8: 1, 9: -1')
-        self.assertEqual(self.S('a_4.a.B_2')(self.L).show(range(10)), '0: -1, 1: -1, 2: 1, 3: -1, 4: 7, 5: 8, 6: 16, 7: -1, 8: 21, 9: 16')
+        self.assertEqual(self.S('a_4.a.B_2')(self.L).show(range(10)), '0: -1, 1: -1, 2: 1, 3: -1, 4: 7, 5: 9, 6: 14, 7: -1, 8: 9, 9: 14')
     
     def test_flip(self):
-        self.assertEqual(self.S('a_0')(self.T({1: 4, 2: 2, 3: 4})), {1: 2, 2: 1, 3: 4})
-        self.assertEqual(self.S('a_0')(self.T({0: 4, 1: 4, 2: 2})), {0: 4, 1: 2, 2: 1})
+        self.assertEqual(self.S('a_0')(self.T({1: 4, 2: 2, 3: 4})), {1: 6, 2: 4, 3: 4})
+        self.assertEqual(self.S('a_0')(self.T({0: 4, 1: 4, 2: 2})), {0: 4, 1: 6, 2: 4})
         self.assertEqual(self.T.encode([1])(self.a), {0: -1})
     
     def test_slice(self):
@@ -48,7 +48,7 @@ class TestBiflute(TestCase):
     def test_twist(self):
         self.assertEqual(self.S('a_0')(self.a), self.a)
         self.assertEqual(self.S('A_0.a_0')(self.m), self.m)
-        self.assertEqual(self.S('b_1')(self.b), {2: 1, 3: 1, 4: 2, 6: 2, 7: 1, 8: 1})
+        self.assertEqual(self.S('b_1')(self.b), {3: 1, 4: 1, 6: 2, 7: 1, 8: 1})
     
     def test_flip(self):
         h = self.T.encode([{0}, {0}])
@@ -60,10 +60,10 @@ class TestBiflute(TestCase):
     
     def test_powers(self):
         self.assertEqual((self.S('a_0.a.b_1')**0)(self.b), self.b)
-        self.assertEqual((self.S('a_0')**1)(self.b), {2: 1})
-        self.assertEqual((self.S('a_0')**2)(self.b), {1: 1, 2: 2})
-        self.assertEqual((self.S('a_0')**10)(self.b), {1: 9, 2: 10})
-        self.assertEqual((self.S('s.a_0.a_0')**10)(self.b), {32: 2, 31: 1})
+        self.assertEqual((self.S('a_0')**1)(self.b), {2: -1})
+        self.assertEqual((self.S('a_0')**2)(self.b), {1: 1})
+        self.assertEqual((self.S('a_0')**10)(self.b), {1: 9, 2: 8})
+        self.assertEqual((self.S('s.a_0.a_0')**10)(self.b), {31: 1})
 
     def test_infinite_twist_commutes(self):
         s = self.S('s')
@@ -99,13 +99,13 @@ class TestTree3(TestCase):
     m = T(dict((e, -i) for i, e in enumerate(edges)))
     
     def test_str(self):
-        self.assertEqual(str(self.L), 'Infinitely supported lamination (0, 0): -1, (0, 1): -1, (0, 2): -1, (0, 3): -1, (-1, 0): -1, (-1, 1): -1, (-1, 2): -1, (-1, 3): -1, (1, 0): -1, (1, 1): -1 ...')
+        self.assertEqual(str(self.L), 'Infinitely supported lamination (0, 0): -1, (0, 1): -1, (0, 2): -1, (0, 3): -1, (1, 0): -1, (1, 1): -1, (1, 2): -1, (1, 3): -1, (2, 0): -1, (2, 1): -1 ...')
         self.assertEqual(str(self.a), 'Lamination (0, 0): -1')
         self.assertEqual(repr(self.L), str(self.L))
     
     def test_twist(self):
         self.assertEqual(self.S('A_1.a_1')(self.m), self.m)
         print(self.S('a_1')(self.m))
-        self.assertEqual(self.S('a_1')(self.m), {(0, 1): -1, (-1, 1): -5, (1, 1): 8, (0, 3): -3, (-1, 0): -4, (0, 2): -2, (-1, 3): -7, (1, 0): -9, (-1, 2): -6})
+        self.assertEqual(self.S('a_1')(self.m), {(0, 1): -1, (1, 2): -6, (2, 1): -9, (1, 1): 4, (0, 3): -3, (2, 0): -8, (0, 2): -2, (1, 0): -5, (1, 3): -7})
         self.assertEqual(self.S('a.a.A_1')(self.m), self.S('A_1.a.a')(self.m))
 

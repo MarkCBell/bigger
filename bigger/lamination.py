@@ -100,32 +100,25 @@ class Lamination(Generic[Edge]):
         short, conjugator = self.shorten()
 
         # Use the following for reference:
-        # #<--------#     #<--------#
-        # |    a   ^^     |\   a    ^
+        # #---------#     #---------#
+        # |    a   /|     |\   a    |
         # |------/--|     |  \      |
         # |b  e/   d| --> |b   \e' d|
         # |  /      |     |      \  |
-        # v/   c    |     v    c   V|
-        # #-------->#     #-------->#
-
-        # #<--------#     #<--------#
-        # |    a|  ^^     |\   a    ^
-        # |     |/  |     |  \      |
-        # |b  e/|  d| --> |b   \e' d|
-        # |  /  |   |     |      \  |
-        # v/   c|   |     v    c   V|
-        # #-------->#     #-------->#
+        # |/   c    |     |    c   \|
+        # #---------#     #---------#
 
         assert isinstance(short.support, set)
         assert len(short.support) == 2
 
-        e, _ = short.support
+        e, e2 = short.support
         a, b, c, d = short.triangulation.link(e)
-        if short(b) == 1:
-            assert b == d
-            twist = short.triangulation.encode([{e: b, b: e}, {e}])
-        else:  # short(a) == 1:
-            assert a == c
-            twist = short.triangulation.encode([{e: a, a: e}, {e}])
+        if short(a) == 1:
+            e, e2 = e2, e
+            a, b, c, d = short.triangulation.link(e)
+
+        assert short(b) == 1
+        assert b == d
+        twist = short.triangulation.encode([{e: b, b: e}, {e}])
 
         return ~conjugator * twist * conjugator
