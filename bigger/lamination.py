@@ -23,7 +23,7 @@ class Lamination(Generic[Edge]):
     def __call__(self, edge: Edge) -> int:
         return self.weight(edge)
 
-    def show(self, edges: Iterable[Edge]) -> str:
+    def describe(self, edges: Iterable[Edge]) -> str:
         """ Return a string describing this Lamination on the given edges. """
         return ", ".join("{}: {}".format(edge, self(edge)) for edge in edges)
 
@@ -47,9 +47,9 @@ class Lamination(Generic[Edge]):
 
     def __str__(self) -> str:
         if not self.is_finitely_supported():
-            return "Infinitely supported lamination {} ...".format(self.show(islice(self.support, 10)))
+            return "Infinitely supported lamination {} ...".format(self.describe(islice(self.support, 10)))
 
-        return "Lamination {}".format(self.show(self.support))
+        return "Lamination {}".format(self.describe(self.support))
 
     def __repr__(self) -> str:
         return str(self)
