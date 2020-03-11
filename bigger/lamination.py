@@ -114,6 +114,7 @@ class Lamination(Generic[Edge]):
         e, e2 = short.support
         a, b, c, d = short.triangulation.link(e)
         if short(a) == 1:
+            assert a == c
             e, e2 = e2, e
             a, b, c, d = short.triangulation.link(e)
 
