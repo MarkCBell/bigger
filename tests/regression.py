@@ -105,7 +105,6 @@ class TestTree3(TestCase):
     
     def test_twist(self):
         self.assertEqual(self.S('A_1.a_1')(self.m), self.m)
-        print(self.S('a_1')(self.m))
         self.assertEqual(self.S('a_1')(self.m), {(0, 1): -1, (1, 2): -6, (2, 1): -9, (1, 1): 4, (0, 3): -3, (2, 0): -8, (0, 2): -2, (1, 0): -5, (1, 3): -7})
         self.assertEqual(self.S('a.a.A_1')(self.m), self.S('A_1.a.a')(self.m))
 
