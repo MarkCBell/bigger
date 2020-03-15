@@ -86,12 +86,12 @@ class Triangulation(Generic[Edge]):
                 return (b, c, d, a)
             if flipped(a):
                 aa, ab, ac, ad = self.link(a)
-                if ad != edge:
+                if not (ac == b and ad == edge):
                     aa, ab, ac, ad = ac, ad, aa, ab
                 w, x = aa, a
             elif flipped(b):
                 ba, bb, bc, bd = self.link(b)
-                if bc != edge:
+                if not (bc == edge and bd == a):
                     ba, bb, bc, bd = bc, bd, ba, bb
                 w, x = b, bb
             else:
@@ -99,12 +99,12 @@ class Triangulation(Generic[Edge]):
 
             if flipped(c):
                 ca, cb, cc, cd = self.link(c)
-                if cd != edge:
+                if not (cc == d and cd == edge):
                     ca, cb, cc, cd = cc, cd, ca, cb
                 y, z = ca, c
             elif flipped(d):
                 da, db, dc, dd = self.link(d)
-                if dc != edge:
+                if not (dc == edge and dd == c):
                     da, db, dc, dd = dc, dd, da, db
                 y, z = d, db
             else:
@@ -243,6 +243,11 @@ class Triangulation(Generic[Edge]):
             support = IterableStore(support)
 
         return bigger.Lamination(self, weights, support)
+
+    def empty_lamination(self) -> "bigger.Lamination[Edge]":
+        """ Return the zero Lamination on this triangulation. """
+
+        return self(lambda edge: 0)
 
     def as_lamination(self) -> "bigger.Lamination[Edge]":
         """ Return this Triangulation as a Lamination on self. """
