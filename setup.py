@@ -7,6 +7,7 @@ from setuptools import setup, find_packages
 
 requirements = [
     'decorator',
+    'pillow',
 ]
 
 def readme():
