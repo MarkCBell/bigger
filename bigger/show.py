@@ -61,6 +61,12 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
         triangle1 = min(triangle1[i:] + triangle1[:i] for i in range(3))
         triangle2 = min(triangle2[i:] + triangle2[:i] for i in range(3))
         return triangle1, triangle2
+    
+    def adjacent(current: Triangle, side: Edge) -> Triangle:
+        try:
+            return next(triangle for triangle in support(side) if triangle != current)
+        except StopIteration:
+            return current
 
     # Compute the connect components of the supporting triangles of the given edges.
     components = bigger.UnionFind(deduplicate([triangle for edge in edges for triangle in support(edge)]))
@@ -87,10 +93,11 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
         # Expore out to find out which edges are in the interior.
         interior = set()
         placed = set([start])
-        to_check = [(position_index.get(edge, len(position_index)), (start, edge)) for edge in start if edge in edge_set]
+        to_check = [(position_index.get(edge, len(position_index)), (start, edge)) for edge in start if edge in edge_set]  # A priority queue.
+        heapq.heapify(to_check)
         while to_check:
             _, (current, side) = heapq.heappop(to_check)
-            other = next(triangle for triangle in support(side) if triangle != current)
+            other = adjacent(current, side)
             if other not in placed:
                 interior.add(side)
                 placed.add(other)
@@ -108,11 +115,12 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
         # Determine how many boundary edges occur between each edge's endpoints.
         # We really should do this in a sensible order so that it only takes a single pass.
         num_decendents = dict(((triangle, side), 1) for triangle in component for side in triangle if side not in interior)
-        while len(num_decendents) < 3 * len(component):
+        target_num_decendents = len(set((triangle, side) for triangle in component for side in triangle))
+        while len(num_decendents) < target_num_decendents:
             for current in component:
                 for side in current:
                     if (current, side) not in num_decendents:
-                        other = next(triangle for triangle in support(side) if triangle != current)
+                        other = adjacent(current, side)
                         if all((other, other_side) in num_decendents or other_side == side for other_side in other):
                             num_decendents[(current, side)] = sum(num_decendents[(other, other_side)] for other_side in other if other_side != side)
 
@@ -125,7 +133,7 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
         to_extend = [(start, side) for side in start if side in interior]
         while to_extend:
             current, side = to_extend.pop()
-            other = next(triangle for triangle in support(side) if triangle != current)
+            other = adjacent(current, side)
             a, b, _ = rotate(current, side)
             x, y, z = rotate(other, side)
 
