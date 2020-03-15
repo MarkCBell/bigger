@@ -1,6 +1,7 @@
-from math import sin, cos, pi, ceil, sqrt
-from typing import Union, List, Generic, Iterable, TypeVar, Tuple, Dict
-from queue import Queue
+""" A module for making images of laminations. """
+
+from math import sin, cos, pi, ceil
+from typing import Union, List, Iterable, TypeVar, Tuple, Dict
 import heapq
 
 from PIL import Image, ImageDraw  # type: ignore
@@ -9,6 +10,7 @@ import bigger
 
 Edge = TypeVar("Edge")
 Triangle = Tuple[Edge, Edge, Edge]
+Coord = Tuple[float, float]
 
 # Vectors to offset a label by to produce backing.
 OFFSETS = [(1.5 * cos(2 * pi * i / 12), 1.5 * sin(2 * pi * i / 12)) for i in range(12)]
@@ -19,10 +21,6 @@ DEFAULT_EDGE_LABEL_BG_COLOUR = "white"
 MAX_DRAWABLE = 1000  # Maximum weight of a multicurve to draw fully.
 ZOOM_FRACTION = 0.8
 VERTEX_BUFFER = 0.2
-
-
-def dot(a: Tuple[int, int], b: Tuple[int, int]) -> int:
-    return a[0] * b[0] + a[1] * b[1]
 
 
 def deduplicate(items: List[Edge]) -> List[Edge]:
@@ -48,7 +46,11 @@ def interpolate(A, B, C, r, s):
     return ((1 - r) * B[0] + (r) * A[0], (1 - r) * B[1] + (r) * A[1]), ((1 - s) * B[0] + (s) * C[0], (1 - s) * B[1] + (s) * C[1])
 
 
-def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: List[Edge], w: int = 100, h: int = 100) -> Dict[Triangle, Tuple[float, float]]:
+def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: List[Edge], w: int, h: int) -> Dict[Triangle, Tuple[Coord, Coord, Coord]]:
+    """ Return a dictionary mapping the triangles that meet the given edges to coordinates in the plane.
+
+    Triangle T is mapped to ((x1, y1), (x2, y2), (x3, y3)) where (xi, yi) is at the tail of side i of T when oriented anti-clockwise.
+    Coordinate are within the w x h rectangle. """
     position_index = dict((edge, index) for index, edge in enumerate(edges))
     edge_set = set(edges)
 
@@ -124,7 +126,7 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
         while to_extend:
             current, side = to_extend.pop()
             other = next(triangle for triangle in support(side) if triangle != current)
-            a, b, c = rotate(current, side)
+            a, b, _ = rotate(current, side)
             x, y, z = rotate(other, side)
 
             triangle_vertex_number[(other, x)] = triangle_vertex_number[(current, b)]
@@ -161,7 +163,7 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
             sum_weights_0 = sum(weights_0)
             correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
             dual_weights = [(sum_weights_0 - 2 * e + correction) / 2 for e in weights_0]
-            parallel_weights = [max(-weight, 0) / 2 for weight in weights]
+            parallel_weights = [max(-weight, 0) / 2 for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
             for i in range(3):
                 # Dual arcs.
                 if dual_weights[i] > 0:
@@ -206,11 +208,11 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
             sum_weights_0 = sum(weights_0)
             correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
             dual_weights = [(sum_weights_0 - 2 * e + correction) // 2 for e in weights_0]
-            parallel_weights = [max(-weight, 0) // 2 for weight in weights]
+            parallel_weights = [max(-weight, 0) // 2 for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
             for i in range(3):  # Dual arcs:
                 if dual_weights[i] > 0:
-                    s_a = (1 - 2 * VERTEX_BUFFER) * weights_0[i - 2] / master
-                    s_b = (1 - 2 * VERTEX_BUFFER) * weights_0[i - 1] / master
+                    s_a = 1 - 2 * VERTEX_BUFFER
+                    s_b = 1 - 2 * VERTEX_BUFFER
                     for j in range(dual_weights[i]):
                         scale_a = 0.5 if weights_0[i - 2] == 1 else (1 - s_a) / 2 + s_a * j / (weights_0[i - 2] - 1)
                         scale_b = 0.5 if weights_0[i - 1] == 1 else (1 - s_b) / 2 + s_b * j / (weights_0[i - 1] - 1)
@@ -218,7 +220,7 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
                         S1, E1 = interpolate(layout[triangle][i - 1], layout[triangle][i], layout[triangle][i - 2], scale_a, scale_b)
                         draw.line([S1, E1], fill="Gray")
                 elif dual_weights[i] < 0:  # Terminal arc.
-                    s_0 = (1 - 2 * VERTEX_BUFFER) * weights_0[i] / master
+                    s_0 = 1 - 2 * VERTEX_BUFFER
                     for j in range(-dual_weights[i]):
                         scale_a = 0.5 if weights_0[i] == 1 else (1 - s_0) / 2 + s_0 * dual_weights[i - 1] / (weights_0[i] - 1) + s_0 * j / (weights_0[i] - 1)
 
@@ -239,6 +241,7 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
 
 
 def show(item: Union["bigger.Triangulation", "bigger.Lamination"], edges: List[Edge], **options) -> Image:
+    """ Return a PIL image of a Lamination or Triangulation around the given edges. """
 
     if "w" not in options:
         options["w"] = 400

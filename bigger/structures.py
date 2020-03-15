@@ -1,3 +1,5 @@
+""" A module of data structures. """
+
 from collections import defaultdict
 from typing import Generic, TypeVar, Iterable, Iterator, List
 
