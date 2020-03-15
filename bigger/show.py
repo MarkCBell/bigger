@@ -1,7 +1,7 @@
 """ A module for making images of laminations. """
 
 from math import sin, cos, pi, ceil
-from typing import Union, List, Iterable, TypeVar, Tuple, Dict
+from typing import Union, List, TypeVar, Tuple, Dict, Any
 import heapq
 
 from PIL import Image, ImageDraw  # type: ignore
@@ -25,6 +25,7 @@ VERTEX_BUFFER = 0.2
 
 def deduplicate(items: List[Edge]) -> List[Edge]:
     """ Return the same list but without duplicates. """
+
     output = []
     seen = set()
     for item in items:
@@ -34,16 +35,10 @@ def deduplicate(items: List[Edge]) -> List[Edge]:
     return output
 
 
-def rotate(items: List[Edge], target: Edge) -> List[Edge]:
-    """ Rotate a list until the given item is at the front. """
-    i = items.index(target)
-    return items[i:] + items[:i]
+def interpolate(A: Coord, B: Coord, r: float = 0.5) -> Coord:
+    """ Return the point that is r% from B to A. """
 
-
-def interpolate(A, B, C, r, s):
-    """ Interpolate from B to A (resp. C) by r (resp. s). """
-
-    return ((1 - r) * B[0] + (r) * A[0], (1 - r) * B[1] + (r) * A[1]), ((1 - s) * B[0] + (s) * C[0], (1 - s) * B[1] + (s) * C[1])
+    return (r * A[0] + (1 - r) * B[0], r * A[1] + (1 - r) * B[1])
 
 
 def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: List[Edge], w: int, h: int) -> Dict[Triangle, Tuple[Coord, Coord, Coord]]:
@@ -51,22 +46,26 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
 
     Triangle T is mapped to ((x1, y1), (x2, y2), (x3, y3)) where (xi, yi) is at the tail of side i of T when oriented anti-clockwise.
     Coordinate are within the w x h rectangle. """
+
     position_index = dict((edge, index) for index, edge in enumerate(edges))
     edge_set = set(edges)
 
     def support(edge: Edge) -> Tuple[Triangle, Triangle]:
         """ Return the two triangles that support and edge. """
+
         a, b, c, d = triangulation.link(edge)
         triangle1, triangle2 = (a, b, edge), (c, d, edge)
-        triangle1 = min(triangle1[i:] + triangle1[:i] for i in range(3))
-        triangle2 = min(triangle2[i:] + triangle2[:i] for i in range(3))
+        # Cyclically permute to the canonical position.
+        triangle1 = min(triangle1, triangle1[1:] + triangle1[:1], triangle1[2:] + triangle1[:2])
+        triangle2 = min(triangle2, triangle2[1:] + triangle2[:1], triangle2[2:] + triangle2[:2])
         return triangle1, triangle2
-    
-    def adjacent(current: Triangle, side: Edge) -> Triangle:
-        try:
-            return next(triangle for triangle in support(side) if triangle != current)
-        except StopIteration:
-            return current
+
+    def adjacent(current: Triangle, side: int) -> Tuple[Triangle, int]:
+        """ Return the (other triangle, other side) which shares an edge with triangle[side]. """
+
+        return next(
+            (other, other_side) for other in support(current[side]) for other_side in range(3) if other[other_side] == current[side] and (other != current or other_side != side)
+        )
 
     # Compute the connect components of the supporting triangles of the given edges.
     components = bigger.UnionFind(deduplicate([triangle for edge in edges for triangle in support(edge)]))
@@ -85,7 +84,7 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
     dx = w / p
     dy = h / q
 
-    layout = dict()
+    layout: Dict[Triangle, Tuple[Coord, Coord, Coord]] = dict()
     for index, component in enumerate(components):
         # Get a starting triangle.
         start = min(component, key=lambda triangle: tuple(position_index.get(edge, len(position_index)) for edge in triangle))
@@ -93,17 +92,47 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
         # Expore out to find out which edges are in the interior.
         interior = set()
         placed = set([start])
-        to_check = [(position_index.get(edge, len(position_index)), (start, edge)) for edge in start if edge in edge_set]  # A priority queue.
+        to_check = [(position_index.get(start[i], len(position_index)), (start, i)) for i in range(3) if start[i] in edge_set]  # A priority queue.
         heapq.heapify(to_check)
         while to_check:
             _, (current, side) = heapq.heappop(to_check)
-            other = adjacent(current, side)
+            other, _ = adjacent(current, side)
             if other not in placed:
-                interior.add(side)
+                interior.add(current[side])
                 placed.add(other)
-                for other_side in other:
-                    if other_side != side and other_side in edge_set:
-                        heapq.heappush(to_check, (position_index.get(other_side, len(position_index)), (other, other_side)))
+                for other_side in range(3):
+                    if other[other_side] != current[side] and other[other_side] in edge_set:
+                        heapq.heappush(to_check, (position_index.get(other[other_side], len(position_index)), (other, other_side)))
+
+        # Determine how many boundary edges occur between each edge's endpoints.
+        # We really should do this in a sensible order so that it only takes a single pass.
+        num_decendents = dict(((triangle, side), 1) for triangle in component for side in range(3) if triangle[side] not in interior)
+        while len(num_decendents) < 3 * len(component):
+            for current in component:
+                for side in range(3):
+                    if (current, side) not in num_decendents:
+                        other, _ = adjacent(current, side)
+                        if all((other, other_side) in num_decendents or other[other_side] == current[side] for other_side in range(3)):
+                            num_decendents[(current, side)] = sum(num_decendents[(other, other_side)] for other_side in range(3) if other[other_side] != current[side])
+
+        # Work out which vertex (number) each side of each triangle starts at.
+        triangle_vertex_number = {
+            (start, 0): 0,
+            (start, 1): num_decendents[(start, 0)],
+            (start, 2): num_decendents[(start, 0)] + num_decendents[(start, 1)],
+        }
+        to_extend = [(start, side) for side in range(3) if start[side] in interior]
+        while to_extend:
+            current, side = to_extend.pop()
+            other, other_side = adjacent(current, side)
+
+            triangle_vertex_number[(other, (other_side + 0) % 3)] = triangle_vertex_number[(current, (side + 1) % 3)]
+            triangle_vertex_number[(other, (other_side + 1) % 3)] = triangle_vertex_number[(current, (side + 0) % 3)]
+            triangle_vertex_number[(other, (other_side + 2) % 3)] = triangle_vertex_number[(other, (other_side + 1) % 3)] + num_decendents[(other, (other_side + 1) % 3)]
+
+            for i in [1, 2]:
+                if other[(other_side + i) % 3] in interior:
+                    to_extend.append((other, (other_side + i) % 3))
 
         # Create the vertices.
         num_outside = 3 * len(component) - 2 * len(interior)
@@ -111,67 +140,37 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
             (dx * (index % p) + dx / 2 + r * sin(2 * pi * (i + 0.5) / num_outside), dy * int(index / p) + dy / 2 + r * cos(2 * pi * (i + 0.5) / num_outside))
             for i in range(num_outside)
         ]
-
-        # Determine how many boundary edges occur between each edge's endpoints.
-        # We really should do this in a sensible order so that it only takes a single pass.
-        num_decendents = dict(((triangle, side), 1) for triangle in component for side in triangle if side not in interior)
-        target_num_decendents = len(set((triangle, side) for triangle in component for side in triangle))
-        while len(num_decendents) < target_num_decendents:
-            for current in component:
-                for side in current:
-                    if (current, side) not in num_decendents:
-                        other = adjacent(current, side)
-                        if all((other, other_side) in num_decendents or other_side == side for other_side in other):
-                            num_decendents[(current, side)] = sum(num_decendents[(other, other_side)] for other_side in other if other_side != side)
-
-        # Work out which vertex (number) each side of each triangle starts at.
-        triangle_vertex_number = {
-            (start, start[0]): 0,
-            (start, start[1]): num_decendents[(start, start[0])],
-            (start, start[2]): num_decendents[(start, start[0])] + num_decendents[(start, start[1])],
-        }
-        to_extend = [(start, side) for side in start if side in interior]
-        while to_extend:
-            current, side = to_extend.pop()
-            other = adjacent(current, side)
-            a, b, _ = rotate(current, side)
-            x, y, z = rotate(other, side)
-
-            triangle_vertex_number[(other, x)] = triangle_vertex_number[(current, b)]
-            triangle_vertex_number[(other, y)] = triangle_vertex_number[(current, a)]
-            triangle_vertex_number[(other, z)] = triangle_vertex_number[(other, y)] + num_decendents[(other, y)]
-
-            if y in interior:
-                to_extend.append((other, y))
-            if z in interior:
-                to_extend.append((other, z))
-
         for triangle in component:
-            layout[triangle] = tuple(vertices[triangle_vertex_number[(triangle, side)]] for side in triangle)
+            layout[triangle] = (vertices[triangle_vertex_number[(triangle, 0)]], vertices[triangle_vertex_number[(triangle, 1)]], vertices[triangle_vertex_number[(triangle, 2)]])
 
     return layout
 
 
-def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options) -> Image:
+def show_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **options: Any) -> Image:
     """ Return an image of this lamination on the specified edges. """
+
     image = Image.new("RGB", (options["w"], options["h"]), color="White")
     draw = ImageDraw.Draw(image)
+
+    if "label" not in options:
+        options["label"] = "none"
 
     # Draw these triangles.
     layout = layout_triangulation(lamination.triangulation, edges, options["w"], options["h"])
 
     for index, triangle in enumerate(layout):
-        draw.polygon(layout[triangle], fill=["Green", "Red", "Blue"][index % 3])
+        draw.polygon(layout[triangle], fill=["Gray", "LightGray"][index % 2])
 
-    master = float(sum(abs(lamination(edge)) for triangle in layout for edge in triangle))
+    master = max(abs(lamination(edge)) for triangle in layout for edge in triangle)
     if master > MAX_DRAWABLE:
         for triangle in layout:
-            weights = [float(lamination(side)) for side in triangle]
+            weights = [lamination(side) for side in triangle]
             weights_0 = [max(weight, 0) for weight in weights]
             sum_weights_0 = sum(weights_0)
             correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
-            dual_weights = [(sum_weights_0 - 2 * e + correction) / 2 for e in weights_0]
-            parallel_weights = [max(-weight, 0) / 2 for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+            dual_weights = [bigger.half(sum_weights_0 - 2 * e + correction) for e in weights_0]
+            parallel_weights = [bigger.half(max(-weight, 0)) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+            vertices = layout[triangle]
             for i in range(3):
                 # Dual arcs.
                 if dual_weights[i] > 0:
@@ -187,18 +186,22 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
                     scale_b = (1 - s_b) / 2
                     scale_b2 = scale_b + s_b * dual_weights[i] / weights_0[i - 1]
 
-                    S1, E1 = interpolate(layout[triangle][i - 1], layout[triangle][i], layout[triangle][i - 2], scale_a, scale_b)
-                    S2, E2 = interpolate(layout[triangle][i - 1], layout[triangle][i], layout[triangle][i - 2], scale_a2, scale_b2)
-                    draw.polygon([S1, E1, E2, S2], fill="Gray")
+                    S1 = interpolate(vertices[i - 2], vertices[i - 1], scale_a)
+                    E1 = interpolate(vertices[i - 0], vertices[i - 1], scale_b)
+                    S2 = interpolate(vertices[i - 2], vertices[i - 1], scale_a2)
+                    E2 = interpolate(vertices[i - 0], vertices[i - 1], scale_b2)
+                    draw.polygon([S1, E1, E2, S2], fill="DarkGray")
                 elif dual_weights[i] < 0:  # Terminal arc.
                     s_0 = (1 - 2 * VERTEX_BUFFER) * weights_0[i] / master
 
                     scale_a = (1 - s_0) / 2 + s_0 * dual_weights[i - 2] / weights_0[i]
                     scale_a2 = scale_a + s_0 * (-dual_weights[i]) / weights_0[i]
 
-                    S1, E1 = interpolate(layout[triangle][i - 1], layout[triangle][i], layout[triangle][i - 2], scale_a, 1.0)
-                    S2, E2 = interpolate(layout[triangle][i - 1], layout[triangle][i], layout[triangle][i - 2], scale_a2, 1.0)
-                    draw.polygon([S1, E1, E2, S2], fill="Gray")
+                    S1 = interpolate(vertices[i - 0], vertices[i - 2], scale_a)
+                    E1 = vertices[i - 1]
+                    S2 = interpolate(vertices[i - 0], vertices[i - 2], scale_a2)
+                    E2 = vertices[i - 1]
+                    draw.polygon([S1, E1, E2, S2], fill="DarkGray")
                 else:  # dual_weights[i] == 0:  # Nothing to draw.
                     pass
 
@@ -215,8 +218,9 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
             weights_0 = [max(weight, 0) for weight in weights]
             sum_weights_0 = sum(weights_0)
             correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
-            dual_weights = [(sum_weights_0 - 2 * e + correction) // 2 for e in weights_0]
-            parallel_weights = [max(-weight, 0) // 2 for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+            dual_weights = [bigger.half(sum_weights_0 - 2 * e + correction) for e in weights_0]
+            parallel_weights = [bigger.half(max(-weight, 0)) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+            vertices = layout[triangle]
             for i in range(3):  # Dual arcs:
                 if dual_weights[i] > 0:
                     s_a = 1 - 2 * VERTEX_BUFFER
@@ -225,15 +229,17 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
                         scale_a = 0.5 if weights_0[i - 2] == 1 else (1 - s_a) / 2 + s_a * j / (weights_0[i - 2] - 1)
                         scale_b = 0.5 if weights_0[i - 1] == 1 else (1 - s_b) / 2 + s_b * j / (weights_0[i - 1] - 1)
 
-                        S1, E1 = interpolate(layout[triangle][i - 1], layout[triangle][i], layout[triangle][i - 2], scale_a, scale_b)
-                        draw.line([S1, E1], fill="Gray")
+                        S1 = interpolate(vertices[i - 2], vertices[i - 1], scale_a)
+                        E1 = interpolate(vertices[i - 0], vertices[i - 1], scale_b)
+                        draw.line([S1, E1], fill="DarkGray", width=2)
                 elif dual_weights[i] < 0:  # Terminal arc.
                     s_0 = 1 - 2 * VERTEX_BUFFER
                     for j in range(-dual_weights[i]):
                         scale_a = 0.5 if weights_0[i] == 1 else (1 - s_0) / 2 + s_0 * dual_weights[i - 1] / (weights_0[i] - 1) + s_0 * j / (weights_0[i] - 1)
 
-                        S1, E1 = interpolate(layout[triangle][i - 1], layout[triangle][i], layout[triangle][i - 2], scale_a, 1.0)
-                        draw.line([S1, E1], fill="Gray")
+                        S1 = interpolate(vertices[i - 0], vertices[i - 2], scale_a)
+                        E1 = vertices[i - 1]
+                        draw.line([S1, E1], fill="DarkGray", width=2)
                 else:  # dual_weights[i] == 0:  # Nothing to draw.
                     pass
 
@@ -245,10 +251,24 @@ def show_lamination(lamination: "bigger.Lamination", edges: Iterable, **options)
                 # P = M + float(j+1) / (parallel_weights[i] + 1) * (centroid - M) * (parallel_weights[i] + 1) / master
                 # self.create_curve_component([S, P, E])
 
+    for triangle in layout:
+        weights = [lamination(side) for side in triangle]
+        weights_0 = [max(weight, 0) for weight in weights]
+        sum_weights_0 = sum(weights_0)
+        correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
+        dual_weights = [bigger.half(sum_weights_0 - 2 * e + correction) for e in weights_0]
+        parallel_weights = [bigger.half(max(-weight, 0)) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+        vertices = layout[triangle]
+        for i in range(3):
+            if options["label"] == "edge":
+                draw.text(interpolate(vertices[i - 0], vertices[i - 2]), str(triangle[i]), fill="Black")
+            if options["label"] == "weight":
+                draw.text(interpolate(vertices[i - 0], vertices[i - 2]), str(weights[i]), fill="Black")
+
     return image
 
 
-def show(item: Union["bigger.Triangulation", "bigger.Lamination"], edges: List[Edge], **options) -> Image:
+def show(item: Union["bigger.Triangulation[Edge]", "bigger.Lamination[Edge]"], edges: List[Edge], **options: Any) -> Image:
     """ Return a PIL image of a Lamination or Triangulation around the given edges. """
 
     if "w" not in options:
