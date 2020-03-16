@@ -44,12 +44,27 @@ class Triangulation(Generic[Edge]):
         if callable(edges):
             edges = IterableStore(edges)
         self.edges = edges
-        self.link = link
+        self._link = link
 
-    def star(self, edge: Edge) -> Tuple[Edge, Edge, Edge, Edge, Edge]:
+    def link(self, edge: Edge, **kwargs: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
+        """ Return the link of an edge. """
+
+        a, b, c, d = self._link(edge)
+        if "a" in kwargs and a != kwargs["a"]:
+            a, b, c, d = c, d, a, b
+        if "b" in kwargs and b != kwargs["b"]:
+            a, b, c, d = c, d, a, b
+        if "c" in kwargs and c != kwargs["c"]:
+            a, b, c, d = c, d, a, b
+        if "d" in kwargs and d != kwargs["d"]:
+            a, b, c, d = c, d, a, b
+
+        return a, b, c, d
+
+    def star(self, edge: Edge, **kwargs: Edge) -> Tuple[Edge, Edge, Edge, Edge, Edge]:
         """ Return the link of an Edge together with the Edge itself. """
 
-        return self.link(edge) + (edge,)
+        return self.link(edge, **kwargs) + (edge,)
 
     def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges)
@@ -86,28 +101,16 @@ class Triangulation(Generic[Edge]):
 
                 return (b, c, d, a)
             if flipped(a):
-                aa, ab, ac, ad = self.link(a)
-                if not (ac == b and ad == edge):
-                    aa, ab, ac, ad = ac, ad, aa, ab
-                w, x = aa, a
+                w, _, _, _, x = self.star(a, c=b, d=edge)
             elif flipped(b):
-                ba, bb, bc, bd = self.link(b)
-                if not (bc == edge and bd == a):
-                    ba, bb, bc, bd = bc, bd, ba, bb
-                w, x = b, bb
+                _, x, _, _, w = self.star(b, c=edge, d=a)
             else:
                 w, x = a, b
 
             if flipped(c):
-                ca, cb, cc, cd = self.link(c)
-                if not (cc == d and cd == edge):
-                    ca, cb, cc, cd = cc, cd, ca, cb
-                y, z = ca, c
+                y, _, _, _, z = self.star(c, c=d, d=edge)
             elif flipped(d):
-                da, db, dc, dd = self.link(d)
-                if not (dc == edge and dd == c):
-                    da, db, dc, dd = dc, dd, da, db
-                y, z = d, db
+                _, z, _, _, y = self.star(d, c=edge, d=c)
             else:
                 y, z = c, d
 
