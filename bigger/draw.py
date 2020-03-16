@@ -40,6 +40,11 @@ def interpolate(A: Coord, B: Coord, r: float = 0.5) -> Coord:
 
     return (r * A[0] + (1 - r) * B[0], r * A[1] + (1 - r) * B[1])
 
+def add(A: Coord, B: Coord) -> Coord:
+    """ Return the point A + B. """
+
+    return (A[0] + B[0], A[1] + B[1])
+
 
 def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: List[Edge], w: int, h: int) -> Dict[Triangle, Tuple[Coord, Coord, Coord]]:
     """ Return a dictionary mapping the triangles that meet the given edges to coordinates in the plane.
@@ -153,12 +158,11 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
         options["w"] = 400
     if "h" not in options:
         options["h"] = 400
+    if "label" not in options:
+        options["label"] = "none"
 
     image = Image.new("RGB", (options["w"], options["h"]), color="White")
     draw = ImageDraw.Draw(image)
-
-    if "label" not in options:
-        options["label"] = "none"
 
     # Draw these triangles.
     layout = layout_triangulation(lamination.triangulation, edges, options["w"], options["h"])
@@ -266,8 +270,17 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
         vertices = layout[triangle]
         for i in range(3):
             if options["label"] == "edge":
-                draw.text(interpolate(vertices[i - 0], vertices[i - 2]), str(triangle[i]), fill="Black")
+                text = str(triangle[i])
             if options["label"] == "weight":
-                draw.text(interpolate(vertices[i - 0], vertices[i - 2]), str(weights[i]), fill="Black")
+                text = str(weights[i])
+            if options["label"] == "none":
+                text = ""
+            w, h = draw.textsize(text)
+            point = interpolate(vertices[i - 0], vertices[i - 2])
+            point = (point[0] - w/2, point[1] - h/2)
+            for offset in OFFSETS:
+                draw.text(add(point, offset), text, fill="White", anchor="centre")
+
+            draw.text(point, text, fill="Black", anchor="centre")
 
     return image
