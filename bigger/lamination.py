@@ -1,7 +1,8 @@
 """ A module for representing laminations on Triangulations. """
 
 from itertools import islice
-from typing import Any, Iterable, Tuple, TypeVar, Generic, Callable
+from typing import Any, Iterable, Tuple, TypeVar, Generic, Callable, List
+from PIL import Image  # type: ignore
 
 import bigger  # pylint: disable=unused-import
 from bigger.decorators import memoize
@@ -123,3 +124,8 @@ class Lamination(Generic[Edge]):
         twist = short.triangulation.encode([{e: b, b: e}, {e}])
 
         return ~conjugator * twist * conjugator
+
+    def draw(self, edges: List[Edge], **options: Any) -> Image:
+        """ Return a PIL image of this Lamination around the given edges. """
+
+        return bigger.draw.draw_lamination(self, edges, **options)

@@ -1,7 +1,7 @@
 """ A module for making images of laminations. """
 
 from math import sin, cos, pi, ceil
-from typing import Union, List, TypeVar, Tuple, Dict, Any
+from typing import List, TypeVar, Tuple, Dict, Any
 import heapq
 
 from PIL import Image, ImageDraw  # type: ignore
@@ -146,8 +146,13 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", edges: Lis
     return layout
 
 
-def show_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **options: Any) -> Image:
+def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **options: Any) -> Image:
     """ Return an image of this lamination on the specified edges. """
+
+    if "w" not in options:
+        options["w"] = 400
+    if "h" not in options:
+        options["h"] = 400
 
     image = Image.new("RGB", (options["w"], options["h"]), color="White")
     draw = ImageDraw.Draw(image)
@@ -266,17 +271,3 @@ def show_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
                 draw.text(interpolate(vertices[i - 0], vertices[i - 2]), str(weights[i]), fill="Black")
 
     return image
-
-
-def show(item: Union["bigger.Triangulation[Edge]", "bigger.Lamination[Edge]"], edges: List[Edge], **options: Any) -> Image:
-    """ Return a PIL image of a Lamination or Triangulation around the given edges. """
-
-    if "w" not in options:
-        options["w"] = 400
-    if "h" not in options:
-        options["h"] = 400
-
-    if isinstance(item, bigger.Triangulation):
-        return show_lamination(item.empty_lamination(), edges, **options)
-    else:  # isinstance(item, bigger.Lamination):
-        return show_lamination(item, edges, **options)

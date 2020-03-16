@@ -1,7 +1,8 @@
 """ A module for representing a triangulation of a punctured surface. """
 
 from functools import partial
-from typing import Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, TypeVar, Union
+from typing import Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, TypeVar, Union, Any
+from PIL import Image  # type: ignore
 
 import bigger
 
@@ -253,3 +254,8 @@ class Triangulation(Generic[Edge]):
         """ Return this Triangulation as a Lamination on self. """
 
         return self(lambda edge: -1)
+
+    def draw(self, edges: List[Edge], **options: Any) -> Image:
+        """ Return a PIL image of this Triangulation around the given edges. """
+
+        return self.empty_lamination().draw(edges, **options)
