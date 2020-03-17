@@ -48,7 +48,7 @@ def flute() -> "bigger.MCG[int]":
         twist_match = twist_re.match(name)
         if name == "a":
             isom = lambda edge: -1 if edge == -1 else edge + [0, +1, -1][edge % 3]
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 1])
+            return T.encode([(isom, isom), lambda edge: edge > 0 and edge % 3 == 2])
         elif twist_match is not None:
             parameters = twist_match.groupdict()
             n = int(parameters["n"])
@@ -113,12 +113,12 @@ def biflute() -> "bigger.MCG[int]":
             k = int(parameters["k"]) if parameters["k"] is not None else 0
 
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge // 3 % p == k else edge
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 1 and edge // 3 % p == k])
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge // 3 % p == k])
         elif twist_expr_match is not None:
             parameters = twist_expr_match.groupdict()
             test: Callable[[int], bool] = lambda n: eval(parameters["expr"], globals(), locals())  # pylint: disable=eval-used
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 1 and test(edge // 3)])
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and test(edge // 3)])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
