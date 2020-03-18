@@ -31,6 +31,13 @@ Once installed, try it inside of Python::
     True
     >>> S('shift.b.b.b.b')(a)  # Twist then shift
     Lamination (1, 6): 2, (1, 5): 3
+    >>> # Let's see what is going on:
+    >>> S('shift.b.b.b.b')(a).draw([(1, i) for i in range(9)])
+
+.. image:: images/ladder.png
+   :scale: 75 %
+   :alt: An arc on the ladder surface
+   :align: center
 
 External Links
 --------------

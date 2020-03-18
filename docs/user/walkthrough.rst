@@ -89,6 +89,37 @@ Of course, in this case we cannot tell whether two such laminations are equal (o
         raise ValueError("Can only determine equality between finitely supported laminations")
     ValueError: Can only determine equality between finitely supported laminations
 
+Visualisations
+--------------
+
+It's often hard to visualise or keep track of what is going on on these surfaces.
+To help with this, bigger can create pictures of laminations on parts of the surface::
+
+    >>> L = S.triangulation(lambda edge: 1 if edge % 3 != 2 else 0)
+    >>> L = S('a.a{n > 1}.a{n > 1}')(L)
+    >>> L.draw([-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+
+This is a pillow Image object and so if you are running bigger within a jupyter notebook it will be automatically rendered in your browser.
+
+.. image:: ../images/biflute.png
+   :scale: 75 %
+   :alt: A lamination on the biflute surface
+   :align: center
+
+If not then you may need to use its :meth:`show()` method to write the image to a temporary file and open it in your image viewer::
+
+    >>> L.draw([-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]).show()
+
+As well as the collection of edges to draw the lamination around, the :meth:`~bigger.lamination.Lamination.draw` method supports a number of optional arguments.
+This includes labels to place on the edges in the picture as well as the size of the image to produce::
+
+    >>> L.draw([-2, -1, 3, 4, 5, 6, 7, 8, 9], label='weight', w=800)
+
+.. image:: ../images/biflute_weights.png
+   :scale: 75 %
+   :alt: A lamination on the biflute surface labelled with weights
+   :align: center
+
 Operations on mapping classes
 -----------------------------
 
@@ -108,11 +139,3 @@ Since  it can manipulate curves, bigger can create the Dehn twist about a curve 
     >>> twist = S.triangulation({1: 1, 2: 1}).encode_twist()
     >>> twist(c), (twist * twist)(c), (twist**3)(c)
     (Lamination 2: 1, Lamination 1: 1, 2: 2, Lamination 1: 2, 2: 3)
-
-Visualisations
---------------
-
-It's often hard to visualise or keep track of what is going on on these surfaces.
-Eventually bigger will be able to show laminations using something like::
-
-    >>> bigger.show(c, {1, 2, 3, 4})
