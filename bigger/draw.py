@@ -22,6 +22,9 @@ MAX_DRAWABLE = 1000  # Maximum weight of a multicurve to draw fully.
 ZOOM_FRACTION = 0.8
 VERTEX_BUFFER = 0.2
 
+LAMINATION_COLOUR = "#555555"
+TRIANGLE_COLOURS = ["#bbbbbb", "#cccccc"]
+
 
 def deduplicate(items: List[Edge]) -> List[Edge]:
     """ Return the same list but without duplicates. """
@@ -168,7 +171,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
     layout = layout_triangulation(lamination.triangulation, edges, options["w"], options["h"])
 
     for index, triangle in enumerate(layout):
-        draw.polygon(layout[triangle], fill=["Gray", "LightGray"][index % 2])
+        draw.polygon(layout[triangle], fill=TRIANGLE_COLOURS[index % len(TRIANGLE_COLOURS)])
 
     master = max(abs(lamination(edge)) for triangle in layout for edge in triangle)
     if master > MAX_DRAWABLE:
@@ -178,7 +181,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
             sum_weights_0 = sum(weights_0)
             correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
             dual_weights = [bigger.half(sum_weights_0 - 2 * e + correction) for e in weights_0]
-            parallel_weights = [bigger.half(max(-weight, 0)) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+            parallel_weights = [max(-weight, 0) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
             vertices = layout[triangle]
             for i in range(3):
                 # Dual arcs.
@@ -199,7 +202,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
                     E1 = interpolate(vertices[i - 0], vertices[i - 1], scale_b)
                     S2 = interpolate(vertices[i - 2], vertices[i - 1], scale_a2)
                     E2 = interpolate(vertices[i - 0], vertices[i - 1], scale_b2)
-                    draw.polygon([S1, E1, E2, S2], fill="DarkGray")
+                    draw.polygon([S1, E1, E2, S2], fill=LAMINATION_COLOUR)
                 elif dual_weights[i] < 0:  # Terminal arc.
                     s_0 = (1 - 2 * VERTEX_BUFFER) * weights_0[i] / master
 
@@ -210,7 +213,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
                     E1 = vertices[i - 1]
                     S2 = interpolate(vertices[i - 0], vertices[i - 2], scale_a2)
                     E2 = vertices[i - 1]
-                    draw.polygon([S1, E1, E2, S2], fill="DarkGray")
+                    draw.polygon([S1, E1, E2, S2], fill=LAMINATION_COLOUR)
                 else:  # dual_weights[i] == 0:  # Nothing to draw.
                     pass
 
@@ -228,7 +231,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
             sum_weights_0 = sum(weights_0)
             correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
             dual_weights = [bigger.half(sum_weights_0 - 2 * e + correction) for e in weights_0]
-            parallel_weights = [bigger.half(max(-weight, 0)) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+            parallel_weights = [max(-weight, 0) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
             vertices = layout[triangle]
             for i in range(3):  # Dual arcs:
                 if dual_weights[i] > 0:
@@ -240,7 +243,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
 
                         S1 = interpolate(vertices[i - 2], vertices[i - 1], scale_a)
                         E1 = interpolate(vertices[i - 0], vertices[i - 1], scale_b)
-                        draw.line([S1, E1], fill="DarkGray", width=2)
+                        draw.line([S1, E1], fill=LAMINATION_COLOUR, width=2)
                 elif dual_weights[i] < 0:  # Terminal arc.
                     s_0 = 1 - 2 * VERTEX_BUFFER
                     for j in range(-dual_weights[i]):
@@ -248,7 +251,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
 
                         S1 = interpolate(vertices[i - 0], vertices[i - 2], scale_a)
                         E1 = vertices[i - 1]
-                        draw.line([S1, E1], fill="DarkGray", width=2)
+                        draw.line([S1, E1], fill=LAMINATION_COLOUR, width=2)
                 else:  # dual_weights[i] == 0:  # Nothing to draw.
                     pass
 
