@@ -43,6 +43,7 @@ def interpolate(A: Coord, B: Coord, r: float = 0.5) -> Coord:
 
     return (r * A[0] + (1 - r) * B[0], r * A[1] + (1 - r) * B[1])
 
+
 def add(A: Coord, B: Coord) -> Coord:
     """ Return the point A + B. """
 
@@ -280,7 +281,7 @@ def draw_lamination(lamination: "bigger.Lamination[Edge]", edges: List[Edge], **
                 text = ""
             w, h = draw.textsize(text)
             point = interpolate(vertices[i - 0], vertices[i - 2])
-            point = (point[0] - w/2, point[1] - h/2)
+            point = (point[0] - w / 2, point[1] - h / 2)
             for offset in OFFSETS:
                 draw.text(add(point, offset), text, fill="White", anchor="centre")
 
