@@ -8,6 +8,8 @@ from setuptools import setup, find_packages
 requirements = [
     'decorator',
     'pillow',
+    'typing',
+    'typing_extensions',
 ]
 
 def readme():
