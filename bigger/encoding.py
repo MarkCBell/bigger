@@ -1,10 +1,9 @@
 """ A module for representing and manipulating maps between Triangulations. """
 
-from typing import List, Iterator, Union, TypeVar, Callable, Generic, overload
+from typing import List, Iterator, Union, Callable, Generic, overload
 
 import bigger
-
-Edge = TypeVar("Edge")
+from bigger.types import Edge
 
 
 class Move(Generic[Edge]):

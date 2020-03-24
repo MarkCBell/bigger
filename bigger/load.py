@@ -5,6 +5,7 @@ from itertools import count
 from typing import Tuple, Iterable, Callable
 
 import bigger
+from .types import Triangle, FlatTriangle
 
 
 def integers() -> Iterable[int]:
@@ -22,7 +23,10 @@ def flute() -> "bigger.MCG[int]":
 
      - a_n which twists about the curve parallel to edges n and n+1
      - b_n which twists about the curve which separates punctures n and n+1
-     - a which twists about all an curves simultaneously
+     - a[p, k] which twists about all a_n curves where n mod p == k simultaneously
+     - a{expr n} which twists about all a_n curves when expr(n) is True
+
+    Note: a[p] == a[p, 0] and a == a[1].
     """
 
     #             #----2----#----5----#----8----#---
@@ -43,9 +47,13 @@ def flute() -> "bigger.MCG[int]":
     )
 
     twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>\d+)$")
+    twist_mod_re = re.compile(r"a(\[(?P<p>\d+)(, *(?P<k>-?\d+))?\])?$")
+    twist_expr_re = re.compile(r"a\{(?P<expr>.*)\}$")
 
     def generator(name: str) -> "bigger.Encoding[int]":
         twist_match = twist_re.match(name)
+        twist_mod_match = twist_mod_re.match(name)
+        twist_expr_match = twist_expr_re.match(name)
         if name == "a":
             isom = lambda edge: -1 if edge == -1 else edge + [0, +1, -1][edge % 3]
             return T.encode([(isom, isom), lambda edge: edge > 0 and edge % 3 == 2])
@@ -56,10 +64,32 @@ def flute() -> "bigger.MCG[int]":
                 return T({3 * n + 1: 1, 3 * n + 2: 1}).encode_twist()
             if parameters["curve"] == "b":
                 return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
+        elif twist_mod_match is not None:
+            parameters = twist_mod_match.groupdict()
+            p = int(parameters["p"]) if parameters["p"] is not None else 1
+            k = int(parameters["k"]) if parameters["k"] is not None else 0
+
+            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge // 3 % p == k and edge >= 0 else edge
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge // 3 % p == k and edge >= 0])
+        elif twist_expr_match is not None:
+            parameters = twist_expr_match.groupdict()
+            test: Callable[[int], bool] = lambda n: eval(parameters["expr"], globals(), locals())  # pylint: disable=eval-used
+            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) and edge >= 0 else edge
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and test(edge // 3) and edge >= 0])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
-    return bigger.MCG(T, generator)
+    def layout(triangle: Triangle) -> FlatTriangle:
+        if triangle[0] == -1:
+            return (0.0, 1.0), (-1.0, 0.5), (0.0, 0.0)
+        elif triangle[0] % 3 == 0:
+            n = triangle[0] // 3
+            return (n, 1.0), (n, 0.0), (n + 1.0, 1.0)
+        else:  # triangle[0] % 3 == 1:
+            n = triangle[0] // 3
+            return (n + 1.0, 1.0), (n, 0.0), (n + 1.0, 0.0)
+
+    return bigger.MCG(T, generator, layout)
 
 
 def biflute() -> "bigger.MCG[int]":
@@ -122,7 +152,15 @@ def biflute() -> "bigger.MCG[int]":
 
         raise ValueError("Unknown mapping class {}".format(name))
 
-    return bigger.MCG(T, generator)
+    def layout(triangle: Triangle) -> FlatTriangle:
+        if triangle[0] % 3 == 0:
+            n = triangle[0] // 3
+            return (n, 1.0), (n, 0.0), (n + 1.0, 1.0)
+        else:  # triangle[0] % 3 == 1:
+            n = triangle[0] // 3
+            return (n + 1.0, 1.0), (n, 0.0), (n + 1.0, 0.0)
+
+    return bigger.MCG(T, generator, layout)
 
 
 def ladder() -> "bigger.MCG[Tuple[int, int]]":

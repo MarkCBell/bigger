@@ -1,12 +1,11 @@
 """ A module for representing a triangulation of a punctured surface. """
 
 from functools import partial
-from typing import Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, TypeVar, Union, Any
+from typing import Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, Union, Any
 from PIL import Image  # type: ignore
 
 import bigger
-
-Edge = TypeVar("Edge")
+from bigger.types import Edge
 
 
 class IterableStore(Generic[Edge]):  # pylint: disable=too-few-public-methods

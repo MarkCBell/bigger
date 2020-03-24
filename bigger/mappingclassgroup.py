@@ -1,10 +1,9 @@
 """ A module for representing triangulations along with laminations and mapping classes on them. """
 
-from typing import Callable, Generic, TypeVar, Iterable
+from typing import Callable, Generic, Iterable, Optional
 
 import bigger  # pylint: disable=unused-import
-
-Edge = TypeVar("Edge")
+from .types import Edge, Triangle, FlatTriangle
 
 
 def splitter(strn: str) -> Iterable[str]:
@@ -25,9 +24,12 @@ def splitter(strn: str) -> Iterable[str]:
 class MappingClassGroup(Generic[Edge]):  # pylint: disable=too-few-public-methods
     """ A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names. """
 
-    def __init__(self, triangulation: "bigger.Triangulation[Edge]", generator: Callable[[str], "bigger.Encoding[Edge]"]) -> None:
+    def __init__(
+        self, triangulation: "bigger.Triangulation[Edge]", generator: Callable[[str], "bigger.Encoding[Edge]"], layout: Optional[Callable[[Triangle], FlatTriangle]] = None
+    ) -> None:
         self.triangulation = triangulation
         self.generator = generator
+        self.layout = layout
 
     def _helper(self, name: str) -> "bigger.Encoding[Edge]":
         try:

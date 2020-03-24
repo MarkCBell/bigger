@@ -1,16 +1,13 @@
 """ A module for making images of laminations. """
 
 from math import sin, cos, pi, ceil
-from typing import List, TypeVar, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Set, Optional
 import heapq
 
 from PIL import Image, ImageDraw  # type: ignore
 
 import bigger
-
-Edge = TypeVar("Edge")
-Triangle = Tuple[Edge, Edge, Edge]
-Coord = Tuple[float, float]
+from bigger.types import Edge, Triangle, Coord, FlatTriangle, SupportsLayout
 
 # Vectors to offset a label by to produce backing.
 OFFSETS = [(1.5 * cos(2 * pi * i / 12), 1.5 * sin(2 * pi * i / 12)) for i in range(12)]

@@ -1,13 +1,12 @@
 """ A module for representing laminations on Triangulations. """
 
 from itertools import islice
-from typing import Any, Iterable, Tuple, TypeVar, Generic, Callable, List
+from typing import Any, Iterable, Tuple, Generic, Callable, List
 from PIL import Image  # type: ignore
 
 import bigger  # pylint: disable=unused-import
+from bigger.types import Edge
 from bigger.decorators import memoize
-
-Edge = TypeVar("Edge")
 
 
 class Lamination(Generic[Edge]):
