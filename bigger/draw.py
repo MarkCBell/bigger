@@ -2,7 +2,7 @@
 
 from math import sin, cos, pi, ceil
 from typing import List, Tuple, Dict, Any, Set, Optional
-import heapq
+from queue import PriorityQueue
 
 from PIL import Image, ImageDraw  # type: ignore
 
@@ -89,17 +89,19 @@ def supporting_triangles(triangulation: "bigger.Triangulation[Edge]", edges: Lis
 
         # Expore out to find out which edges are in the interior.
         placed = set([start])
-        to_check = [(position_index.get(start[i], len(position_index)), (start, i)) for i in range(3) if start[i] in edge_set]  # A priority queue.
-        heapq.heapify(to_check)
-        while to_check:
-            _, (current, side) = heapq.heappop(to_check)
+        to_check = PriorityQueue()
+        for i in range(3):
+            if start[i] in edge_set:
+                to_check.put((position_index.get(start[i], len(position_index)), (start, i)))
+        while not to_check.empty():
+            _, (current, side) = to_check.get()
             other, _ = adjacent(triangulation, current, side)
             if other not in placed:
                 interior.add(current[side])
                 placed.add(other)
                 for other_side in range(3):
                     if other[other_side] != current[side] and other[other_side] in edge_set:
-                        heapq.heappush(to_check, (position_index.get(other[other_side], len(position_index)), (other, other_side)))
+                        to_check.put((position_index.get(other[other_side], len(position_index)), (other, other_side)))
 
     return ordered_components, interior
 
