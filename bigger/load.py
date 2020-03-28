@@ -231,7 +231,18 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
 
         raise ValueError("Unknown mapping class {}".format(name))
 
-    return bigger.MCG(T, generator)
+    def layout(triangle: Triangle) -> FlatTriangle:
+        n, k = triangle[0]
+        return {
+            0: ((n + 0.5, -1.0), (n, -1.0), (n, 0.0)),
+            2: ((n + 0.5, -1.0), (n, 0.0), (n + 0.5, 0.0)),
+            3: ((n + 0.5, 0.0), (n, 0.0), (n, 1.0)),
+            5: ((n + 0.5, 1.0), (n + 0.5, 0.0), (n, 1.0)),
+            4: ((n + 0.5, -1.0), (n + 0.5, 0.0), (n + 1.0, -1.0)),
+            7: ((n + 1.0, -1.0), (n + 0.5, 0.0), (n + 1.0, 0.0)),
+            }[k]
+
+    return bigger.MCG(T, generator, layout)
 
 
 def tree3() -> "bigger.MCG[Tuple[int, int]]":
