@@ -172,7 +172,7 @@ class Triangulation(Generic[Edge]):
                 return lamination(inv_isom(edge))
 
             if isinstance(lamination.support, set):
-                return self(weight, set(isom(arc) for arc in lamination.support))
+                return target(weight, set(isom(arc) for arc in lamination.support))
 
             return target(weight, lambda: (isom(arc) for arc in lamination.support))
 
