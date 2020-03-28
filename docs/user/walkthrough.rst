@@ -70,7 +70,7 @@ We can compute the image of a lamination under a mapping class::
     >>> h(c)
     Lamination 1: 1, 2: 2
 
-And, since the support of these laminations is finite and known, we can test whether two such laminations are equal::
+And, since these laminations have finite support and known, we can test whether two such laminations are equal::
 
     >>> S('a_1')(c) == c
     True
@@ -118,6 +118,15 @@ This includes labels to place on the edges in the picture as well as the size of
 .. image:: ../images/biflute_weights.png
    :scale: 75 %
    :alt: A lamination on the biflute surface labelled with weights
+   :align: center
+
+Importantly, the mapping class group provides a standard way of laying out its underlying triangulation::
+
+    >>> L.draw([-2, 0, 1, 3, 4, 6, 7, 9, 10], layout=S, label='edge')
+
+.. image:: ../images/biflute_layout.png
+   :scale: 75 %
+   :alt: A lamination on the biflute surface when laid out
    :align: center
 
 Operations on mapping classes
