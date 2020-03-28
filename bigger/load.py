@@ -217,7 +217,7 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
             return shift
         elif name == "a":
             a_isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]])
-            return T.encode([(a_isom, a_isom), lambda edge: edge[1] == 7])
+            return T.encode([(a_isom, a_isom), lambda edge: edge[1] == 8])
         elif name == "b":
             b_isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]])
             return T.encode([(b_isom, b_isom), lambda edge: edge[1] == 6])
