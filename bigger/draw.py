@@ -292,7 +292,8 @@ def draw_lamination(  # pylint: disable=too-many-branches
     num_components = len(components)
     p = max(range(1, num_components + 1), key=lambda p: min(options["w"] / p, options["h"] / ceil(float(num_components) / p)))
     q = int(ceil(float(num_components) / p))
-    r = min(options["w"] / p, options["h"] / q) * (1 + ZOOM_FRACTION) / 4
+    ww = options["w"] / p * (1 + ZOOM_FRACTION) / 4
+    hh = options["h"] / q * (1 + ZOOM_FRACTION) / 4
     dx = options["w"] / p
     dy = options["h"] / q
 
@@ -306,9 +307,9 @@ def draw_lamination(  # pylint: disable=too-many-branches
         for triangle in component:
             a, b, c = layout2[triangle]
             layout3[triangle] = (
-                ((a[0] - bb_w) * 2 * r / (bb_e - bb_w) - r, (a[1] - bb_n) * 2 * r / (bb_s - bb_n) - r),
-                ((b[0] - bb_w) * 2 * r / (bb_e - bb_w) - r, (b[1] - bb_n) * 2 * r / (bb_s - bb_n) - r),
-                ((c[0] - bb_w) * 2 * r / (bb_e - bb_w) - r, (c[1] - bb_n) * 2 * r / (bb_s - bb_n) - r),
+                ((a[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (a[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
+                ((b[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (b[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
+                ((c[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (c[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
             )
 
     # Move to correct region within the image.
