@@ -20,7 +20,7 @@ ZOOM_FRACTION = 0.9
 VERTEX_BUFFER = 0.2
 
 LAMINATION_COLOUR = "#555555"
-TRIANGLE_COLOURS = ["#bbbbbb", "#cccccc"]
+TRIANGLE_COLOURS = ["#b5b5b5", "#c0c0c0", "#c7c7c7", "#cfcfcf"]
 
 
 def deduplicate(items: List[Edge]) -> List[Edge]:
