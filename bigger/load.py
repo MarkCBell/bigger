@@ -240,7 +240,7 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
             5: ((n + 0.5, 1.0), (n + 0.5, 0.0), (n, 1.0)),
             4: ((n + 0.5, -1.0), (n + 0.5, 0.0), (n + 1.0, -1.0)),
             7: ((n + 1.0, -1.0), (n + 0.5, 0.0), (n + 1.0, 0.0)),
-            }[k]
+        }[k]
 
     return bigger.MCG(T, generator, layout)
 
