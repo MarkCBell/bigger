@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 *.py[cod]
 *$py.class
+.ipynb_checkpoints/
 
 # C extensions
 *.so
@@ -86,4 +87,5 @@ Session.vim
 # Misc
 scratch*
 experiments
+Untitled*.ipynb
 
