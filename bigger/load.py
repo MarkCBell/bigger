@@ -81,8 +81,10 @@ def flute() -> "bigger.MCG[int]":
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge >= 0 and test(edge // 3) else edge
             return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge >= 0 and test(edge // 3)])
         if curve == "b":
-            n = int(re.match(r"b_(?P<n>-?\d+)", name).groupdict()["n"])
-            return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
+            parameters = re.match(r"b_(?P<n>-?\d+)", name)
+            if parameters is not None:
+                n = int(parameters.groupdict()["n"])
+                return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -137,8 +139,10 @@ def biflute() -> "bigger.MCG[int]":
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
             return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and test(edge // 3)])
         if curve == "b":
-            n = int(re.match(r"b_(?P<n>-?\d+)", name).groupdict()["n"])
-            return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
+            parameters = re.match(r"b_(?P<n>-?\d+)", name)
+            if parameters is not None:
+                n = int(parameters.groupdict()["n"])
+                return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
