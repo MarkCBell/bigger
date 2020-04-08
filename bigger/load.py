@@ -19,7 +19,7 @@ def integers() -> Iterable[int]:
 def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[Any], bool]]:
     """ Return a curve and a test to apply for which of it's components to twist. """
 
-    twist_match = re.match(r"(?P<curve>[%s])_(?P<n>\d+)$" % (curve_names), name)
+    twist_match = re.match(r"(?P<curve>[%s])_(?P<n>-?\d+)$" % (curve_names), name)
     twist_mod_match = re.match(r"(?P<curve>[%s])(\[(?P<p>\d+)(, *(?P<k>-?\d+))?\])?$" % (curve_names), name)
     twist_expr_match = re.match(r"(?P<curve>[%s])\{(?P<expr>.*)\}$" % (curve_names), name)
 
@@ -80,6 +80,9 @@ def flute() -> "bigger.MCG[int]":
         if curve == "a":
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge >= 0 and test(edge // 3) else edge
             return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge >= 0 and test(edge // 3)])
+        if curve == "b":
+            n = int(re.match(r"b_(?P<n>-?\d+)", name).groupdict()["n"])
+            return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -133,6 +136,9 @@ def biflute() -> "bigger.MCG[int]":
         if curve == "a":
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
             return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and test(edge // 3)])
+        if curve == "b":
+            n = int(re.match(r"b_(?P<n>-?\d+)", name).groupdict()["n"])
+            return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
