@@ -69,6 +69,8 @@ class Lamination(Generic[Edge]):
 
         Note that in the future this should do curvers full Lamination shortening algorithm. """
 
+        assert self.is_finitely_supported()
+
         lamination = self
         complexity = lamination.complexity()
         conjugator = lamination.triangulation.encode_identity()
@@ -76,7 +78,7 @@ class Lamination(Generic[Edge]):
         while not lamination.is_short():
             time_since_last_progress += 1
             best_complexity, best_h = complexity, lamination.triangulation.encode_identity()
-            for edge in lamination.support:
+            for edge in lamination.support:  # Uses finite support assumption.
                 h = lamination.triangulation.encode_flip({edge})
                 new_complexity = h(lamination).complexity()
                 if new_complexity <= best_complexity:
