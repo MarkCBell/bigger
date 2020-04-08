@@ -2,7 +2,7 @@
 
 import re
 from itertools import count
-from typing import Tuple, Iterable, Callable
+from typing import Tuple, Iterable, Callable, Any
 
 import bigger
 from .types import Triangle, FlatTriangle
@@ -14,6 +14,34 @@ def integers() -> Iterable[int]:
     for i in count():
         yield i
         yield ~i
+
+
+def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[Any], bool]]:
+    """ Return a curve and a test to apply for which of it's components to twist. """
+
+    twist_match = re.match(r"(?P<curve>[%s])_(?P<n>\d+)$" % (curve_names), name)
+    twist_mod_match = re.match(r"(?P<curve>[%s])(\[(?P<p>\d+)(, *(?P<k>-?\d+))?\])?$" % (curve_names), name)
+    twist_expr_match = re.match(r"(?P<curve>[%s])\{(?P<expr>.*)\}$" % (curve_names), name)
+
+    if twist_match is not None:
+        parameters = twist_match.groupdict()
+        curve = parameters["curve"]
+        n = int(parameters["n"])
+        test = lambda edge: edge == n
+    elif twist_mod_match is not None:
+        parameters = twist_mod_match.groupdict()
+        curve = parameters["curve"]
+        p = int(parameters["p"]) if parameters["p"] is not None else 1
+        k = int(parameters["k"]) if parameters["k"] is not None else 0
+        test = lambda edge: edge % p == k
+    elif twist_expr_match is not None:
+        parameters = twist_expr_match.groupdict()
+        curve = parameters["curve"]
+        test = lambda n: eval(parameters["expr"], globals(), locals())  # pylint: disable=eval-used
+    else:
+        raise ValueError("Unknown mapping class {}".format(name))
+
+    return curve, test
 
 
 def flute() -> "bigger.MCG[int]":
@@ -46,36 +74,12 @@ def flute() -> "bigger.MCG[int]":
         else [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
     )
 
-    twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>\d+)$")
-    twist_mod_re = re.compile(r"a(\[(?P<p>\d+)(, *(?P<k>-?\d+))?\])?$")
-    twist_expr_re = re.compile(r"a\{(?P<expr>.*)\}$")
-
     def generator(name: str) -> "bigger.Encoding[int]":
-        twist_match = twist_re.match(name)
-        twist_mod_match = twist_mod_re.match(name)
-        twist_expr_match = twist_expr_re.match(name)
-        if name == "a":
-            isom = lambda edge: -1 if edge == -1 else edge + [0, +1, -1][edge % 3]
-            return T.encode([(isom, isom), lambda edge: edge > 0 and edge % 3 == 2])
-        elif twist_match is not None:
-            parameters = twist_match.groupdict()
-            n = int(parameters["n"])
-            if parameters["curve"] == "a":
-                return T({3 * n + 1: 1, 3 * n + 2: 1}).encode_twist()
-            if parameters["curve"] == "b":
-                return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
-        elif twist_mod_match is not None:
-            parameters = twist_mod_match.groupdict()
-            p = int(parameters["p"]) if parameters["p"] is not None else 1
-            k = int(parameters["k"]) if parameters["k"] is not None else 0
+        curve, test = extract_curve_and_test("ab", name)
 
-            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge // 3 % p == k and edge >= 0 else edge
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge // 3 % p == k and edge >= 0])
-        elif twist_expr_match is not None:
-            parameters = twist_expr_match.groupdict()
-            test: Callable[[int], bool] = lambda n: eval(parameters["expr"], globals(), locals())  # pylint: disable=eval-used
-            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) and edge >= 0 else edge
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and test(edge // 3) and edge >= 0])
+        if curve == "a":
+            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge >= 0 and test(edge // 3) else edge
+            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge >= 0 and test(edge // 3)])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -120,33 +124,13 @@ def biflute() -> "bigger.MCG[int]":
 
     shift = T.encode_isometry(lambda edge: edge + 3, lambda edge: edge - 3)
 
-    twist_re = re.compile(r"(?P<curve>[ab])_(?P<n>-?\d+)$")
-    twist_mod_re = re.compile(r"a(\[(?P<p>\d+)(, *(?P<k>-?\d+))?\])?$")
-    twist_expr_re = re.compile(r"a\{(?P<expr>.*)\}$")
-
     def generator(name: str) -> "bigger.Encoding[int]":
-        twist_match = twist_re.match(name)
-        twist_mod_match = twist_mod_re.match(name)
-        twist_expr_match = twist_expr_re.match(name)
         if name in ("s", "shift"):
             return shift
-        elif twist_match is not None:
-            parameters = twist_match.groupdict()
-            n = int(parameters["n"])
-            if parameters["curve"] == "a":
-                return T({3 * n + 1: 1, 3 * n + 2: 1}).encode_twist()
-            if parameters["curve"] == "b":
-                return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
-        elif twist_mod_match is not None:
-            parameters = twist_mod_match.groupdict()
-            p = int(parameters["p"]) if parameters["p"] is not None else 1
-            k = int(parameters["k"]) if parameters["k"] is not None else 0
 
-            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge // 3 % p == k else edge
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge // 3 % p == k])
-        elif twist_expr_match is not None:
-            parameters = twist_expr_match.groupdict()
-            test: Callable[[int], bool] = lambda n: eval(parameters["expr"], globals(), locals())  # pylint: disable=eval-used
+        curve, test = extract_curve_and_test("ab", name)
+
+        if curve == "a":
             isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
             return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and test(edge // 3)])
 
@@ -209,25 +193,18 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
 
     shift = T.encode_isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
-    twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>-?\d+)$")
-
-    def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
-        twist_match = twist_re.match(name)
+    def generator(name: str) -> "bigger.Encoding[Edge]":
         if name in ("s", "shift"):
             return shift
-        elif name == "a":
-            a_isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]])
-            return T.encode([(a_isom, a_isom), lambda edge: edge[1] == 8])
-        elif name == "b":
-            b_isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]])
-            return T.encode([(b_isom, b_isom), lambda edge: edge[1] == 6])
-        elif twist_match is not None:
-            parameters = twist_match.groupdict()
-            n = int(parameters["n"])
-            if parameters["curve"] == "a":
-                return T({(n, 7): 1, (n, 8): 1}).encode_twist()
-            if parameters["curve"] == "b":
-                return T({(n, 5): 1, (n, 6): 1}).encode_twist()
+
+        curve, test = extract_curve_and_test("ab", name)
+
+        if curve == "a":
+            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]]) if test(edge[0]) else edge
+            return T.encode([(isom, isom), lambda edge: edge[1] == 8 and test(edge[0])])
+        if curve == "b":
+            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]]) if test(edge[0]) else edge
+            return T.encode([(isom, isom), lambda edge: edge[1] == 6 and test(edge[0])])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -281,18 +258,12 @@ def tree3() -> "bigger.MCG[Tuple[int, int]]":
 
     T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in range(4)), link)
 
-    twist_re = re.compile(r"(?P<curve>[aAbB])_(?P<n>-?\d+)$")
-
     def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
-        twist_match = twist_re.match(name)
-        if name == "a":
-            a_isom = lambda edge: (edge[0], [1, 0, 2, 3][edge[1]])
-            return T.encode([(a_isom, a_isom), lambda edge: edge[1] == 0])
-        elif twist_match is not None:
-            parameters = twist_match.groupdict()
-            n = int(parameters["n"])
-            if parameters["curve"] == "a":
-                return T({(n, 0): 1, (n, 1): 1}).encode_twist()
+        curve, test = extract_curve_and_test("ab", name)
+
+        if curve == "a":
+            isom = lambda edge: (edge[0], [1, 0, 2, 3][edge[1]]) if test(edge[0]) else edge
+            return T.encode([(isom, isom), lambda edge: edge[1] == 0 and test(edge[0])])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
