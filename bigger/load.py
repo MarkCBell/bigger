@@ -269,7 +269,7 @@ def tree3() -> "bigger.MCG[Tuple[int, int]]":
     T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in range(4)), link)
 
     def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
-        curve, test = extract_curve_and_test("ab", name)
+        curve, test = extract_curve_and_test("a", name)
 
         if curve == "a":
             isom = lambda edge: (edge[0], [1, 0, 2, 3][edge[1]]) if test(edge[0]) else edge
