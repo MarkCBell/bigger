@@ -18,7 +18,7 @@ def readme():
 
 setup(
     name='bigger',
-    version='0.1.0',
+    version='0.2.0',
     description='For studying big mapping classes',
     long_description=readme(),
     author='Mark Bell',
