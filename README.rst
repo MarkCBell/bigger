@@ -22,18 +22,22 @@ Once installed, try it inside of Python::
 
     >>> import bigger
     >>> S = bigger.load.ladder()  # The infinite-genus two-ended surface
-    >>> a = S.triangulation({(0, 5): -1})  # An arc
-    >>> a
-    Lamination (0, 5): -1
+    
+    # Let's make a finite curve
+    >>> c = S.triangulation({(0, 5): 1, (0, 6): 1})
+    >>> c
+    Lamination (0, 5): 1, (0, 6): 1
 
-    >>> b = S.triangulation(lambda e: 2 if e[1] in {2, 3, 4, 6} else 0)  # An infinite arc
-    >>> b
+    # Let's make an infinite lamination
+    >>> a = S.triangulation(lambda e: 2 if e[1] in {2, 3, 4, 6} else 0)
+    >>> a
     Infinitely supported lamination (0, 0): 0, (0, 1): 0, (0, 2): 2, (0, 3): 2, (0, 4): 2, (0, 5): 0, (0, 6): 2, (0, 7): 0, (0, 8): 0, (-1, 0): 0 ...
 
-    >>> c = S('b{n >= 0}.a[2].a.a')(b)  # Apply some mapping classes
-    >>> # Let's make the picture at the top
+    # Let's make the picture at the top
+    >>> b = S('b{n >= 0}.a[2].a.a')(a)  # Apply some mapping classes
+    # The edges that we are interested in
     >>> edges = [(i, j) for i in range(-1, 2) for j in range(2, 9)] + [(i, 0) for i in range(2)]
-    >>> c.draw(edges, layout=S, w=800)
+    >>> b.draw(edges, layout=S, w=800)
 
 External Links
 --------------
