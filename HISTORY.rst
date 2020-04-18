@@ -2,7 +2,12 @@
 History
 =======
 
-0.2.0 (2020-04-07)
+0.2.1 (2020-04-??)
+------------------
+
+* Made flute and biflute b twists support expression notation.
+
+0.2.0 (2020-04-17)
 ------------------
 
 * Triangulations and laminations can now be drawn.
