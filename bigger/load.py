@@ -51,10 +51,14 @@ def flute() -> "bigger.MCG[int]":
 
      - a_n which twists about the curve parallel to edges n and n+1
      - b_n which twists about the curve which separates punctures n and n+1
-     - a[p, k] which twists about all a_n curves where n mod p == k simultaneously
-     - a{expr n} which twists about all a_n curves when expr(n) is True
+     - a{expr(n)} which twists about all a_n curves when expr(n) is True
+     - b{expr(n)} which twists about all b_n curves when expr(n) is True
 
-    Note: a[p] == a[p, 0] and a == a[1].
+    Shortcuts:
+
+     - a[p, k] == a{n % p == k}
+     - a[p] == a[p, 0]
+     - a == a[1]
     """
 
     #             #----2----#----5----#----8----#---
@@ -78,13 +82,39 @@ def flute() -> "bigger.MCG[int]":
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge >= 0 and test(edge // 3) else edge
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and edge >= 0 and test(edge // 3)])
+            a_isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if edge >= 0 and test(edge // 3) else edge
+            return T.encode([(a_isom, a_isom), lambda edge: edge % 3 == 2 and edge >= 0 and test(edge // 3)])
         if curve == "b":
-            parameters = re.match(r"b_(?P<n>-?\d+)", name)
-            if parameters is not None:
-                n = int(parameters.groupdict()["n"])
-                return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
+
+            def b_isom(edge: int) -> int:
+                if edge % 3 == 0:
+                    if test(edge // 3):
+                        return edge + 3
+                    if test(edge // 3 - 1):
+                        return edge - 3
+                    return edge
+                if edge % 3 == 1:
+                    if test(edge // 3 - 1):
+                        return edge - 6
+                    if test(edge // 3 + 1):
+                        return edge + 6
+                return edge
+
+            prefix = T.encode(
+                [
+                    lambda edge: edge % 3 == 2 and (test(edge // 3 - 1) or test(edge // 3 + 1)),
+                    lambda edge: edge % 3 == 1 and test(edge // 3),
+                    lambda edge: edge % 3 == 0 and (test(edge // 3) or test(edge // 3 - 1)),
+                ]
+            )
+            twist = prefix.target.encode(
+                [
+                    (b_isom, b_isom),
+                    lambda edge: edge % 3 == 1 and (test(edge // 3 - 1) or test(edge // 3 + 1)),
+                    lambda edge: edge % 3 == 0 and (test(edge // 3) or test(edge // 3 - 1)),
+                ]
+            )
+            return ~prefix * twist * prefix
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -108,11 +138,17 @@ def biflute() -> "bigger.MCG[int]":
 
      - a_n which twists about the curve parallel to edges n and n+1
      - b_n which twists about the curve which separates punctures n and n+1
-     - a[p, k] which twists about all a_n curves where n mod p == k simultaneously
-     - a{expr n} which twists about all a_n curves when expr(n) is True
+     - a{expr(n)} which twists about all a_n curves when expr(n) is True
+     - b{expr(n)} which twists about all b_n curves when expr(n) is True
      - s which shifts the surface down
 
-    Note: a[p] == a[p, 0] and a == a[1].
+    Shortcuts:
+
+     - a[p, k] == a{n % p == k}
+     - a[p] == a[p, 0]
+     - a == a[1]
+
+    Note: Since b_n and b_{n+1} intersect, any b expression cannot be true for consecutive values.
     """
 
     #  ---#----2----#----5----#----8----#---
@@ -136,13 +172,39 @@ def biflute() -> "bigger.MCG[int]":
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
-            return T.encode([(isom, isom), lambda edge: edge % 3 == 2 and test(edge // 3)])
+            a_isom = lambda edge: (edge + [0, +1, -1][edge % 3]) if test(edge // 3) else edge
+            return T.encode([(a_isom, a_isom), lambda edge: edge % 3 == 2 and test(edge // 3)])
         if curve == "b":
-            parameters = re.match(r"b_(?P<n>-?\d+)", name)
-            if parameters is not None:
-                n = int(parameters.groupdict()["n"])
-                return T({3 * n - 2: 1, 3 * n - 1: 1, 3 * n + 0: 2, 3 * n + 1: 2, 3 * n + 3: 2, 3 * n + 4: 1, 3 * n + 5: 1}).encode_twist()
+
+            def b_isom(edge: int) -> int:
+                if edge % 3 == 0:
+                    if test(edge // 3):
+                        return edge + 3
+                    if test(edge // 3 - 1):
+                        return edge - 3
+                    return edge
+                if edge % 3 == 1:
+                    if test(edge // 3 - 1):
+                        return edge - 6
+                    if test(edge // 3 + 1):
+                        return edge + 6
+                return edge
+
+            prefix = T.encode(
+                [
+                    lambda edge: edge % 3 == 2 and (test(edge // 3 - 1) or test(edge // 3 + 1)),
+                    lambda edge: edge % 3 == 1 and test(edge // 3),
+                    lambda edge: edge % 3 == 0 and (test(edge // 3) or test(edge // 3 - 1)),
+                ]
+            )
+            twist = prefix.target.encode(
+                [
+                    (b_isom, b_isom),
+                    lambda edge: edge % 3 == 1 and (test(edge // 3 - 1) or test(edge // 3 + 1)),
+                    lambda edge: edge % 3 == 0 and (test(edge // 3) or test(edge // 3 - 1)),
+                ]
+            )
+            return ~prefix * twist * prefix
 
         raise ValueError("Unknown mapping class {}".format(name))
 
