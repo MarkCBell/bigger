@@ -8,6 +8,7 @@ from .types import Edge, Triangle, FlatTriangle
 
 def splitter(strn: str) -> Iterable[str]:
     """ Break strn into words on .'s except when they are inside braces. """
+
     start = 0
     brackets = 0
     for index, letter in enumerate(strn):
@@ -18,7 +19,35 @@ def splitter(strn: str) -> Iterable[str]:
             brackets += 1
         elif letter == "}":
             brackets -= 1
+
+        if brackets < 0:
+            raise ValueError("Mismatched braces")
+
+    if brackets:
+        raise ValueError("Mismatched braces")
+
     yield strn[start:]
+
+
+def swapcase(strn: str) -> str:
+    """ Swapcase of strn, except for items that are inside braces. """
+
+    output = []
+    brackets = 0
+    for letter in strn:
+        output.append(letter if brackets else letter.swapcase())
+        if letter == "{":
+            brackets += 1
+        elif letter == "}":
+            brackets -= 1
+
+        if brackets < 0:
+            raise ValueError("Mismatched braces")
+
+    if brackets:
+        raise ValueError("Mismatched braces")
+
+    return "".join(output)
 
 
 class MappingClassGroup(Generic[Edge]):  # pylint: disable=too-few-public-methods
@@ -35,7 +64,7 @@ class MappingClassGroup(Generic[Edge]):  # pylint: disable=too-few-public-method
         try:
             return self.generator(name)
         except ValueError:
-            return ~(self.generator(name.swapcase()))
+            return ~(self.generator(swapcase(name)))
 
     def __call__(self, strn: str) -> "bigger.Encoding[Edge]":
         sequence = [item for name in splitter(strn) for item in self._helper(name).sequence]
