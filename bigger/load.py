@@ -45,7 +45,7 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
 
 
 def flute() -> "bigger.MCG[int]":
-    """ The infinitely punctured sphere, with punctures that accumulate in one direction.
+    """The infinitely punctured sphere, with punctures that accumulate in one direction.
 
     With mapping classes:
 
@@ -132,7 +132,7 @@ def flute() -> "bigger.MCG[int]":
 
 
 def biflute() -> "bigger.MCG[int]":
-    """ The infinitely punctured sphere, with punctures that accumulate in two directions.
+    """The infinitely punctured sphere, with punctures that accumulate in two directions.
 
     With mapping classes:
 
@@ -160,7 +160,8 @@ def biflute() -> "bigger.MCG[int]":
     #  ---#----2----#----5----#----8----#---
 
     T = bigger.Triangulation(
-        integers, lambda edge: [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
+        integers,
+        lambda edge: [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
     )
 
     shift = T.encode_isometry(lambda edge: edge + 3, lambda edge: edge - 3)
@@ -220,7 +221,7 @@ def biflute() -> "bigger.MCG[int]":
 
 
 def ladder() -> "bigger.MCG[Tuple[int, int]]":
-    """ The infinite-genus, two-ended surface.
+    """The infinite-genus, two-ended surface.
 
     With mapping classes:
 
@@ -295,7 +296,7 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
 
 
 def tree3() -> "bigger.MCG[Tuple[int, int]]":
-    """ The uncountably-punctured sphere.
+    """The uncountably-punctured sphere.
 
     With mapping classes:
 
