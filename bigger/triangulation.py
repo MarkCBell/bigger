@@ -19,14 +19,14 @@ class IterableStore(Generic[Edge]):  # pylint: disable=too-few-public-methods
 
 
 class Triangulation(Generic[Edge]):
-    """ A triangulation of a (possibly infinite type) surface.
+    """A triangulation of a (possibly infinite type) surface.
 
     The triangulation is specified via two functions:
 
      - edges: which returns an iterable over the edges of the triangulation, and
      - link: which maps an edge to its link.
 
-    Note that this cannot be used to define S_{1,1} since its edge links are invariant under the hyperelliptic involution. """
+    Note that this cannot be used to define S_{1,1} since its edge links are invariant under the hyperelliptic involution."""
 
     def __init__(self, edges: Union[Iterable[Edge], Callable[[], Iterable[Edge]]], link: Callable[[Edge], Tuple[Edge, Edge, Edge, Edge]]) -> None:
         # Use the following for reference:
@@ -69,10 +69,10 @@ class Triangulation(Generic[Edge]):
         return iter(self.edges)
 
     def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> "bigger.Encoding[Edge]":
-        """ Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
+        """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
         Alternatively, this can be given a set of Edges and will use membership of this set to test which edges flip.
-        Note that if :attr:`is_flipped` is True for an Edge then it must be False for all edge in its link. """
+        Note that if :attr:`is_flipped` is True for an Edge then it must be False for all edge in its link."""
 
         if isinstance(is_flipped, set):
             # Start again with the function lambda edge: edge in is_flipped.
@@ -204,9 +204,10 @@ class Triangulation(Generic[Edge]):
         return self.encode_isometry_from_dict(dict())
 
     def encode(
-        self, sequence: List[Union[Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Callable[[Edge], bool], Edge, Set[Edge], Dict[Edge, Edge]]],
+        self,
+        sequence: List[Union[Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Callable[[Edge], bool], Edge, Set[Edge], Dict[Edge, Edge]]],
     ) -> "bigger.Encoding[Edge]":
-        """ Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
+        """Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
 
         There are several conventions that allow these to be specified by a smaller amount of information:
 
@@ -214,7 +215,7 @@ class Triangulation(Generic[Edge]):
          - A dict or pair of callables is used to encode an isomety.
          - Otherwise, it is assumed to be the label of an edge to flip.
 
-        The sequence is read in reverse in order to respect composition. """
+        The sequence is read in reverse in order to respect composition."""
         h = self.encode_identity()
         for term in reversed(sequence):
             if isinstance(term, set) or callable(term):

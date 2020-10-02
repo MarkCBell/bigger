@@ -6,10 +6,10 @@
 from setuptools import setup, find_packages
 
 requirements = [
-    'decorator',
-    'pillow',
-    'typing',
-    'typing_extensions',
+    'decorator>=4.3.0',
+    'pillow>=7',
+    'typing>=3.7',
+    'typing_extensions>=3.7',
 ]
 
 def readme():

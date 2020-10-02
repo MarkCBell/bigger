@@ -107,10 +107,10 @@ def supporting_triangles(triangulation: "bigger.Triangulation[Edge]", edges: Lis
 
 
 def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", components: List[List[Triangle]], interior: Set[Edge]) -> Dict[Triangle, FlatTriangle]:
-    """ Return a dictionary mapping the triangles that meet the given edges to coordinates in the plane.
+    """Return a dictionary mapping the triangles that meet the given edges to coordinates in the plane.
 
     Triangle T is mapped to ((x1, y1), (x2, y2), (x3, y3)) where (xi, yi) is at the tail of side i of T when oriented anti-clockwise.
-    Coordinate are within the w x h rectangle. """
+    Coordinate are within the w x h rectangle."""
 
     r = 1000.0
 
