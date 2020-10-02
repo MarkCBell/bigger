@@ -10,9 +10,9 @@ from bigger.decorators import memoize
 
 
 class Lamination(Generic[Edge]):
-    """ A measured lamination on a :class:`~bigger.triangulation.Triangulation`.
+    """A measured lamination on a :class:`~bigger.triangulation.Triangulation`.
 
-    The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure. """
+    The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure."""
 
     def __init__(self, triangulation: "bigger.Triangulation[Edge]", weight: Callable[[Edge], int], support: Iterable[Edge]) -> None:
         self.triangulation = triangulation
@@ -59,15 +59,15 @@ class Lamination(Generic[Edge]):
         return sum(max(self(edge), 0) for edge in self.support)
 
     def is_short(self) -> bool:
-        """ Return whether this Lamination intersects its underlying Triangulation exactly twice.
+        """Return whether this Lamination intersects its underlying Triangulation exactly twice.
 
-        Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short. """
+        Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short."""
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support)
 
     def shorten(self) -> Tuple["bigger.Lamination[Edge]", "bigger.Encoding[Edge]"]:
-        """ Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
+        """Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
 
-        Note that in the future this should do curvers full Lamination shortening algorithm. """
+        Note that in the future this should do curvers full Lamination shortening algorithm."""
 
         assert self.is_finitely_supported()
 
@@ -96,9 +96,9 @@ class Lamination(Generic[Edge]):
         return lamination, conjugator
 
     def encode_twist(self) -> "bigger.Encoding[Edge]":
-        """ Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
+        """Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
 
-        Note that this currently only works on non-isolating curves. """
+        Note that this currently only works on non-isolating curves."""
         short, conjugator = self.shorten()
 
         # Use the following for reference:
