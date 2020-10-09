@@ -37,7 +37,7 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
     elif twist_expr_match is not None:
         parameters = twist_expr_match.groupdict()
         curve = parameters["curve"]
-        test = lambda n: eval(parameters["expr"], globals(), locals())  # pylint: disable=eval-used
+        test = lambda n: eval(parameters["expr"], {'n': n, **globals()})  # pylint: disable=eval-used
     else:
         raise ValueError("Unknown mapping class {}".format(name))
 
