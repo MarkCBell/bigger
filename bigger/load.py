@@ -37,7 +37,7 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
     elif twist_expr_match is not None:
         parameters = twist_expr_match.groupdict()
         curve = parameters["curve"]
-        test = lambda n: eval(parameters["expr"], {'n': n, **globals()})  # pylint: disable=eval-used
+        test = lambda n: eval(parameters["expr"], {"n": n, **globals()})  # pylint: disable=eval-used
     else:
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -337,6 +337,77 @@ def tree3() -> "bigger.MCG[Tuple[int, int]]":
         if curve == "a":
             isom = lambda edge: (edge[0], [1, 0, 2, 3][edge[1]]) if test(edge[0]) else edge
             return T.encode([(isom, isom), lambda edge: edge[1] == 0 and test(edge[0])])
+
+        raise ValueError("Unknown mapping class {}".format(name))
+
+    return bigger.MCG(T, generator)
+
+
+def cantor() -> "bigger.MCG[Tuple[int, int]]":
+    """A sphere minus a cantor set.
+
+    With mapping classes:
+
+     - a_n which twists about the curve about the nth hole
+    """
+
+    Edge = Tuple[int, int]
+    Link = Tuple[Edge, Edge, Edge, Edge]
+    POS, EQ, NEG = +1, 0, -1
+
+    def invert(sign: int, X: Link) -> Link:
+        return X if sign == POS else (X[1], X[0], X[3], X[2])
+
+    def link(edge: Edge) -> Link:
+        n, k = edge
+        if k == EQ:  # Equator
+            if n == -1:
+                return ((2, POS), (0, POS), (0, NEG), (2, NEG))
+            elif n == 0:
+                return ((1, POS), (0, POS), (0, NEG), (1, NEG))
+            else:  # n > 0
+                return ((3 * n + 2, POS), (3 * n, POS), (3 * n, NEG), (3 * n + 2, NEG))
+
+        # Northern / Southern hemisphere.
+        if n == 0:
+            return invert(k, ((0, EQ), (1, k), (-1, EQ), (2, k)))
+        elif n == 1:
+            return invert(k, ((4, k), (3, k), (0, k), (0, EQ)))
+        elif n == 2:
+            return invert(k, ((0, k), (-1, EQ), (7, k), (6, k)))
+        N, r = divmod(n, 3)
+        assert N > 0
+        incoming = 3 * ((N - 1) // 2) + (1 if N % 2 else 2)
+        if r == 0:
+            return invert(k, ((incoming, k), (n + 1, k), (N, EQ), (n + 2, k)))
+        elif r == 1:
+            return invert(k, ((n - 1, k), (incoming, k), (6 * N + 4, k), (6 * N + 3, k)))
+        else:  # r == 2:
+            return invert(k, ((n - 2, k), (N, EQ), (6 * N + 7, k), (6 * N + 6, k)))
+
+    T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in [+1, 0, -1]), link)
+
+    def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
+        twist_match = re.match(r"a_(?P<n>-?\d+)$", name)
+
+        if twist_match is not None:
+            parameters = twist_match.groupdict()
+            N = int(parameters["n"])
+            if N == 0:
+                X = [(0, EQ), (0, POS), (-1, EQ)]
+            else:
+                X = [(0, EQ), (N, EQ), (3 * N, POS)]
+                while N:
+                    low_N = (N - 1) // 2
+                    if N % 2:  # Go up and right.
+                        X.append((3 * low_N + 1, POS))
+                    else:  # Go up and left.
+                        X.append((3 * low_N + 2, POS))
+                        X.append((3 * low_N, POS))
+                    N = low_N
+
+            curve = T(dict(((x, y * s), 1) for x, y in X for s in [+1, -1]))
+            return curve.encode_twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
