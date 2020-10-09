@@ -27,6 +27,17 @@ Biflute
 
 .. autofunction:: bigger.load.biflute
 
+Cantor
+------
+
+.. image:: ../figures/cantor.svg
+    :height: 400
+    :alt: Cantor
+    :target: ../_images/cantor.svg
+    :align: center
+
+.. autofunction:: bigger.load.cantor
+
 Ladder
 ------
 
