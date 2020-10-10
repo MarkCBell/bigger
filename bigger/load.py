@@ -349,6 +349,7 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":
     With mapping classes:
 
      - a_n which twists about the curve about the nth hole
+     - b_n which twists about the curve about the nth hole
     """
 
     Edge = Tuple[int, int]
@@ -376,7 +377,6 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":
         elif n == 2:
             return invert(k, ((0, k), (-1, EQ), (7, k), (6, k)))
         N, r = divmod(n, 3)
-        assert N > 0
         incoming = 3 * ((N - 1) // 2) + (1 if N % 2 else 2)
         if r == 0:
             return invert(k, ((incoming, k), (n + 1, k), (N, EQ), (n + 2, k)))
@@ -388,26 +388,47 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":
     T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in [+1, 0, -1]), link)
 
     def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
-        twist_match = re.match(r"a_(?P<n>-?\d+)$", name)
+        twist_match = re.match(r"(?P<curve>[ab])_(?P<n>-?\d+)$", name)
+        rotate_match = re.match(r"r$", name)
 
         if twist_match is not None:
             parameters = twist_match.groupdict()
+            curve_name = parameters["curve"]
             N = int(parameters["n"])
             if N == 0:
                 X = [(0, EQ), (0, POS), (-1, EQ)]
             else:
-                X = [(0, EQ), (N, EQ), (3 * N, POS)]
+                X = [(-1, EQ), (N, EQ), (3 * N, POS)]
                 while N:
                     low_N = (N - 1) // 2
-                    if N % 2:  # Go up and right.
-                        X.append((3 * low_N + 1, POS))
-                    else:  # Go up and left.
-                        X.append((3 * low_N + 2, POS))
+                    X.append((3 * low_N + (1 if N % 2 else 2), POS))
+                    if (N % 2 == 0) == (curve_name == "a" or low_N > 0):  # Only difference to a curve.
                         X.append((3 * low_N, POS))
                     N = low_N
 
             curve = T(dict(((x, y * s), 1) for x, y in X for s in [+1, -1]))
             return curve.encode_twist()
+        elif rotate_match is not None:
+
+            def isom(edge: Edge) -> Edge:
+                n, k = edge
+                if k == EQ:
+                    if n == -1:
+                        return (0, EQ)
+                    elif n == 0:
+                        return (-1, EQ)
+                    return (((n + 1) ^ (1 << (n + 1).bit_length() - 2)) - 1, k)
+
+                if n == 0:
+                    return (0, k)
+                elif n == 1:
+                    return (2, k)
+                elif n == 2:
+                    return (1, k)
+                N, r = divmod(n, 3)
+                return (3 * ((N + 1) ^ (1 << (N + 1).bit_length() - 2)) - 3 + r, k)
+
+            return T.encode([(isom, isom)])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
