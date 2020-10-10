@@ -1,6 +1,7 @@
 """ A module for representing triangulations along with laminations and mapping classes on them. """
 
-from typing import Callable, Generic, Iterable, Optional
+from typing import Callable, Generic, Iterable, Optional, List, Any
+from PIL import Image  # type: ignore
 
 import bigger  # pylint: disable=unused-import
 from .types import Edge, Triangle, FlatTriangle
@@ -69,3 +70,8 @@ class MappingClassGroup(Generic[Edge]):  # pylint: disable=too-few-public-method
     def __call__(self, strn: str) -> "bigger.Encoding[Edge]":
         sequence = [item for name in splitter(strn) for item in self._helper(name).sequence]
         return bigger.Encoding(sequence) if sequence else self.triangulation.encode_identity()
+
+    def draw(self, edges: List[Edge], **options: Any) -> Image:
+        """ Return a PIL image of the triangulation of this MCG around the given edges. """
+
+        return self.triangulation.draw(edges, **options)
