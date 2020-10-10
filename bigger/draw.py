@@ -268,17 +268,7 @@ def draw_lamination(  # pylint: disable=too-many-branches
     lamination: "bigger.Lamination[Edge]", edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any
 ) -> Image:
     """ Return an image of this lamination on the specified edges. """
-
-    if "w" not in options:
-        options["w"] = 400
-    if "h" not in options:
-        options["h"] = 400
-    if "label" not in options:
-        options["label"] = "none"
-    if "colour" not in options:
-        options["colour"] = "bw"
-    if "show_triangles" not in options:
-        options["show_triangles"] = False
+    options = {"w": 400, "h": 400, "label": "none", "colour": "bw", "outline": False, **options}
 
     image = Image.new("RGB", (options["w"], options["h"]), color="White")
     draw = ImageDraw.Draw(image)
@@ -328,7 +318,7 @@ def draw_lamination(  # pylint: disable=too-many-branches
     triangle_colours = TRIANGLE_COLOURS[options["colour"]]
     for index, (triangle, vertices) in enumerate(layout4.items()):
         # Draw triangles.
-        draw.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["show_triangles"] else None)
+        draw.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
 
     for index, (triangle, vertices) in enumerate(layout4.items()):
         # Draw lamination.
