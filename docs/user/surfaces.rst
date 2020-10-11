@@ -38,17 +38,6 @@ Cantor
 
 .. autofunction:: bigger.load.cantor
 
-Ladder
-------
-
-.. image:: ../figures/ladder.svg
-    :height: 120
-    :alt: Ladder
-    :target: ../_images/ladder.svg
-    :align: center
-
-.. autofunction:: bigger.load.ladder
-
 Spotted Cantor
 --------------
 
@@ -59,4 +48,15 @@ Spotted Cantor
     :align: center
 
 .. autofunction:: bigger.load.spotted_cantor
+
+Ladder
+------
+
+.. image:: ../figures/ladder.svg
+    :height: 120
+    :alt: Ladder
+    :target: ../_images/ladder.svg
+    :align: center
+
+.. autofunction:: bigger.load.ladder
 
