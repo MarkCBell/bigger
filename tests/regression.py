@@ -89,8 +89,8 @@ class TestLadder(TestCase):
         self.assertEqual(self.S('a_1')(self.m), {(0, 1): -1, (0, 7): -7, (0, 4): -4, (0, 3): -3, (0, 6): -6, (-1, 0): -9, (0, 2): -2, (0, 5): -5, (0, 8): -8})
         self.assertEqual(self.S('a.b.s.s.a_1.B_1')(self.m), self.S('a_3.s.b.a.s.B_1')(self.m))
 
-class TestTree3(TestCase):
-    S = bigger.load.tree3()
+class TestSpottedCantor(TestCase):
+    S = bigger.load.spotted_cantor()
     T = S.triangulation
     L = T.as_lamination()
     edges = list(islice(T, 10))
