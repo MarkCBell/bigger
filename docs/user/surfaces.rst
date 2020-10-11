@@ -27,6 +27,28 @@ Biflute
 
 .. autofunction:: bigger.load.biflute
 
+Cantor
+------
+
+.. image:: ../figures/cantor.svg
+    :height: 400
+    :alt: Cantor
+    :target: ../_images/cantor.svg
+    :align: center
+
+.. autofunction:: bigger.load.cantor
+
+Spotted Cantor
+--------------
+
+.. image:: ../figures/spotted_cantor.svg
+    :height: 400
+    :alt: Spotted Cantor
+    :target: ../_images/spotted_cantor.svg
+    :align: center
+
+.. autofunction:: bigger.load.spotted_cantor
+
 Ladder
 ------
 
@@ -37,15 +59,4 @@ Ladder
     :align: center
 
 .. autofunction:: bigger.load.ladder
-
-Tree3
------
-
-.. image:: ../figures/tree3.svg
-    :height: 400
-    :alt: Tree3
-    :target: ../_images/tree3.svg
-    :align: center
-
-.. autofunction:: bigger.load.tree3
 

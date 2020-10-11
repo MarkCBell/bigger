@@ -20,7 +20,7 @@ ZOOM_FRACTION = 0.9
 VERTEX_BUFFER = 0.2
 
 LAMINATION_COLOUR = "#555555"
-TRIANGLE_COLOURS = ["#b5b5b5", "#c0c0c0", "#c7c7c7", "#cfcfcf"]
+TRIANGLE_COLOURS = {"bw": ["#b5b5b5", "#c0c0c0", "#c7c7c7", "#cfcfcf"], "rainbow": ["hsl({}, 50%, 50%)".format(i) for i in range(0, 360, 10)]}
 
 
 def deduplicate(items: List[Edge]) -> List[Edge]:
@@ -118,7 +118,7 @@ def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", components
     for component in components:
         # Create the vertices.
         num_outside = sum(1 for triangle in component for edge in triangle if edge not in interior)
-        vertices = [(r * sin(2 * pi * (i + 0.5) / num_outside), r * cos(2 * pi * (i + 0.5) / num_outside)) for i in range(num_outside)]
+        vertices = [(r * sin(2 * pi * (i - 0.5) / num_outside), r * cos(2 * pi * (i - 0.5) / num_outside)) for i in range(num_outside)]
         # Determine how many boundary edges occur between each edge's endpoints.
         # We really should do this in a sensible order so that it only takes a single pass.
         num_decendents = dict(((triangle, side), 1) for triangle in component for side in range(3) if triangle[side] not in interior)
@@ -268,13 +268,7 @@ def draw_lamination(  # pylint: disable=too-many-branches
     lamination: "bigger.Lamination[Edge]", edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any
 ) -> Image:
     """ Return an image of this lamination on the specified edges. """
-
-    if "w" not in options:
-        options["w"] = 400
-    if "h" not in options:
-        options["h"] = 400
-    if "label" not in options:
-        options["label"] = "none"
+    options = {"w": 400, "h": 400, "label": "none", "colour": "bw", "outline": False, **options}
 
     image = Image.new("RGB", (options["w"], options["h"]), color="White")
     draw = ImageDraw.Draw(image)
@@ -321,9 +315,10 @@ def draw_lamination(  # pylint: disable=too-many-branches
             layout4[triangle] = (add(a, centre), add(b, centre), add(c, centre))
 
     master = max(abs(lamination(edge)) for triangle in layout4 for edge in triangle)
+    triangle_colours = TRIANGLE_COLOURS[options["colour"]]
     for index, (triangle, vertices) in enumerate(layout4.items()):
         # Draw triangles.
-        draw.polygon(vertices, fill=TRIANGLE_COLOURS[index % len(TRIANGLE_COLOURS)])
+        draw.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
 
     for index, (triangle, vertices) in enumerate(layout4.items()):
         # Draw lamination.

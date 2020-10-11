@@ -17,12 +17,13 @@ class Half:
 
     def __mul__(self, other: Union[Fraction, int]) -> Union[Fraction, int]:  # noqa: F811
         if isinstance(other, int):
-            result = other // 2
-        else:
-            result = other / 2
-        if 2 * result != other:  # Sanity check.
-            raise ValueError("{} is not halvable in its field".format(other))
-        return result
+            int_result = other // 2
+            assert 2 * int_result == other, "{} is not halvable in its field".format(other)
+            return int_result
+        else:  # isinstance(other, Fraction):
+            frac_result = other / 2
+            assert 2 * frac_result == other, "{} is not halvable in its field".format(other)
+            return frac_result
 
     def __str__(self) -> str:
         return "1/2"
