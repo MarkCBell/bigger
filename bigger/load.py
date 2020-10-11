@@ -295,7 +295,7 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
     return bigger.MCG(T, generator, layout)
 
 
-def tree3() -> "bigger.MCG[Tuple[int, int]]":
+def spotted_cantor() -> "bigger.MCG[Tuple[int, int]]":
     """The uncountably-punctured sphere.
 
     With mapping classes:

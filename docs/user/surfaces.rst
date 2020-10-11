@@ -49,14 +49,14 @@ Ladder
 
 .. autofunction:: bigger.load.ladder
 
-Tree3
------
+Spotted Cantor
+--------------
 
-.. image:: ../figures/tree3.svg
+.. image:: ../figures/spotted_cantor.svg
     :height: 400
-    :alt: Tree3
-    :target: ../_images/tree3.svg
+    :alt: Spotted Cantor
+    :target: ../_images/spotted_cantor.svg
     :align: center
 
-.. autofunction:: bigger.load.tree3
+.. autofunction:: bigger.load.spotted_cantor
 
