@@ -363,28 +363,28 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":  # pylint: disable=too-many-state
     def link(edge: Edge) -> Link:
         n, k = edge
         if k == EQ:  # Equator
-            if n == -1:
-                return ((2, POS), (0, POS), (0, NEG), (2, NEG))
-            elif n == 0:
+            if n == 0:
                 return ((1, POS), (0, POS), (0, NEG), (1, NEG))
-            else:  # n > 0
-                return ((3 * n + 2, POS), (3 * n, POS), (3 * n, NEG), (3 * n + 2, NEG))
+            elif n == 1:
+                return ((2, POS), (0, POS), (0, NEG), (2, NEG))
+            else:  # n > 1
+                return ((3 * n - 1, POS), (3 * n - 3, POS), (3 * n - 3, NEG), (3 * n - 1, NEG))
 
         # Northern / Southern hemisphere.
         if n == 0:
-            return invert(k, ((0, EQ), (1, k), (-1, EQ), (2, k)))
+            return invert(k, ((0, EQ), (1, k), (1, EQ), (2, k)))
         elif n == 1:
             return invert(k, ((4, k), (3, k), (0, k), (0, EQ)))
         elif n == 2:
-            return invert(k, ((0, k), (-1, EQ), (7, k), (6, k)))
-        N, r = divmod(n, 3)
-        incoming = 3 * ((N - 1) // 2) + (1 if N % 2 else 2)
+            return invert(k, ((0, k), (1, EQ), (7, k), (6, k)))
+        N, r = n // 3 + 1, n % 3
+        incoming = 3 * (N // 2) - (1 if N % 2 else 2)
         if r == 0:
             return invert(k, ((incoming, k), (n + 1, k), (N, EQ), (n + 2, k)))
         elif r == 1:
-            return invert(k, ((n - 1, k), (incoming, k), (6 * N + 4, k), (6 * N + 3, k)))
+            return invert(k, ((n - 1, k), (incoming, k), (6 * N - 2, k), (6 * N - 3, k)))
         else:  # r == 2:
-            return invert(k, ((n - 2, k), (N, EQ), (6 * N + 7, k), (6 * N + 6, k)))
+            return invert(k, ((n - 2, k), (N, EQ), (6 * N + 1, k), (6 * N + 0, k)))
 
     T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in [+1, 0, -1]), link)
 
@@ -397,32 +397,34 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":  # pylint: disable=too-many-state
             curve_name = parameters["curve"]
             N = int(parameters["n"])
             if curve_name == "a":
-                if N == 0:
-                    cut_sequence = [(0, EQ), (0, POS), (-1, EQ)]
+                if N == 1:
+                    cut_sequence = [(0, EQ), (0, POS), (1, EQ)]
                 else:
-                    cut_sequence = [(-1, EQ), (N, EQ), (3 * N, POS)]
-                    while N:
-                        low_N = (N - 1) // 2
-                        cut_sequence.append((3 * low_N + (1 if N % 2 else 2), POS))
-                        if N % 2 == 0:
-                            cut_sequence.append((3 * low_N, POS))
+                    cut_sequence = [(0, EQ), (N, EQ), (3 * N - 3, POS)]
+                    while N > 1:
+                        low_N = N // 2
+                        cut_sequence.append((3 * low_N - (1 if N % 2 else 2), POS))
+                        if N % 2:
+                            cut_sequence.append((3 * low_N - 3, POS))
                         N = low_N
             elif curve_name == "b":
-                if N <= 2:
-                    cut_sequence = [(0, EQ), (0, POS), (-1, EQ)]
+                if N <= 3:
+                    cut_sequence = [(0, EQ), (0, POS), (1, EQ)]
                 else:
-                    extend_right = N % 2
-                    N = (N - 1) // 2
-                    cut_sequence = [(N, EQ), (3 * N, POS)]
-                    while N:
-                        N_low = (N - 1) // 2
-                        cut_sequence.append((3 * N_low + (1 if N % 2 else 2), POS))
-                        if extend_right == 0:
-                            cut_sequence.append((3 * N_low + 0, POS))
-                        if N % 2 != extend_right or N_low == 0:
-                            cut_sequence.append((N_low if N > 2 else 0 if N % 2 == extend_right else -1, EQ))
+                    extend_left = N % 2
+                    N = N // 2
+                    cut_sequence = [(N, EQ), (3 * N - 3, POS)]
+                    while N > 1:
+                        N_low = N // 2
+                        cut_sequence.append((3 * N_low - (1 if N % 2 else 2), POS))
+                        if extend_left:
+                            cut_sequence.append((3 * N_low - 3, POS))
+                        if N % 2 != extend_left:
+                            cut_sequence.append((N_low, EQ))
                             break
                         N = N_low
+                    else:
+                        cut_sequence.append((0, EQ))
 
             curve = T(dict(((x, y * s), 1) for x, y in cut_sequence for s in [+1, -1]))
             return curve.encode_twist()
