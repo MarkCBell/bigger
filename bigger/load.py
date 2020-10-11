@@ -343,13 +343,14 @@ def tree3() -> "bigger.MCG[Tuple[int, int]]":
     return bigger.MCG(T, generator)
 
 
-def cantor() -> "bigger.MCG[Tuple[int, int]]":
+def cantor() -> "bigger.MCG[Tuple[int, int]]":  # pylint: disable=too-many-statements
     """A sphere minus a cantor set.
 
     With mapping classes:
 
      - a_n which twists about the curve about the nth hole
      - b_n which twists about the curve about the nth hole
+     - r an order two rotation
     """
 
     Edge = Tuple[int, int]
@@ -387,7 +388,7 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":
 
     T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in [+1, 0, -1]), link)
 
-    def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
+    def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":  # pylint: disable=too-many-branches
         twist_match = re.match(r"(?P<curve>[ab])_(?P<n>-?\d+)$", name)
         rotate_match = re.match(r"r$", name)
 
@@ -395,18 +396,35 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":
             parameters = twist_match.groupdict()
             curve_name = parameters["curve"]
             N = int(parameters["n"])
-            if N == 0:
-                X = [(0, EQ), (0, POS), (-1, EQ)]
-            else:
-                X = [(-1, EQ), (N, EQ), (3 * N, POS)]
-                while N:
-                    low_N = (N - 1) // 2
-                    X.append((3 * low_N + (1 if N % 2 else 2), POS))
-                    if (N % 2 == 0) == (curve_name == "a" or low_N > 0):  # Only difference to a curve.
-                        X.append((3 * low_N, POS))
-                    N = low_N
+            if curve_name == "a":
+                if N == 0:
+                    cut_sequence = [(0, EQ), (0, POS), (-1, EQ)]
+                else:
+                    cut_sequence = [(-1, EQ), (N, EQ), (3 * N, POS)]
+                    while N:
+                        low_N = (N - 1) // 2
+                        cut_sequence.append((3 * low_N + (1 if N % 2 else 2), POS))
+                        if N % 2 == 0:
+                            cut_sequence.append((3 * low_N, POS))
+                        N = low_N
+            elif curve_name == "b":
+                if N <= 2:
+                    cut_sequence = [(0, EQ), (0, POS), (-1, EQ)]
+                else:
+                    extend_right = N % 2
+                    N = (N - 1) // 2
+                    cut_sequence = [(N, EQ), (3 * N, POS)]
+                    while N:
+                        N_low = (N - 1) // 2
+                        cut_sequence.append((3 * N_low + (1 if N % 2 else 2), POS))
+                        if extend_right == 0:
+                            cut_sequence.append((3 * N_low + 0, POS))
+                        if N % 2 != extend_right or N_low == 0:
+                            cut_sequence.append((N_low if N > 2 else 0 if N % 2 == extend_right else -1, EQ))
+                            break
+                        N = N_low
 
-            curve = T(dict(((x, y * s), 1) for x, y in X for s in [+1, -1]))
+            curve = T(dict(((x, y * s), 1) for x, y in cut_sequence for s in [+1, -1]))
             return curve.encode_twist()
         elif rotate_match is not None:
 
