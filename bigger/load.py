@@ -433,11 +433,11 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":  # pylint: disable=too-many-state
             def isom(edge: Edge) -> Edge:
                 n, k = edge
                 if k == EQ:
-                    if n == -1:
+                    if n == 0:
+                        return (1, EQ)
+                    elif n == 1:
                         return (0, EQ)
-                    elif n == 0:
-                        return (-1, EQ)
-                    return (((n + 1) ^ (1 << (n + 1).bit_length() - 2)) - 1, k)
+                    return (n ^ (1 << n.bit_length() - 2), k)
 
                 if n == 0:
                     return (0, k)
@@ -445,8 +445,8 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":  # pylint: disable=too-many-state
                     return (2, k)
                 elif n == 2:
                     return (1, k)
-                N, r = divmod(n, 3)
-                return (3 * ((N + 1) ^ (1 << (N + 1).bit_length() - 2)) - 3 + r, k)
+                N, r = n // 3 + 1, n % 3
+                return (3 * (N ^ (1 << N.bit_length() - 2)) - 3 + r, k)
 
             return T.encode([(isom, isom)])
 
