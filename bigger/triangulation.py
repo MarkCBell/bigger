@@ -101,6 +101,7 @@ class Triangulation(Generic[Edge]):
                 assert not flipped(d), "Flipping edges {} and {} which do not have disjoint support".format(edge, d)
 
                 return (b, c, d, a)
+
             if flipped(a):
                 w, _, _, _, x = self.star(a, c=b, d=edge)
             elif flipped(b):
