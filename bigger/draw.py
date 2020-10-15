@@ -264,9 +264,7 @@ def draw_line_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[in
                 draw.line([S, E], fill=LAMINATION_COLOUR, width=2)
 
 
-def draw_lamination(  # pylint: disable=too-many-branches
-    lamination: bigger.Lamination[Edge], edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any
-) -> Image:
+def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any) -> Image:  # pylint: disable=too-many-branches
     """ Return an image of this lamination on the specified edges. """
     options = {"w": 400, "h": 400, "label": "none", "colour": "bw", "outline": False, **options}
 
@@ -320,7 +318,7 @@ def draw_lamination(  # pylint: disable=too-many-branches
         # Draw triangles.
         draw.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
 
-    weights = dict((edge, lamination(edge) for edge in set(edge for triangle in layout4 for edge in triangle))
+    weights = dict((edge, lamination(edge)) for edge in set(edge for triangle in layout4 for edge in triangle))
 
     shown_is_integral = all(isinstance(weights[edge], int) for edge in weights)
 
