@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Generic, Iterable, Optional, List, Any
+from typing import Any, Callable, Generic, Iterable, List, Optional
 from PIL import Image  # type: ignore
 
 import bigger  # pylint: disable=unused-import

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, Union, Any
+from typing import Any, Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, Union
 from PIL import Image  # type: ignore
 
 import bigger

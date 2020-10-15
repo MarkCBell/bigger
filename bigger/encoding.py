@@ -1,7 +1,7 @@
 """ A module for representing and manipulating maps between Triangulations. """
 
 from __future__ import annotations
-from typing import List, Iterator, Union, Callable, Generic, overload
+from typing import Callable, Generic, Iterator, List, Union, overload
 
 import bigger
 from bigger.types import Edge

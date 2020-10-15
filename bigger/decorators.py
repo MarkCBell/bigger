@@ -1,7 +1,7 @@
 """ A module for decorators. """
 
 import inspect
-from typing import Callable, TypeVar, Any
+from typing import Any, Callable, TypeVar
 
 from decorator import decorator
 

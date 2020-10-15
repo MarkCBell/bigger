@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from math import sin, cos, pi, ceil
-from typing import List, Tuple, Dict, Any, Set, Optional
 from queue import PriorityQueue
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from PIL import Image, ImageDraw  # type: ignore
 

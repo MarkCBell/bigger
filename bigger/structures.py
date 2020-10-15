@@ -1,7 +1,7 @@
 """ A module of data structures. """
 
 from collections import defaultdict
-from typing import Generic, TypeVar, Iterable, Iterator, List
+from typing import Generic, Iterable, Iterator, List, TypeVar
 
 X = TypeVar("X")
 

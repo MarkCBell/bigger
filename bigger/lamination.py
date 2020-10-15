@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import chain, islice
-from typing import Any, Iterable, Tuple, Generic, Callable, List
+from typing import Any, Callable, Generic, Iterable, List, Tuple
 from PIL import Image  # type: ignore
 
 import bigger  # pylint: disable=unused-import

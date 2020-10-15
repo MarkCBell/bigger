@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from itertools import count
-from typing import Tuple, Iterable, Callable, Any
+from typing import Any, Callable, Iterable, Tuple
 
 import bigger
 from .types import Triangle, FlatTriangle
