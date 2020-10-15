@@ -108,7 +108,7 @@ def supporting_triangles(triangulation: bigger.Triangulation[Edge], edges: List[
     return ordered_components, interior
 
 
-def layout_triangulation(triangulation: bigger.Triangulation[Edge], components: List[List[Triangle]], interior: Set[Edge]) -> Dict[Triangle, FlatTriangle]:
+def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], components: List[List[Triangle]], interior: Set[Edge]) -> Dict[Triangle, FlatTriangle]:
     """Return a dictionary mapping the triangles that meet the given edges to coordinates in the plane.
 
     Triangle T is mapped to ((x1, y1), (x2, y2), (x3, y3)) where (xi, yi) is at the tail of side i of T when oriented anti-clockwise.
@@ -274,7 +274,7 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
     # Draw these triangles.
     components, interior = supporting_triangles(lamination.triangulation, edges)
     if layout is None:
-        layout2 = layout_triangulation(lamination.triangulation, components, interior)
+        layout2 = default_layout_triangulation(lamination.triangulation, components, interior)
     else:
         layout2 = dict((triangle, layout.layout(triangle)) for component in components for triangle in component)
 
@@ -312,25 +312,25 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
             a, b, c = layout3[triangle]
             layout4[triangle] = (add(a, centre), add(b, centre), add(c, centre))
 
-    master = max(abs(lamination(edge)) for triangle in layout4 for edge in triangle)
+    # Draw triangles.
     triangle_colours = TRIANGLE_COLOURS[options["colour"]]
     for index, (triangle, vertices) in enumerate(layout4.items()):
-        # Draw triangles.
         draw.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
 
     weights = dict((edge, lamination(edge)) for edge in set(edge for triangle in layout4 for edge in triangle))
 
+    master = max(abs(weights[edge]) for triangle in layout4 for edge in triangle)
     shown_is_integral = all(isinstance(weights[edge], int) for edge in weights)
 
+    # Draw lamination.
     for index, (triangle, vertices) in enumerate(layout4.items()):
-        # Draw lamination.
         if master < MAX_DRAWABLE and shown_is_integral:
             draw_line_triangle(draw, vertices, [weights[edge] for edge in triangle], master)
         else:  # Draw everything. Caution, this is is VERY slow (O(n) not O(log(n))) so we only do it when the weight is low.
             draw_block_triangle(draw, vertices, [weights[edge] for edge in triangle], master)
 
+    # Draw labels.
     for index, (triangle, vertices) in enumerate(layout4.items()):
-        # Draw labels.
         for side in range(3):
             if options["label"] == "edge":
                 text = str(triangle[side])
