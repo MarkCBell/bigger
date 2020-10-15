@@ -1,5 +1,7 @@
 """ Functions for building example mapping class groups. """
 
+from __future__ import annotations
+
 import re
 from itertools import count
 from typing import Tuple, Iterable, Callable, Any
@@ -44,7 +46,7 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
     return curve, test
 
 
-def flute() -> "bigger.MCG[int]":
+def flute() -> bigger.MCG[int]:
     """The infinitely punctured sphere, with punctures that accumulate in one direction.
 
     With mapping classes:
@@ -78,7 +80,7 @@ def flute() -> "bigger.MCG[int]":
         else [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
     )
 
-    def generator(name: str) -> "bigger.Encoding[int]":
+    def generator(name: str) -> bigger.Encoding[int]:
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
@@ -131,7 +133,7 @@ def flute() -> "bigger.MCG[int]":
     return bigger.MCG(T, generator, layout)
 
 
-def biflute() -> "bigger.MCG[int]":
+def biflute() -> bigger.MCG[int]:
     """The infinitely punctured sphere, with punctures that accumulate in two directions.
 
     With mapping classes:
@@ -166,7 +168,7 @@ def biflute() -> "bigger.MCG[int]":
 
     shift = T.encode_isometry(lambda edge: edge + 3, lambda edge: edge - 3)
 
-    def generator(name: str) -> "bigger.Encoding[int]":
+    def generator(name: str) -> bigger.Encoding[int]:
         if name in ("s", "shift"):
             return shift
 
@@ -220,7 +222,7 @@ def biflute() -> "bigger.MCG[int]":
     return bigger.MCG(T, generator, layout)
 
 
-def ladder() -> "bigger.MCG[Tuple[int, int]]":
+def ladder() -> bigger.MCG[Tuple[int, int]]:
     """The infinite-genus, two-ended surface.
 
     With mapping classes:
@@ -266,7 +268,7 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
 
     shift = T.encode_isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
-    def generator(name: str) -> "bigger.Encoding[Edge]":
+    def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):
             return shift
 
@@ -295,7 +297,7 @@ def ladder() -> "bigger.MCG[Tuple[int, int]]":
     return bigger.MCG(T, generator, layout)
 
 
-def spotted_cantor() -> "bigger.MCG[Tuple[int, int]]":
+def spotted_cantor() -> bigger.MCG[Tuple[int, int]]:
     """The uncountably-punctured sphere.
 
     With mapping classes:
@@ -331,7 +333,7 @@ def spotted_cantor() -> "bigger.MCG[Tuple[int, int]]":
 
     T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in range(4)), link)
 
-    def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":
+    def generator(name: str) -> bigger.Encoding[Tuple[int, int]]:
         curve, test = extract_curve_and_test("a", name)
 
         if curve == "a":
@@ -343,7 +345,7 @@ def spotted_cantor() -> "bigger.MCG[Tuple[int, int]]":
     return bigger.MCG(T, generator)
 
 
-def cantor() -> "bigger.MCG[Tuple[int, int]]":  # pylint: disable=too-many-statements
+def cantor() -> bigger.MCG[Tuple[int, int]]:  # pylint: disable=too-many-statements
     """A sphere minus a cantor set.
 
     With mapping classes:
@@ -388,7 +390,7 @@ def cantor() -> "bigger.MCG[Tuple[int, int]]":  # pylint: disable=too-many-state
 
     T = bigger.Triangulation(lambda: ((x, y) for x in count() for y in [+1, 0, -1]), link)
 
-    def generator(name: str) -> "bigger.Encoding[Tuple[int, int]]":  # pylint: disable=too-many-branches
+    def generator(name: str) -> bigger.Encoding[Tuple[int, int]]:  # pylint: disable=too-many-branches
         twist_match = re.match(r"(?P<curve>[ab])_(?P<n>-?\d+)$", name)
         rotate_match = re.match(r"r$", name)
 

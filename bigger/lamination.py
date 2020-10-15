@@ -1,5 +1,7 @@
 """ A module for representing laminations on Triangulations. """
 
+from __future__ import annotations
+
 from itertools import islice
 from typing import Any, Iterable, Tuple, Generic, Callable, List
 from PIL import Image  # type: ignore
@@ -14,7 +16,7 @@ class Lamination(Generic[Edge]):
 
     The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure."""
 
-    def __init__(self, triangulation: "bigger.Triangulation[Edge]", weight: Callable[[Edge], int], support: Iterable[Edge]) -> None:
+    def __init__(self, triangulation: bigger.Triangulation[Edge], weight: Callable[[Edge], int], support: Iterable[Edge]) -> None:
         self.triangulation = triangulation
         self.weight = weight
         self.support = support
@@ -64,7 +66,7 @@ class Lamination(Generic[Edge]):
         Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short."""
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support)
 
-    def shorten(self) -> Tuple["bigger.Lamination[Edge]", "bigger.Encoding[Edge]"]:
+    def shorten(self) -> Tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:
         """Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
 
         Note that in the future this should do curvers full Lamination shortening algorithm."""
@@ -95,7 +97,7 @@ class Lamination(Generic[Edge]):
 
         return lamination, conjugator
 
-    def encode_twist(self) -> "bigger.Encoding[Edge]":
+    def encode_twist(self) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
 
         Note that this currently only works on non-isolating curves."""

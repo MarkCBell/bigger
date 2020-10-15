@@ -1,5 +1,7 @@
 """ A module for representing a triangulation of a punctured surface. """
 
+from __future__ import annotations
+
 from functools import partial
 from typing import Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, Union, Any
 from PIL import Image  # type: ignore
@@ -68,7 +70,7 @@ class Triangulation(Generic[Edge]):
     def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges)
 
-    def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> "bigger.Encoding[Edge]":
+    def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
         Alternatively, this can be given a set of Edges and will use membership of this set to test which edges flip.
@@ -118,7 +120,7 @@ class Triangulation(Generic[Edge]):
         target = Triangulation(self.edges, link)
 
         # Since the action and inv_action are so similar, we define both at once and just use a partial function to set the correct source / target.
-        def helper(source: "bigger.Triangulation[Edge]", target: "bigger.Triangulation[Edge]", lamination: "bigger.Lamination[Edge]") -> "bigger.Lamination[Edge]":
+        def helper(source: bigger.Triangulation[Edge], target: bigger.Triangulation[Edge], lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
                 if not flipped(edge):
                     return lamination(edge)
@@ -157,7 +159,7 @@ class Triangulation(Generic[Edge]):
 
         return bigger.Move(self, target, action, inv_action).encode()
 
-    def encode_isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> "bigger.Encoding[Edge]":
+    def encode_isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. """
 
         # Define the new triangulation.
@@ -167,7 +169,7 @@ class Triangulation(Generic[Edge]):
 
         target = Triangulation(self.edges, link)
 
-        def action(lamination: "bigger.Lamination[Edge]") -> "bigger.Lamination[Edge]":
+        def action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
                 return lamination(inv_isom(edge))
 
@@ -176,7 +178,7 @@ class Triangulation(Generic[Edge]):
 
             return target(weight, lambda: (isom(arc) for arc in lamination.support))
 
-        def inv_action(lamination: "bigger.Lamination[Edge]") -> "bigger.Lamination[Edge]":
+        def inv_action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
                 return lamination(isom(edge))
 
@@ -187,7 +189,7 @@ class Triangulation(Generic[Edge]):
 
         return bigger.Move(self, target, action, inv_action).encode()
 
-    def encode_isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> "bigger.Encoding[Edge]":
+    def encode_isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. """
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
 
@@ -199,14 +201,14 @@ class Triangulation(Generic[Edge]):
 
         return self.encode_isometry(isom, inv_isom)
 
-    def encode_identity(self) -> "bigger.Encoding[Edge]":
+    def encode_identity(self) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class. """
         return self.encode_isometry_from_dict(dict())
 
     def encode(
         self,
         sequence: List[Union[Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Callable[[Edge], bool], Edge, Set[Edge], Dict[Edge, Edge]]],
-    ) -> "bigger.Encoding[Edge]":
+    ) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
 
         There are several conventions that allow these to be specified by a smaller amount of information:
@@ -232,7 +234,7 @@ class Triangulation(Generic[Edge]):
 
     def __call__(
         self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Union[Iterable[Edge], Callable[[], Iterable[Edge]], None] = None
-    ) -> "bigger.Lamination[Edge]":  # noqa: F811
+    ) -> bigger.Lamination[Edge]:  # noqa: F811
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
 
@@ -248,12 +250,12 @@ class Triangulation(Generic[Edge]):
 
         return bigger.Lamination(self, weights, support)
 
-    def empty_lamination(self) -> "bigger.Lamination[Edge]":
+    def empty_lamination(self) -> bigger.Lamination[Edge]:
         """ Return the zero Lamination on this triangulation. """
 
         return self(lambda edge: 0)
 
-    def as_lamination(self) -> "bigger.Lamination[Edge]":
+    def as_lamination(self) -> bigger.Lamination[Edge]:
         """ Return this Triangulation as a Lamination on self. """
 
         return self(lambda edge: -1)

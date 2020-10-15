@@ -1,5 +1,7 @@
 """ A module for representing triangulations along with laminations and mapping classes on them. """
 
+from __future__ import annotations
+
 from typing import Callable, Generic, Iterable, Optional, List, Any
 from PIL import Image  # type: ignore
 
@@ -55,19 +57,19 @@ class MappingClassGroup(Generic[Edge]):  # pylint: disable=too-few-public-method
     """ A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names. """
 
     def __init__(
-        self, triangulation: "bigger.Triangulation[Edge]", generator: Callable[[str], "bigger.Encoding[Edge]"], layout: Optional[Callable[[Triangle], FlatTriangle]] = None
+        self, triangulation: bigger.Triangulation[Edge], generator: Callable[[str], bigger.Encoding[Edge]], layout: Optional[Callable[[Triangle], FlatTriangle]] = None
     ) -> None:
         self.triangulation = triangulation
         self.generator = generator
         self.layout = layout
 
-    def _helper(self, name: str) -> "bigger.Encoding[Edge]":
+    def _helper(self, name: str) -> bigger.Encoding[Edge]:
         try:
             return self.generator(name)
         except ValueError:
             return ~(self.generator(swapcase(name)))
 
-    def __call__(self, strn: str) -> "bigger.Encoding[Edge]":
+    def __call__(self, strn: str) -> bigger.Encoding[Edge]:
         sequence = [item for name in splitter(strn) for item in self._helper(name).sequence]
         return bigger.Encoding(sequence) if sequence else self.triangulation.encode_identity()
 
