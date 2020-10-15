@@ -165,10 +165,9 @@ def layout_triangulation(triangulation: bigger.Triangulation[Edge], components: 
     return layout
 
 
-def draw_block_triangle(draw: ImageDraw, lamination: "bigger.Lamination[Edge]", triangle: Triangle, vertices: FlatTriangle, master: int) -> None:
-    """ Draw a lamination in the given triangle as a single block. """
+def draw_block_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
+    """ Draw a flat triangle with (blocks of) lines inside it. """
 
-    weights = [lamination(side) for side in triangle]
     weights_0 = [max(weight, 0) for weight in weights]
     sum_weights_0 = sum(weights_0)
     correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
@@ -220,10 +219,9 @@ def draw_block_triangle(draw: ImageDraw, lamination: "bigger.Lamination[Edge]", 
             draw.polygon([S, P, E], fill=LAMINATION_COLOUR)
 
 
-def draw_line_triangle(draw: ImageDraw, lamination: "bigger.Lamination[Edge]", triangle: Triangle, vertices: FlatTriangle, master: int) -> None:
-    """ Draw a lamination in the given triangle as individual lines. """
+def draw_line_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
+    """ Draw a flat triangle with (individual) lines inside it. """
 
-    weights = [lamination(side) for side in triangle]
     weights_0 = [max(weight, 0) for weight in weights]
     sum_weights_0 = sum(weights_0)
     correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
@@ -322,25 +320,28 @@ def draw_lamination(  # pylint: disable=too-many-branches
         # Draw triangles.
         draw.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
 
-    for index, (triangle, vertices) in enumerate(layout4.items()):
-        # Draw lamination.
-        if master > MAX_DRAWABLE:
-            draw_block_triangle(draw, lamination, triangle, vertices, master)
-        else:  # Draw everything. Caution, this is is VERY slow (O(n) not O(log(n))) so we only do it when the weight is low.
-            draw_line_triangle(draw, lamination, triangle, vertices, master)
+    weights = dict((edge, lamination(edge) for edge in set(edge for triangle in layout4 for edge in triangle))
+
+    shown_is_integral = all(isinstance(weights[edge], int) for edge in weights)
 
     for index, (triangle, vertices) in enumerate(layout4.items()):
-        weights = [lamination(side) for side in triangle]
+        # Draw lamination.
+        if master < MAX_DRAWABLE and shown_is_integral:
+            draw_line_triangle(draw, vertices, [weights[edge] for edge in triangle], master)
+        else:  # Draw everything. Caution, this is is VERY slow (O(n) not O(log(n))) so we only do it when the weight is low.
+            draw_block_triangle(draw, vertices, [weights[edge] for edge in triangle], master)
+
+    for index, (triangle, vertices) in enumerate(layout4.items()):
         # Draw labels.
-        for i in range(3):
+        for side in range(3):
             if options["label"] == "edge":
-                text = str(triangle[i])
+                text = str(triangle[side])
             if options["label"] == "weight":
-                text = str(weights[i])
+                text = str(weights[triangle[side]])
             if options["label"] == "none":
                 text = ""
             w, h = draw.textsize(text)
-            point = interpolate(vertices[i - 0], vertices[i - 2])
+            point = interpolate(vertices[side - 0], vertices[side - 2])
             point = (point[0] - w / 2, point[1] - h / 2)
             for offset in OFFSETS:
                 draw.text(add(point, offset), text, fill="White", anchor="centre")
