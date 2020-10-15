@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from itertools import islice
+from itertools import chain, islice
 from typing import Any, Iterable, Tuple, Generic, Callable, List
 from PIL import Image  # type: ignore
 
@@ -55,6 +55,30 @@ class Lamination(Generic[Edge]):
 
     def __repr__(self) -> str:
         return str(self)
+
+    def __add__(self, other: Lamination[Edge]) -> Lamination[Edge]:
+        """ Return the Haken sum of this lamination and another. """
+
+        def weight(edge: Edge) -> int:
+            return self(edge) + other(edge)
+
+        if self.is_finitely_supported() and other.is_finitely_supported():
+            return self.triangulation(weight, set(self.support).union(other.support))
+        else:
+            return self.triangulation(weight, lambda: chain(self.support, other.support))
+
+    def __mul__(self, other: int) -> Lamination[Edge]:
+        """ Return this lamination scaled by other. """
+
+        def weight(edge: Edge) -> int:
+            return other * self(edge)
+
+        return self.triangulation(weight, self.support)
+
+    def __rmul__(self, other: int) -> Lamination[Edge]:
+        """ Return this lamination scaled by other. """
+
+        return self * other
 
     def complexity(self) -> int:
         """ Return the number of intersections between this Lamination and its underlying Triangulation. """
