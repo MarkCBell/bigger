@@ -6,7 +6,7 @@ from itertools import chain, islice
 from typing import Any, Callable, Generic, Iterable, List, Tuple
 from PIL import Image  # type: ignore
 
-import bigger  # pylint: disable=unused-import
+import bigger
 from bigger.types import Edge
 from bigger.decorators import memoize
 

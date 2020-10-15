@@ -235,7 +235,7 @@ class Triangulation(Generic[Edge]):
 
     def __call__(
         self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Union[Iterable[Edge], Callable[[], Iterable[Edge]], None] = None
-    ) -> bigger.Lamination[Edge]:  # noqa: F811
+    ) -> bigger.Lamination[Edge]:
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
 

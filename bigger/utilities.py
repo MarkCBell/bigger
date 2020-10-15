@@ -12,10 +12,10 @@ class Half:
         ...
 
     @overload
-    def __mul__(self, other: int) -> int:  # noqa: F811
+    def __mul__(self, other: int) -> int:
         ...
 
-    def __mul__(self, other: Union[Fraction, int]) -> Union[Fraction, int]:  # noqa: F811
+    def __mul__(self, other: Union[Fraction, int]) -> Union[Fraction, int]:
         if isinstance(other, int):
             int_result = other // 2
             assert 2 * int_result == other, "{} is not halvable in its field".format(other)

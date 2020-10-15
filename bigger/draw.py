@@ -172,7 +172,7 @@ def draw_block_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[i
     sum_weights_0 = sum(weights_0)
     correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
     dual_weights = [bigger.half(sum_weights_0 - 2 * e + correction) for e in weights_0]
-    parallel_weights = [max(-weight, 0) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+    parallel_weights = [max(-weight, 0) for weight in weights]
     for i in range(3):
         # Dual arcs.
         if dual_weights[i] > 0:
@@ -226,7 +226,7 @@ def draw_line_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[in
     sum_weights_0 = sum(weights_0)
     correction = min(min(sum_weights_0 - 2 * e for e in weights_0), 0)
     dual_weights = [bigger.half(sum_weights_0 - 2 * e + correction) for e in weights_0]
-    parallel_weights = [max(-weight, 0) for weight in weights]  # noqa: F841  # Remove once we can draw parallel things.
+    parallel_weights = [max(-weight, 0) for weight in weights]
     for i in range(3):  # Dual arcs:
         if dual_weights[i] > 0:
             s_a = 1 - 2 * VERTEX_BUFFER

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Callable, Generic, Iterable, List, Optional
 from PIL import Image  # type: ignore
 
-import bigger  # pylint: disable=unused-import
+import bigger
 from .types import Edge, Triangle, FlatTriangle
 
 
@@ -53,7 +53,7 @@ def swapcase(strn: str) -> str:
     return "".join(output)
 
 
-class MappingClassGroup(Generic[Edge]):  # pylint: disable=too-few-public-methods
+class MappingClassGroup(Generic[Edge]):
     """ A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names. """
 
     def __init__(

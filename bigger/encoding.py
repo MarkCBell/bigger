@@ -56,16 +56,16 @@ class Encoding(Generic[Edge]):
         ...
 
     @overload
-    def __getitem__(self, index: int) -> bigger.Move[Edge]:  # noqa: F811
+    def __getitem__(self, index: int) -> bigger.Move[Edge]:
         ...
 
-    def __getitem__(self, index: Union[int, slice]) -> Union[bigger.Move[Edge], bigger.Encoding[Edge]]:  # noqa: F811
+    def __getitem__(self, index: Union[int, slice]) -> Union[bigger.Move[Edge], bigger.Encoding[Edge]]:
         if isinstance(index, slice):
             return Encoding(self.sequence[index])
         else:
             return self.sequence[index]
 
-    def __call__(self, lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:  # noqa: F811
+    def __call__(self, lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
         for move in self:
             lamination = move(lamination)
 
