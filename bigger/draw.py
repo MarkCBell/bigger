@@ -1,5 +1,7 @@
 """ A module for making images of laminations. """
 
+from __future__ import annotations
+
 from math import sin, cos, pi, ceil
 from typing import List, Tuple, Dict, Any, Set, Optional
 from queue import PriorityQueue
@@ -47,7 +49,7 @@ def interpolate(A: Coord, B: Coord, r: float = 0.5) -> Coord:
     return add(A, B, r, 1 - r)
 
 
-def support(triangulation: "bigger.Triangulation[Edge]", edge: Edge) -> Tuple[Triangle, Triangle]:
+def support(triangulation: bigger.Triangulation[Edge], edge: Edge) -> Tuple[Triangle, Triangle]:
     """ Return the two triangles that support and edge. """
 
     a, b, c, d = triangulation.link(edge)
@@ -58,7 +60,7 @@ def support(triangulation: "bigger.Triangulation[Edge]", edge: Edge) -> Tuple[Tr
     return triangle1, triangle2
 
 
-def adjacent(triangulation: "bigger.Triangulation[Edge]", current: Triangle, side: int) -> Tuple[Triangle, int]:
+def adjacent(triangulation: bigger.Triangulation[Edge], current: Triangle, side: int) -> Tuple[Triangle, int]:
     """ Return the (other triangle, other side) which shares an edge with triangle[side]. """
 
     return next(
@@ -69,7 +71,7 @@ def adjacent(triangulation: "bigger.Triangulation[Edge]", current: Triangle, sid
     )
 
 
-def supporting_triangles(triangulation: "bigger.Triangulation[Edge]", edges: List[Edge]) -> Tuple[List[List[Triangle]], Set[Edge]]:
+def supporting_triangles(triangulation: bigger.Triangulation[Edge], edges: List[Edge]) -> Tuple[List[List[Triangle]], Set[Edge]]:
     """ Return a list of list of triangles that support these edges, grouped by connectedness, and a set of edges that in the interior. """
 
     position_index = dict((edge, index) for index, edge in enumerate(edges))
@@ -106,7 +108,7 @@ def supporting_triangles(triangulation: "bigger.Triangulation[Edge]", edges: Lis
     return ordered_components, interior
 
 
-def layout_triangulation(triangulation: "bigger.Triangulation[Edge]", components: List[List[Triangle]], interior: Set[Edge]) -> Dict[Triangle, FlatTriangle]:
+def layout_triangulation(triangulation: bigger.Triangulation[Edge], components: List[List[Triangle]], interior: Set[Edge]) -> Dict[Triangle, FlatTriangle]:
     """Return a dictionary mapping the triangles that meet the given edges to coordinates in the plane.
 
     Triangle T is mapped to ((x1, y1), (x2, y2), (x3, y3)) where (xi, yi) is at the tail of side i of T when oriented anti-clockwise.
@@ -265,7 +267,7 @@ def draw_line_triangle(draw: ImageDraw, lamination: "bigger.Lamination[Edge]", t
 
 
 def draw_lamination(  # pylint: disable=too-many-branches
-    lamination: "bigger.Lamination[Edge]", edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any
+    lamination: bigger.Lamination[Edge], edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any
 ) -> Image:
     """ Return an image of this lamination on the specified edges. """
     options = {"w": 400, "h": 400, "label": "none", "colour": "bw", "outline": False, **options}
