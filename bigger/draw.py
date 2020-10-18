@@ -351,6 +351,7 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
 
 class DrawStructure:  # pylint: disable=too-few-public-methods
     """ A class to record intermediate draw commands. """
+
     def __init__(self, edges: Optional[List[Edge]] = None, **options: Any):
         self.edges = edges
         self.options = options
