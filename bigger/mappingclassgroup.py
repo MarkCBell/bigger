@@ -71,7 +71,7 @@ class MappingClassGroup(Generic[Edge]):
 
     def __call__(self, strn: str) -> bigger.Encoding[Edge]:
         sequence = [item for name in splitter(strn) for item in self._helper(name).sequence]
-        return bigger.Encoding(sequence) if sequence else self.triangulation.encode_identity()
+        return bigger.Encoding(sequence) if sequence else self.triangulation.identity()
 
     def draw(self, edges: List[Edge], **options: Any) -> Image:
         """ Return a PIL image of the triangulation of this MCG around the given edges. """

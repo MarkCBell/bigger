@@ -73,7 +73,7 @@ class Encoding(Generic[Edge]):
 
     def __pow__(self, power: int) -> bigger.Encoding[Edge]:
         if power == 0:
-            return self.source.encode_identity()
+            return self.source.identity()
 
         abs_power = Encoding(self.sequence * abs(power))
         return abs_power if power > 0 else ~abs_power

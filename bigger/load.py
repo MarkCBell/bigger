@@ -166,7 +166,7 @@ def biflute() -> bigger.MCG[int]:
         lambda edge: [(edge - 2, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge + 1, edge + 2), (edge + 1, edge - 1, edge - 2, edge - 1)][edge % 3],
     )
 
-    shift = T.encode_isometry(lambda edge: edge + 3, lambda edge: edge - 3)
+    shift = T.isometry(lambda edge: edge + 3, lambda edge: edge - 3)
 
     def generator(name: str) -> bigger.Encoding[int]:
         if name in ("s", "shift"):
@@ -266,7 +266,7 @@ def ladder() -> bigger.MCG[Tuple[int, int]]:
 
     T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(9)), link)
 
-    shift = T.encode_isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
+    shift = T.isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
     def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):
@@ -429,7 +429,7 @@ def cantor() -> bigger.MCG[Tuple[int, int]]:  # pylint: disable=too-many-stateme
                         cut_sequence.append((0, EQ))
 
             curve = T(dict(((x, y * s), 1) for x, y in cut_sequence for s in [+1, -1]))
-            return curve.encode_twist()
+            return curve.twist()
         elif rotate_match is not None:
 
             def isom(edge: Edge) -> Edge:

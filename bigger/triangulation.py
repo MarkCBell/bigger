@@ -70,7 +70,7 @@ class Triangulation(Generic[Edge]):
     def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges)
 
-    def encode_flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> bigger.Encoding[Edge]:
+    def flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
         Alternatively, this can be given a set of Edges and will use membership of this set to test which edges flip.
@@ -78,7 +78,7 @@ class Triangulation(Generic[Edge]):
 
         if isinstance(is_flipped, set):
             # Start again with the function lambda edge: edge in is_flipped.
-            return self.encode_flip(is_flipped.__contains__)
+            return self.flip(is_flipped.__contains__)
 
         flipped = is_flipped
 
@@ -160,7 +160,7 @@ class Triangulation(Generic[Edge]):
 
         return bigger.Move(self, target, action, inv_action).encode()
 
-    def encode_isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> bigger.Encoding[Edge]:
+    def isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. """
 
         # Define the new triangulation.
@@ -190,7 +190,7 @@ class Triangulation(Generic[Edge]):
 
         return bigger.Move(self, target, action, inv_action).encode()
 
-    def encode_isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> bigger.Encoding[Edge]:
+    def isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. """
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
 
@@ -200,11 +200,11 @@ class Triangulation(Generic[Edge]):
         def inv_isom(edge: Edge) -> Edge:
             return inv_isom_dict.get(edge, edge)
 
-        return self.encode_isometry(isom, inv_isom)
+        return self.isometry(isom, inv_isom)
 
-    def encode_identity(self) -> bigger.Encoding[Edge]:
+    def identity(self) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class. """
-        return self.encode_isometry_from_dict(dict())
+        return self.isometry_from_dict(dict())
 
     def encode(
         self,
@@ -219,16 +219,16 @@ class Triangulation(Generic[Edge]):
          - Otherwise, it is assumed to be the label of an edge to flip.
 
         The sequence is read in reverse in order to respect composition."""
-        h = self.encode_identity()
+        h = self.identity()
         for term in reversed(sequence):
             if isinstance(term, set) or callable(term):
-                move = h.target.encode_flip(term)
+                move = h.target.flip(term)
             elif isinstance(term, dict):
-                move = h.target.encode_isometry_from_dict(term)
+                move = h.target.isometry_from_dict(term)
             elif isinstance(term, tuple):  # and len(term) == 2 and all(callable(item) for item in term):
-                move = h.target.encode_isometry(*term)
+                move = h.target.isometry(*term)
             else:  # Assume term is the label of an edge to flip.
-                move = h.target.encode_flip({term})
+                move = h.target.flip({term})
             h = move * h
 
         return h

@@ -99,13 +99,13 @@ class Lamination(Generic[Edge]):
 
         lamination = self
         complexity = lamination.complexity()
-        conjugator = lamination.triangulation.encode_identity()
+        conjugator = lamination.triangulation.identity()
         time_since_last_progress = 0
         while not lamination.is_short():
             time_since_last_progress += 1
-            best_complexity, best_h = complexity, lamination.triangulation.encode_identity()
+            best_complexity, best_h = complexity, lamination.triangulation.identity()
             for edge in lamination.support:  # Uses finite support assumption.
-                h = lamination.triangulation.encode_flip({edge})
+                h = lamination.triangulation.flip({edge})
                 new_complexity = h(lamination).complexity()
                 if new_complexity <= best_complexity:
                     best_complexity, best_h = new_complexity, h
@@ -121,7 +121,7 @@ class Lamination(Generic[Edge]):
 
         return lamination, conjugator
 
-    def encode_twist(self) -> bigger.Encoding[Edge]:
+    def twist(self, power: int = 1) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
 
         Note that this currently only works on non-isolating curves."""
@@ -150,7 +150,7 @@ class Lamination(Generic[Edge]):
         assert b == d
         twist = short.triangulation.encode([{e: b, b: e}, {e}])
 
-        return ~conjugator * twist * conjugator
+        return ~conjugator * twist**power * conjugator
 
     def draw(self, edges: List[Edge], **options: Any) -> Image:
         """ Return a PIL image of this Lamination around the given edges. """
