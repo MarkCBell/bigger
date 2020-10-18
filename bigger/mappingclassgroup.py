@@ -76,4 +76,4 @@ class MappingClassGroup(Generic[Edge]):
     def draw(self, edges: List[Edge], **options: Any) -> Image:
         """ Return a PIL image of the triangulation of this MCG around the given edges. """
 
-        return self.triangulation.draw(edges, **options)
+        return bigger.draw(self, edges=edges, **options)

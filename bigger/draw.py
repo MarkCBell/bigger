@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from math import sin, cos, pi, ceil
 from queue import PriorityQueue
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from PIL import Image, ImageDraw  # type: ignore
 
@@ -347,3 +347,35 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
             canvas.text(point, text, fill="Black", anchor="centre")
 
     return image
+
+
+class DrawStructure:  # pylint: disable=too-few-public-methods
+    """ A class to record intermediate draw commands. """
+    def __init__(self, edges: Optional[List[Edge]] = None, **options: Any):
+        self.edges = edges
+        self.options = options
+
+    def __call__(
+        self, obj: Optional[Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]]] = None, edges: Optional[List[Edge]] = None, **kwargs: Any
+    ) -> Union[DrawStructure, Image]:
+        draw_structure = DrawStructure(edges=edges if edges is not None else self.edges, **{**self.options, **kwargs})
+        if obj is None:
+            return draw_structure
+        elif draw_structure.edges is None:
+            raise TypeError("draw() missing 1 required positional argument: 'edges'")
+        elif isinstance(obj, bigger.Lamination):
+            return draw_lamination(obj, draw_structure.edges, **draw_structure.options)
+        elif isinstance(obj, bigger.Triangulation):
+            return draw_structure(obj.empty_lamination())
+        elif isinstance(obj, bigger.MCG):
+            return draw_structure(obj.triangulation)
+
+        raise TypeError("Unable to draw objects of type: {}".format(type(obj)))
+
+
+def draw(
+    obj: Optional[Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]]] = None, edges: Optional[List[Edge]] = None, **options: Any
+) -> Union[DrawStructure, Image]:
+    """ Draw the given object with the provided options. """
+
+    return DrawStructure(edges=edges, **options)(obj)

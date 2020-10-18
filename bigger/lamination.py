@@ -155,4 +155,4 @@ class Lamination(Generic[Edge]):
     def draw(self, edges: List[Edge], **options: Any) -> Image:
         """ Return a PIL image of this Lamination around the given edges. """
 
-        return bigger.draw.draw_lamination(self, edges, **options)
+        return bigger.draw(self, edges=edges, **options)

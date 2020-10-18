@@ -264,4 +264,4 @@ class Triangulation(Generic[Edge]):
     def draw(self, edges: List[Edge], **options: Any) -> Image:
         """ Return a PIL image of this Triangulation around the given edges. """
 
-        return self.empty_lamination().draw(edges, **options)
+        return bigger.draw(self, edges=edges, **options)

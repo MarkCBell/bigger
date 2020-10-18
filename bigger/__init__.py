@@ -11,7 +11,7 @@ from .triangulation import Triangulation  # noqa: F401
 from .mappingclassgroup import MappingClassGroup  # noqa: F401
 from .structures import UnionFind  # noqa: F401
 from .utilities import half  # noqa: F401
-from . import draw  # noqa: F401
+from .draw import draw  # noqa: F401
 
 # Aliases.
 MCG = MappingClassGroup
