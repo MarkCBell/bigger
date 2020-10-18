@@ -2,9 +2,12 @@
 History
 =======
 
-0.2.1 (2020-04-??)
+0.2.1 (2020-10-18)
 ------------------
 
+* Re-engineered draw methods to support partial evaluation.
+* Checking for useless-suppression.
+* Added Cantor surface.
 * Made flute and biflute b twists support expression notation.
 
 0.2.0 (2020-04-17)
