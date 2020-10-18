@@ -150,7 +150,7 @@ class Lamination(Generic[Edge]):
         assert b == d
         twist = short.triangulation.encode([{e: b, b: e}, {e}])
 
-        return ~conjugator * twist**power * conjugator
+        return ~conjugator * twist ** power * conjugator
 
     def draw(self, edges: List[Edge], **options: Any) -> Image:
         """ Return a PIL image of this Lamination around the given edges. """
