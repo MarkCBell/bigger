@@ -165,7 +165,7 @@ def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], comp
     return layout
 
 
-def draw_block_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
+def draw_block_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
     """ Draw a flat triangle with (blocks of) lines inside it. """
 
     weights_0 = [max(weight, 0) for weight in weights]
@@ -192,7 +192,7 @@ def draw_block_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[i
             E1 = interpolate(vertices[i - 0], vertices[i - 1], scale_b)
             S2 = interpolate(vertices[i - 2], vertices[i - 1], scale_a2)
             E2 = interpolate(vertices[i - 0], vertices[i - 1], scale_b2)
-            draw.polygon([S1, E1, E2, S2], fill=LAMINATION_COLOUR)
+            canvas.polygon([S1, E1, E2, S2], fill=LAMINATION_COLOUR)
         elif dual_weights[i] < 0:  # Terminal arc.
             s_0 = (1 - 2 * VERTEX_BUFFER) * weights_0[i] / master
 
@@ -203,7 +203,7 @@ def draw_block_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[i
             E1 = vertices[i - 1]
             S2 = interpolate(vertices[i - 0], vertices[i - 2], scale_a2)
             E2 = vertices[i - 1]
-            draw.polygon([S1, E1, E2, S2], fill=LAMINATION_COLOUR)
+            canvas.polygon([S1, E1, E2, S2], fill=LAMINATION_COLOUR)
         else:  # dual_weights[i] == 0:  # Nothing to draw.
             pass
 
@@ -216,10 +216,10 @@ def draw_block_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[i
             MM = interpolate(SS, EE)
             s = parallel_weights[i] / master
             P = interpolate(MM, M, s)
-            draw.polygon([S, P, E], fill=LAMINATION_COLOUR)
+            canvas.polygon([S, P, E], fill=LAMINATION_COLOUR)
 
 
-def draw_line_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
+def draw_line_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
     """ Draw a flat triangle with (individual) lines inside it. """
 
     weights_0 = [max(weight, 0) for weight in weights]
@@ -237,7 +237,7 @@ def draw_line_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[in
 
                 S1 = interpolate(vertices[i - 2], vertices[i - 1], scale_a)
                 E1 = interpolate(vertices[i - 0], vertices[i - 1], scale_b)
-                draw.line([S1, E1], fill=LAMINATION_COLOUR, width=2)
+                canvas.line([S1, E1], fill=LAMINATION_COLOUR, width=2)
         elif dual_weights[i] < 0:  # Terminal arc.
             s_0 = 1 - 2 * VERTEX_BUFFER
             for j in range(-dual_weights[i]):
@@ -245,7 +245,7 @@ def draw_line_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[in
 
                 S1 = interpolate(vertices[i - 0], vertices[i - 2], scale_a)
                 E1 = vertices[i - 1]
-                draw.line([S1, E1], fill=LAMINATION_COLOUR, width=2)
+                canvas.line([S1, E1], fill=LAMINATION_COLOUR, width=2)
         else:  # dual_weights[i] == 0:  # Nothing to draw.
             pass
 
@@ -259,9 +259,9 @@ def draw_line_triangle(draw: ImageDraw, vertices: FlatTriangle, weights: List[in
             for j in range(parallel_weights[i] // 2):
                 s = float(j + 1) / master
                 P = interpolate(MM, M, s)
-                draw.line([S, P, E], fill=LAMINATION_COLOUR, width=2)
+                canvas.line([S, P, E], fill=LAMINATION_COLOUR, width=2)
             if parallel_weights[i] % 2 == 1:
-                draw.line([S, E], fill=LAMINATION_COLOUR, width=2)
+                canvas.line([S, E], fill=LAMINATION_COLOUR, width=2)
 
 
 def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any) -> Image:  # pylint: disable=too-many-branches
@@ -269,7 +269,7 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
     options = {"w": 400, "h": 400, "label": "none", "colour": "bw", "outline": False, **options}
 
     image = Image.new("RGB", (options["w"], options["h"]), color="White")
-    draw = ImageDraw.Draw(image)
+    canvas = ImageDraw.Draw(image)
 
     # Draw these triangles.
     components, interior = supporting_triangles(lamination.triangulation, edges)
@@ -315,7 +315,7 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
     # Draw triangles.
     triangle_colours = TRIANGLE_COLOURS[options["colour"]]
     for index, (triangle, vertices) in enumerate(layout4.items()):
-        draw.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
+        canvas.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
 
     weights = dict((edge, lamination(edge)) for edge in set(edge for triangle in layout4 for edge in triangle))
 
@@ -325,9 +325,9 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
     # Draw lamination.
     for index, (triangle, vertices) in enumerate(layout4.items()):
         if master < MAX_DRAWABLE and shown_is_integral:
-            draw_line_triangle(draw, vertices, [weights[edge] for edge in triangle], master)
+            draw_line_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
         else:  # Draw everything. Caution, this is is VERY slow (O(n) not O(log(n))) so we only do it when the weight is low.
-            draw_block_triangle(draw, vertices, [weights[edge] for edge in triangle], master)
+            draw_block_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
 
     # Draw labels.
     for index, (triangle, vertices) in enumerate(layout4.items()):
@@ -338,12 +338,12 @@ def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layo
                 text = str(weights[triangle[side]])
             if options["label"] == "none":
                 text = ""
-            w, h = draw.textsize(text)
+            w, h = canvas.textsize(text)
             point = interpolate(vertices[side - 0], vertices[side - 2])
             point = (point[0] - w / 2, point[1] - h / 2)
             for offset in OFFSETS:
-                draw.text(add(point, offset), text, fill="White", anchor="centre")
+                canvas.text(add(point, offset), text, fill="White", anchor="centre")
 
-            draw.text(point, text, fill="Black", anchor="centre")
+            canvas.text(point, text, fill="Black", anchor="centre")
 
     return image
