@@ -143,6 +143,7 @@ def biflute() -> bigger.MCG[int]:
      - a{expr(n)} which twists about all a_n curves when expr(n) is True
      - b{expr(n)} which twists about all b_n curves when expr(n) is True
      - s which shifts the surface down
+     - r which rotates the surface fixing the curve a_0
 
     Shortcuts:
 
@@ -167,10 +168,14 @@ def biflute() -> bigger.MCG[int]:
     )
 
     shift = T.isometry(lambda edge: edge + 3, lambda edge: edge - 3)
+    rotate = T.isometry(lambda edge: [3, 2, 4][edge % 3] - edge, lambda edge: [3, 2, 4][edge % 3] - edge)
 
     def generator(name: str) -> bigger.Encoding[int]:
         if name in ("s", "shift"):
             return shift
+
+        if name in ("r", "rotate"):
+            return rotate
 
         curve, test = extract_curve_and_test("ab", name)
 
