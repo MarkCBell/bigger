@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from math import sin, cos, pi, ceil
 from queue import PriorityQueue
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Generic, List, Optional, Set, Tuple, Union
 
 from PIL import Image, ImageDraw  # type: ignore
 
 import bigger
-from bigger.types import Edge, Triangle, Coord, FlatTriangle, SupportsLayout
+from bigger.types import Edge, Triangle, Coord, FlatTriangle
 
 # Vectors to offset a label by to produce backing.
 OFFSETS = [(1.5 * cos(2 * pi * i / 12), 1.5 * sin(2 * pi * i / 12)) for i in range(12)]
@@ -264,119 +265,144 @@ def draw_line_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: List[
                 canvas.line([S, E], fill=LAMINATION_COLOUR, width=2)
 
 
-def draw_lamination(lamination: bigger.Lamination[Edge], edges: List[Edge], layout: Optional[SupportsLayout] = None, **options: Any) -> Image:  # pylint: disable=too-many-branches
-    """ Return an image of this lamination on the specified edges. """
-    options = {"w": 400, "h": 400, "label": "none", "colour": "bw", "outline": False, **options}
-
-    image = Image.new("RGB", (options["w"], options["h"]), color="White")
-    canvas = ImageDraw.Draw(image)
-
-    # Draw these triangles.
-    components, interior = supporting_triangles(lamination.triangulation, edges)
-    if layout is None:
-        layout2 = default_layout_triangulation(lamination.triangulation, components, interior)
-    else:
-        layout2 = dict((triangle, layout.layout(triangle)) for component in components for triangle in component)
-
-    # We will layout the components in a p x q grid.
-    # Aim to maximise r := min(w / p, h / q) subject to pq >= num_components.
-    # There is probably a closed formula for the optimal value of p (and so q).
-    num_components = len(components)
-    p = max(range(1, num_components + 1), key=lambda p: min(options["w"] / p, options["h"] / ceil(float(num_components) / p)))
-    q = int(ceil(float(num_components) / p))
-    ww = options["w"] / p * (1 + ZOOM_FRACTION) / 4
-    hh = options["h"] / q * (1 + ZOOM_FRACTION) / 4
-    dx = options["w"] / p
-    dy = options["h"] / q
-
-    # Scale & translate to fit into the [-r, r] x [-r, r] box.
-    layout3 = dict()
-    for component in components:
-        bb_w = min(vertex[0] for triangle in component for vertex in layout2[triangle])
-        bb_e = max(vertex[0] for triangle in component for vertex in layout2[triangle])
-        bb_n = min(vertex[1] for triangle in component for vertex in layout2[triangle])
-        bb_s = max(vertex[1] for triangle in component for vertex in layout2[triangle])
-        for triangle in component:
-            a, b, c = layout2[triangle]
-            layout3[triangle] = (
-                ((a[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (a[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
-                ((b[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (b[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
-                ((c[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (c[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
-            )
-
-    # Move to correct region within the image.
-    layout4 = dict()
-    for index, component in enumerate(components):
-        for triangle in component:
-            centre = (dx * (index % p) + dx / 2, dy * int(index / p) + dy / 2)
-            a, b, c = layout3[triangle]
-            layout4[triangle] = (add(a, centre), add(b, centre), add(c, centre))
-
-    # Draw triangles.
-    triangle_colours = TRIANGLE_COLOURS[options["colour"]]
-    for index, (triangle, vertices) in enumerate(layout4.items()):
-        canvas.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if options["outline"] else None)
-
-    weights = dict((edge, lamination(edge)) for edge in set(edge for triangle in layout4 for edge in triangle))
-
-    master = max(abs(weights[edge]) for triangle in layout4 for edge in triangle)
-    shown_is_integral = all(isinstance(weights[edge], int) for edge in weights)
-
-    # Draw lamination.
-    for index, (triangle, vertices) in enumerate(layout4.items()):
-        if master < MAX_DRAWABLE and shown_is_integral:
-            draw_line_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
-        else:  # Draw everything. Caution, this is is VERY slow (O(n) not O(log(n))) so we only do it when the weight is low.
-            draw_block_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
-
-    # Draw labels.
-    for index, (triangle, vertices) in enumerate(layout4.items()):
-        for side in range(3):
-            if options["label"] == "edge":
-                text = str(triangle[side])
-            if options["label"] == "weight":
-                text = str(weights[triangle[side]])
-            if options["label"] == "none":
-                text = ""
-            w, h = canvas.textsize(text)
-            point = interpolate(vertices[side - 0], vertices[side - 2])
-            point = (point[0] - w / 2, point[1] - h / 2)
-            for offset in OFFSETS:
-                canvas.text(add(point, offset), text, fill="White", anchor="centre")
-
-            canvas.text(point, text, fill="Black", anchor="centre")
-
-    return image
-
-
-class DrawStructure:  # pylint: disable=too-few-public-methods
+class DrawStructure(Generic[Edge]):
     """ A class to record intermediate draw commands. """
 
-    def __init__(self, edges: Optional[List[Edge]] = None, **options: Any):
-        self.edges = edges
-        self.options = options
+    def __init__(self, **options: Any):
+        self.edges: Optional[List[Edge]] = None
+        self.w = 400
+        self.h = 400
+        self.label = "none"
+        self.layout = None
+        self.colour = "bw"
+        self.outline = False
+        self.set_options(**options)
 
-    def __call__(
-        self, obj: Optional[Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]]] = None, edges: Optional[List[Edge]] = None, **kwargs: Any
-    ) -> Union[DrawStructure, Image]:
-        draw_structure = DrawStructure(edges=edges if edges is not None else self.edges, **{**self.options, **kwargs})
-        if obj is None:
+    def set_options(self, **options: Any) -> None:
+        """ Set the options passed in. """
+
+        for key, value in options.items():
+            setattr(self, key, value)
+
+    def __call__(self, *objs: Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]], **options: Any) -> Union[DrawStructure, Image]:
+        draw_structure = deepcopy(self)
+        draw_structure.set_options(**options)
+
+        if not objs:
             return draw_structure
-        elif draw_structure.edges is None:
+        elif not draw_structure.edges:
             raise TypeError("draw() missing 1 required positional argument: 'edges'")
-        elif isinstance(obj, bigger.Lamination):
-            return draw_lamination(obj, draw_structure.edges, **draw_structure.options)
-        elif isinstance(obj, bigger.Triangulation):
-            return draw_structure(obj.empty_lamination())
-        elif isinstance(obj, bigger.MCG):
-            return draw_structure(obj.triangulation)
+        for obj in objs:
+            if not isinstance(obj, (bigger.Triangulation, bigger.Lamination, bigger.MCG)):
+                raise TypeError("Unable to draw objects of type: {}".format(type(obj)))
 
-        raise TypeError("Unable to draw objects of type: {}".format(type(obj)))
+        return draw_structure.draw_objs(*objs)
+
+    def draw_objs(self, *objs: Union[bigger.Triangulation[Edge], bigger.Lamination[Edge], bigger.MCG[Edge]]) -> Image:  # pylint: disable=too-many-statements, too-many-branches
+        """Return an image of these objects.
+
+        This method assumes that:
+         - at least one object is given,
+         - that all objects exist on the first triangulation, and
+         - self.edges has been set."""
+
+        image = Image.new("RGB", (self.w, self.h), color="White")
+        canvas = ImageDraw.Draw(image)
+
+        assert self.edges is not None
+
+        if isinstance(objs[0], bigger.Triangulation):
+            triangulation = objs[0]
+        elif isinstance(objs[0], bigger.Lamination):
+            triangulation = objs[0].triangulation
+        elif isinstance(objs[0], bigger.MCG):
+            triangulation = objs[0].triangulation
+        else:
+            raise TypeError("Unable to draw objects of type: {}".format(type(objs[0])))
+
+        # Draw these triangles.
+        components, interior = supporting_triangles(triangulation, self.edges)
+        if self.layout is None:
+            layout2 = default_layout_triangulation(triangulation, components, interior)
+        else:
+            layout2 = dict((triangle, self.layout.layout(triangle)) for component in components for triangle in component)
+
+        # We will layout the components in a p x q grid.
+        # Aim to maximise r := min(w / p, h / q) subject to pq >= num_components.
+        # There is probably a closed formula for the optimal value of p (and so q).
+        num_components = len(components)
+        p = max(range(1, num_components + 1), key=lambda p: min(self.w / p, self.h / ceil(float(num_components) / p)))
+        q = int(ceil(float(num_components) / p))
+        ww = self.w / p * (1 + ZOOM_FRACTION) / 4
+        hh = self.h / q * (1 + ZOOM_FRACTION) / 4
+        dx = self.w / p
+        dy = self.h / q
+
+        # Scale & translate to fit into the [-r, r] x [-r, r] box.
+        layout3 = dict()
+        for component in components:
+            bb_w = min(vertex[0] for triangle in component for vertex in layout2[triangle])
+            bb_e = max(vertex[0] for triangle in component for vertex in layout2[triangle])
+            bb_n = min(vertex[1] for triangle in component for vertex in layout2[triangle])
+            bb_s = max(vertex[1] for triangle in component for vertex in layout2[triangle])
+            for triangle in component:
+                a, b, c = layout2[triangle]
+                layout3[triangle] = (
+                    ((a[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (a[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
+                    ((b[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (b[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
+                    ((c[0] - bb_w) * 2 * ww / (bb_e - bb_w) - ww, (c[1] - bb_n) * 2 * hh / (bb_s - bb_n) - hh),
+                )
+
+        # Move to correct region within the image.
+        layout4 = dict()
+        for index, component in enumerate(components):
+            for triangle in component:
+                centre = (dx * (index % p) + dx / 2, dy * int(index / p) + dy / 2)
+                a, b, c = layout3[triangle]
+                layout4[triangle] = (add(a, centre), add(b, centre), add(c, centre))
+
+        # Draw triangles.
+        triangle_colours = TRIANGLE_COLOURS[self.colour]
+        for index, (triangle, vertices) in enumerate(layout4.items()):
+            canvas.polygon(vertices, fill=triangle_colours[index % len(triangle_colours)], outline="white" if self.outline else None)
+
+        laminations = [obj for obj in objs if isinstance(obj, bigger.Lamination)]
+        for lamination in laminations:
+            weights = dict((edge, lamination(edge)) for edge in set(edge for triangle in layout4 for edge in triangle))
+
+            master = max(abs(weights[edge]) for triangle in layout4 for edge in triangle)
+            shown_is_integral = all(isinstance(weights[edge], int) for edge in weights)
+
+            # Draw lamination.
+            for index, (triangle, vertices) in enumerate(layout4.items()):
+                if master < MAX_DRAWABLE and shown_is_integral:
+                    draw_line_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
+                else:  # Draw everything. Caution, this is is VERY slow (O(n) not O(log(n))) so we only do it when the weight is low.
+                    draw_block_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
+
+        # Draw labels.
+        for index, (triangle, vertices) in enumerate(layout4.items()):
+            for side in range(3):
+                if self.label == "edge":
+                    text = str(triangle[side])
+                elif self.label == "weight" and len(laminations) == 1:  # Only draw weights if there is a single lamination.
+                    text = str(weights[triangle[side]])
+                else:
+                    text = ""
+                w, h = canvas.textsize(text)
+                point = interpolate(vertices[side - 0], vertices[side - 2])
+                point = (point[0] - w / 2, point[1] - h / 2)
+                for offset in OFFSETS:
+                    canvas.text(add(point, offset), text, fill="White", anchor="centre")
+
+                canvas.text(point, text, fill="Black", anchor="centre")
+
+        return image
 
 
-def draw(
-    obj: Optional[Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]]] = None, edges: Optional[List[Edge]] = None, **options: Any
-) -> Union[DrawStructure, Image]:
+def draw(*objs: Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]], edges: Optional[List[Edge]] = None, **options: Any) -> Union[DrawStructure, Image]:
     """ Draw the given object with the provided options. """
 
-    return DrawStructure(edges=edges, **options)(obj)
+    # This is only really here so we can provide "edges" as a keyword argument to users.
+
+    return DrawStructure[Edge](edges=edges, **options)(*objs)
