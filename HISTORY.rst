@@ -2,6 +2,13 @@
 History
 =======
 
+0.2.2 (2020-10-28)
+------------------
+
+* New draw method support variable text size and multiple simultaneous objects.
+* Removed encode prefixes
+* Added rotate to biflute
+
 0.2.1 (2020-10-18)
 ------------------
 
