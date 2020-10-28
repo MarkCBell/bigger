@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from copy import deepcopy
 from math import sin, cos, pi, ceil
 from queue import PriorityQueue
@@ -308,7 +309,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
          - self.edges has been set."""
 
         image = Image.new("RGB", (self.w, self.h), color="White")
-        font = ImageFont.truetype("fonts/FreeMonoBold.ttf", self.textsize)
+        font = ImageFont.truetype(os.path.join(os.path.dirname(__file__), "fonts", "FreeMonoBold.ttf"), self.textsize)
         canvas = ImageDraw.Draw(image)
 
         assert self.edges is not None
@@ -395,9 +396,9 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
                 point = interpolate(vertices[side - 0], vertices[side - 2])
                 point = (point[0] - w / 2, point[1] - h / 2)
                 for offset in OFFSETS:
-                    canvas.text(add(point, offset), text, fill="White", anchor="centre", font=font)
+                    canvas.text(add(point, offset), text, fill="White", font=font)
 
-                canvas.text(point, text, fill="Black", anchor="centre", font=font)
+                canvas.text(point, text, fill="Black", font=font)
 
         return image
 
