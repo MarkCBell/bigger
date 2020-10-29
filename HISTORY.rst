@@ -2,6 +2,11 @@
 History
 =======
 
+0.2.4 (2020-10-29)
+------------------
+
+* Changed curve test notation to match python slice notation.
+
 0.2.3 (2020-10-29)
 ------------------
 
