@@ -392,8 +392,9 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
                     text = str(weights[triangle[side]])
                 else:
                     text = ""
-                w, h = canvas.textsize(text, font=font)
                 point = interpolate(vertices[side - 0], vertices[side - 2])
+                # For some reason anchor="mm" does not work. So we will have to manually center the text ourselves.
+                w, h = canvas.textsize(text, font=font)
                 point = (point[0] - w / 2, point[1] - h / 2)
                 for offset in OFFSETS:
                     canvas.text(add(point, offset), text, fill="White", font=font)
