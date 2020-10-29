@@ -32,7 +32,7 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
         curve = parameters["curve"]
         n = int(parameters["n"])
         test = lambda edge: edge == n
-    if twist_index_match is not None:
+    elif twist_index_match is not None:
         parameters = twist_index_match.groupdict()
         curve = parameters["curve"]
         n = int(parameters["n"])
