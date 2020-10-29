@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from itertools import count
+from math import inf
 from typing import Any, Callable, Iterable, Tuple
 
 import bigger
@@ -22,7 +23,8 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
     """ Return a curve and a test to apply for which of it's components to twist. """
 
     twist_match = re.match(r"(?P<curve>[%s])_(?P<n>-?\d+)$" % (curve_names), name)
-    twist_mod_match = re.match(r"(?P<curve>[%s])(\[(?P<p>\d+)(, *(?P<k>-?\d+))?\])?$" % (curve_names), name)
+    twist_index_match = re.match(r"(?P<curve>[%s])\[ *(?P<n>-?\d+) *\]$" % (curve_names), name)
+    twist_slice_match = re.match(r"(?P<curve>[%s])(\[ *(?P<start>-?\d*) *: *(?P<stop>-?\d*) *(: *(?P<step>-?\d*) *)?\])?$" % (curve_names), name)
     twist_expr_match = re.match(r"(?P<curve>[%s])\{(?P<expr>.*)\}$" % (curve_names), name)
 
     if twist_match is not None:
@@ -30,12 +32,18 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
         curve = parameters["curve"]
         n = int(parameters["n"])
         test = lambda edge: edge == n
-    elif twist_mod_match is not None:
-        parameters = twist_mod_match.groupdict()
+    if twist_index_match is not None:
+        parameters = twist_index_match.groupdict()
         curve = parameters["curve"]
-        p = int(parameters["p"]) if parameters["p"] is not None else 1
-        k = int(parameters["k"]) if parameters["k"] is not None else 0
-        test = lambda edge: edge % p == k
+        n = int(parameters["n"])
+        test = lambda edge: edge == n
+    elif twist_slice_match is not None:
+        parameters = twist_slice_match.groupdict()
+        curve = parameters["curve"]
+        start = int(parameters["start"]) if parameters["start"] else -inf
+        stop = int(parameters["stop"]) if parameters["stop"] else inf
+        step = int(parameters["step"]) if parameters["step"] else 1
+        test = lambda edge: start <= edge < stop and (edge % step == (0 if start == -inf else start % step))
     elif twist_expr_match is not None:
         parameters = twist_expr_match.groupdict()
         curve = parameters["curve"]
@@ -58,9 +66,8 @@ def flute() -> bigger.MCG[int]:
 
     Shortcuts:
 
-     - a[p, k] == a{n % p == k}
-     - a[p] == a[p, 0]
-     - a == a[1]
+     - a[start:stop:step] = a{n in range(start, stop, slice)}
+     - a == a[:]
     """
 
     #             #----2----#----5----#----8----#---
@@ -147,9 +154,8 @@ def biflute() -> bigger.MCG[int]:
 
     Shortcuts:
 
-     - a[p, k] == a{n % p == k}
-     - a[p] == a[p, 0]
-     - a == a[1]
+     - a[start:stop:step] = a{n in range(start, stop, slice)}
+     - a == a[:]
 
     Note: Since b_n and b_{n+1} intersect, any b expression cannot be true for consecutive values.
     """
@@ -309,6 +315,9 @@ def spotted_cantor() -> bigger.MCG[Tuple[int, int]]:
 
      - a_n which twists about the curve across square n
      - a which twists about all a_n curves simultaneously
+
+     - a[start:stop:step] = a{n in range(start, stop, slice)}
+     - a == a[:]
     """
 
     #       #
