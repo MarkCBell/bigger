@@ -7,7 +7,7 @@ from math import sin, cos, pi, ceil
 from queue import PriorityQueue
 from typing import Any, Dict, Generic, List, Optional, Set, Tuple, Union
 
-from PIL import Image, ImageDraw  # type: ignore
+from PIL import Image, ImageDraw, ImageFont  # type: ignore
 
 import bigger
 from bigger.types import Edge, Triangle, Coord, FlatTriangle
@@ -19,7 +19,7 @@ OFFSETS = [(1.5 * cos(2 * pi * i / 12), 1.5 * sin(2 * pi * i / 12)) for i in ran
 DEFAULT_EDGE_LABEL_COLOUR = "black"
 DEFAULT_EDGE_LABEL_BG_COLOUR = "white"
 MAX_DRAWABLE = 100  # Maximum weight of a multicurve to draw fully.
-ZOOM_FRACTION = 0.9
+ZOOM_FRACTION = 0.8
 VERTEX_BUFFER = 0.2
 
 LAMINATION_COLOUR = "#555555"
@@ -276,6 +276,7 @@ class DrawStructure(Generic[Edge]):
         self.layout = None
         self.colour = "bw"
         self.outline = False
+        self.textsize = 12
         self.set_options(**options)
 
     def set_options(self, **options: Any) -> None:
@@ -307,6 +308,7 @@ class DrawStructure(Generic[Edge]):
          - self.edges has been set."""
 
         image = Image.new("RGB", (self.w, self.h), color="White")
+        font = ImageFont.truetype("fonts/FreeMonoBold.ttf", self.textsize)
         canvas = ImageDraw.Draw(image)
 
         assert self.edges is not None
@@ -389,13 +391,13 @@ class DrawStructure(Generic[Edge]):
                     text = str(weights[triangle[side]])
                 else:
                     text = ""
-                w, h = canvas.textsize(text)
+                w, h = canvas.textsize(text, font=font)
                 point = interpolate(vertices[side - 0], vertices[side - 2])
                 point = (point[0] - w / 2, point[1] - h / 2)
                 for offset in OFFSETS:
-                    canvas.text(add(point, offset), text, fill="White", anchor="centre")
+                    canvas.text(add(point, offset), text, fill="White", anchor="centre", font=font)
 
-                canvas.text(point, text, fill="Black", anchor="centre")
+                canvas.text(point, text, fill="Black", anchor="centre", font=font)
 
         return image
 
