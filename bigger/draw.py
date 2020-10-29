@@ -265,7 +265,7 @@ def draw_line_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: List[
                 canvas.line([S, E], fill=LAMINATION_COLOUR, width=2)
 
 
-class DrawStructure(Generic[Edge]):
+class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attributes
     """ A class to record intermediate draw commands. """
 
     def __init__(self, **options: Any):
