@@ -26,7 +26,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Display Python version
-      run: python -c "import sys; print(sys.version)"
+      run: |
+        python -c "import sys; print(sys.version)"
+        tox --version
+        echo "${TOXENV}"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
