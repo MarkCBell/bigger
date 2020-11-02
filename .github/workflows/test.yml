@@ -11,13 +11,13 @@ jobs:
         include:
           - python-version: 3.7
             env:
-              TOXENV: lint
+              - TOXENV: lint
           - python-version: 3.7
             env:
-              TOXENV: py37
+              - TOXENV: py37
           - python-version: 3.8
             env:
-              TOXENV: py38
+              - TOXENV: py38
 
     steps:
     - uses: actions/checkout@v2
