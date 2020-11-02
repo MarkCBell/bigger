@@ -190,35 +190,43 @@ def biflute() -> bigger.MCG[int]:
             return T.encode([(a_isom, a_isom), lambda edge: edge % 3 == 2 and test(edge // 3)])
         if curve == "b":
 
-            def b_isom(edge: int) -> int:
-                if edge % 3 == 0:
-                    if test(edge // 3):
-                        return edge + 3
-                    if test(edge // 3 - 1):
-                        return edge - 3
-                    return edge
-                if edge % 3 == 1:
-                    if test(edge // 3 - 1):
-                        return edge - 6
-                    if test(edge // 3 + 1):
-                        return edge + 6
-                return edge
+            def build(k: int) -> bigger.Encoding[int]:
+                # Build the encoding which twists around b[n] when test(n) and n % 3 == k.
 
-            prefix = T.encode(
-                [
-                    lambda edge: edge % 3 == 2 and (test(edge // 3 - 1) or test(edge // 3 + 1)),
-                    lambda edge: edge % 3 == 1 and test(edge // 3),
-                    lambda edge: edge % 3 == 0 and (test(edge // 3) or test(edge // 3 - 1)),
-                ]
-            )
-            twist = prefix.target.encode(
-                [
-                    (b_isom, b_isom),
-                    lambda edge: edge % 3 == 1 and (test(edge // 3 - 1) or test(edge // 3 + 1)),
-                    lambda edge: edge % 3 == 0 and (test(edge // 3) or test(edge // 3 - 1)),
-                ]
-            )
-            return ~prefix * twist * prefix
+                def retest(n: int) -> bool:
+                    return n % 3 == k and test(n)
+
+                def b_isom(edge: int) -> int:
+                    if edge % 3 == 0:
+                        if retest(edge // 3):
+                            return edge + 3
+                        if retest(edge // 3 - 1):
+                            return edge - 3
+                        return edge
+                    if edge % 3 == 1:
+                        if retest(edge // 3 - 1):
+                            return edge - 6
+                        if retest(edge // 3 + 1):
+                            return edge + 6
+                    return edge
+
+                prefix = T.encode(
+                    [
+                        lambda edge: edge % 3 == 2 and (retest(edge // 3 - 1) or retest(edge // 3 + 1)),
+                        lambda edge: edge % 3 == 1 and retest(edge // 3),
+                        lambda edge: edge % 3 == 0 and (retest(edge // 3) or retest(edge // 3 - 1)),
+                    ]
+                )
+                twist = prefix.target.encode(
+                    [
+                        (b_isom, b_isom),
+                        lambda edge: edge % 3 == 1 and (retest(edge // 3 - 1) or retest(edge // 3 + 1)),
+                        lambda edge: edge % 3 == 0 and (retest(edge // 3) or retest(edge // 3 - 1)),
+                    ]
+                )
+                return ~prefix * twist * prefix
+
+            return build(0) * build(1) * build(2)
 
         raise ValueError("Unknown mapping class {}".format(name))
 
