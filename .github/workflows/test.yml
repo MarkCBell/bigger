@@ -28,7 +28,6 @@ jobs:
     - name: Display Python version
       run: |
         python -c "import sys; print(sys.version)"
-        tox --version
         echo "${TOXENV}"
     - name: Install dependencies
       run: |
