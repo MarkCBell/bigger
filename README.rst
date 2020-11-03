@@ -14,7 +14,8 @@ Bigger
     :target: https://github.com/MarkCBell/bigger/actions
     :alt: Github build status
 
-..can also use: https://github.com/MarkCBell/bigger/workflows/Build/badge.svg?branch=master
+..
+    can also use: https://github.com/MarkCBell/bigger/workflows/Build/badge.svg?branch=master
 
 Bigger is a program for computing big mapping classes and their actions on non-compact laminations via ideal triangulation coordinates.
 
