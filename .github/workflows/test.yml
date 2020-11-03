@@ -40,7 +40,7 @@ jobs:
         TOXENV: ${{ matrix.tox }}
 
   release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     steps:
