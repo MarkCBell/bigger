@@ -44,6 +44,19 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout branch
+      uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Display Python version
+      run: |
+        python -c "import sys; print(sys.version)"
+        pip --version
+    - name: Build
+      run: |
+        python setup.py sdist
     - name: Publish
       uses: pypa/gh-action-pypi-publish@master
       with:
