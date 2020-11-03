@@ -194,7 +194,19 @@ def biflute() -> bigger.MCG[int]:
                 # Build the encoding which twists around b[n] when test(n) and n % 3 == k.
 
                 def retest(n: int) -> bool:
-                    return n % 3 == k and test(n)
+                    if n % 3 != k:
+                        return False
+
+                    if test(n):
+                        if test(n - 1):
+                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n - 1, n))
+
+                        if test(n + 1):
+                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n, n + 1))
+
+                        return True
+
+                    return False
 
                 def b_isom(edge: int) -> int:
                     if edge % 3 == 0:
