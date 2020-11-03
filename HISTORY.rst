@@ -2,6 +2,12 @@
 History
 =======
 
+0.2.5 (2020-11-03)
+------------------
+
+* Fixed bug which prevented b[::2] from working.
+* Switched to publishing via github action.
+
 0.2.4 (2020-10-29)
 ------------------
 
