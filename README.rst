@@ -2,6 +2,18 @@
 Bigger
 ======
 
+.. image:: https://img.shields.io/pypi/v/bigger.svg
+    :target: https://pypi.org/project/bigger/
+    :alt: PyPI version
+
+.. image:: https://img.shields.io/pypi/l/bigger.svg
+    :target: https://pypi.org/project/bigger/
+    :alt: PyPI license
+
+.. image:: https://img.shields.io/github/workflow/status/MarkCBell/bigger/Build/master
+    :target: https://github.com/MarkCBell/bigger/actions
+    :alt: Github build status
+
 Bigger is a program for computing big mapping classes and their actions on non-compact laminations via ideal triangulation coordinates.
 
 Bigger officially supports Python 3.7 -- 3.9.
