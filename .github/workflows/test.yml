@@ -9,16 +9,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - python-version: 3.7
-            env:
-              - TOXENV: lint
-          - python-version: 3.7
-            env:
-              - TOXENV: py37
-          - python-version: 3.8
-            env:
-              - TOXENV: py38
+        python-version: [3.7, 3.8]
+        TOXENV: [lint, py37, py38]
 
     steps:
     - name: Checkout branch
