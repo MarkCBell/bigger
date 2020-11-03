@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - python-version: 3.7
             env:
@@ -20,7 +21,8 @@ jobs:
               - TOXENV: py38
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout branch
+      uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
