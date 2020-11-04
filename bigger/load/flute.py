@@ -21,7 +21,7 @@ def flute() -> bigger.MCG[Edge]:
 
     Shortcuts:
 
-     - a[start:stop:step] = a{n in range(start, stop, slice)}
+     - a[start:stop:step] = a{n in range(start, stop, step)}
      - a == a[:]
     """
 
@@ -109,7 +109,7 @@ def biflute() -> bigger.MCG[Edge]:
 
     Shortcuts:
 
-     - a[start:stop:step] = a{n in range(start, stop, slice)}
+     - a[start:stop:step] = a{n in range(start, stop, step)}
      - a == a[:]
 
     Note: Since b_n and b_{n+1} intersect, any b expression cannot be true for consecutive values.
