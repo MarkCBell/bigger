@@ -10,8 +10,15 @@ from .utils import integers, extract_curve_and_test
 
 Edge = Tuple[int, int]
 
+
 def ladder() -> bigger.MCG[Edge]:
-    """ """
+    """The infinite-genus, two-ended surface.
+
+    With mapping classes:
+
+     - a which twists about the vertical curves
+     - b which twists about the horizontal curves
+     - s which shifts the surface down"""
 
     #  #---n,2---#
     #  |        /|
@@ -33,7 +40,7 @@ def ladder() -> bigger.MCG[Edge]:
             0: ((n, 1), (n, 2), (n - 1, 1), (n - 1, 3)),
             1: ((n, 2), (n, 0), (n, 3), (n + 1, 0)),
             2: ((n, 0), (n, 1), (n, 4), (n, 5)),
-            3: ((n+1, 0), (n, 1), (n, 4), (n, 5)),
+            3: ((n + 1, 0), (n, 1), (n, 4), (n, 5)),
             4: ((n, 5), (n, 3), (n, 5), (n, 2)),
             5: ((n, 3), (n, 4), (n, 2), (n, 4)),
         }[k]
@@ -67,6 +74,7 @@ def ladder() -> bigger.MCG[Edge]:
         }[k]
 
     return bigger.MCG(T, generator, layout)
+
 
 def spotted_ladder() -> bigger.MCG[Edge]:
     """The infinite-genus, two-ended surface.
