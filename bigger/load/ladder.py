@@ -10,8 +10,65 @@ from .utils import integers, extract_curve_and_test
 
 Edge = Tuple[int, int]
 
-
 def ladder() -> bigger.MCG[Edge]:
+    """ """
+
+    #  #---n,2---#
+    #  |        /|
+    #  |      /  |
+    # n,0  n,1 n+1,0
+    #  |  /      |
+    #  |/        |
+    #  #---n,3---#
+    #  |        /|
+    #  |      /  |
+    # n,4  n,5  n,4
+    #  |  /      |
+    #  |/        |
+    #  #---n,2---#
+
+    def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
+        n, k = edge
+        return {
+            0: ((n, 1), (n, 2), (n - 1, 1), (n - 1, 3)),
+            1: ((n, 2), (n, 0), (n, 3), (n + 1, 0)),
+            2: ((n, 0), (n, 1), (n, 4), (n, 5)),
+            3: ((n+1, 0), (n, 1), (n, 4), (n, 5)),
+            4: ((n, 5), (n, 3), (n, 5), (n, 2)),
+            5: ((n, 3), (n, 4), (n, 2), (n, 4)),
+        }[k]
+
+    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(6)), link)
+
+    shift = T.isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
+
+    def generator(name: str) -> bigger.Encoding[Edge]:
+        if name in ("s", "shift"):
+            return shift
+
+        curve, test = extract_curve_and_test("ab", name)
+
+        if curve == "a":
+            isom = lambda edge: (edge[0], [0, 5, 3, 2, 4, 1][edge[1]]) if test(edge[0]) else edge
+            return T.encode([(isom, isom), lambda edge: edge[1] in {1, 5} and test(edge[0]), lambda edge: edge[1] in {2, 3} and test(edge[0])])
+        if curve == "b":
+            isom = lambda edge: (edge[0], [0, 1, 2, 3, 5, 4][edge[1]]) if test(edge[0]) else edge
+            return T.encode([(isom, isom), lambda edge: edge[1] == 5 and test(edge[0])])
+
+        raise ValueError("Unknown mapping class {}".format(name))
+
+    def layout(triangle: Triangle) -> FlatTriangle:
+        n, k = triangle[0]
+        return {
+            0: ((n, 2.0), (n, 1.0), (n + 1.0, 2.0)),
+            1: ((n + 1.0, 2.0), (n, 1.0), (n + 1.0, 1.0)),
+            3: ((n + 1.0, 1.0), (n, 1.0), (n + 0.1, 0.0)),
+            2: ((n + 0.1, 0.0), (n + 1.0 - 0.1, 0.0), (n + 1.0, 1.0)),
+        }[k]
+
+    return bigger.MCG(T, generator, layout)
+
+def spotted_ladder() -> bigger.MCG[Edge]:
     """The infinite-genus, two-ended surface.
 
     With mapping classes:
