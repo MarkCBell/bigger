@@ -11,6 +11,7 @@ from .utils import naturals, extract_curve_and_test
 Edge = Tuple[int, int]
 Link = Tuple[Edge, Edge, Edge, Edge]
 
+
 def spotted_cantor() -> bigger.MCG[Edge]:
     """The uncountably-punctured sphere.
 

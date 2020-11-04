@@ -5,6 +5,7 @@ from math import inf
 from typing import Any, Callable, Iterable, Tuple
 import re
 
+
 def integers() -> Iterable[int]:
     """ Return an iterable that yields all of the integers. """
 

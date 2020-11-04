@@ -10,6 +10,7 @@ from .utils import integers, extract_curve_and_test
 
 Edge = Tuple[int, int]
 
+
 def ladder() -> bigger.MCG[Edge]:
     """The infinite-genus, two-ended surface.
 

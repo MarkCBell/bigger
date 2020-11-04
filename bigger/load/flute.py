@@ -8,6 +8,7 @@ from .utils import integers, extract_curve_and_test
 
 Edge = int
 
+
 def flute() -> bigger.MCG[Edge]:
     """The infinitely punctured sphere, with punctures that accumulate in one direction.
 
@@ -92,6 +93,7 @@ def flute() -> bigger.MCG[Edge]:
             return (n + 1.0, 1.0), (n, 0.0), (n + 1.0, 0.0)
 
     return bigger.MCG(T, generator, layout)
+
 
 def biflute() -> bigger.MCG[Edge]:
     """The infinitely punctured sphere, with punctures that accumulate in two directions.
