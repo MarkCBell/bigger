@@ -36,8 +36,8 @@ Bigger is available on `PyPI`_, so it can be installed via::
 Once installed, try it inside of Python::
 
     >>> import bigger
-    >>> S = bigger.load.ladder()  # The infinite-genus two-ended surface
-    
+    >>> S = bigger.load.spotted_ladder()  # The infinite-genus two-ended surface
+
     # Let's make a finite curve
     >>> c = S.triangulation({(0, 5): 1, (0, 6): 1})
     >>> c

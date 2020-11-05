@@ -72,7 +72,7 @@ class TestBiflute(TestCase):
         self.assertEqual((t * s**10)(self.b), (s**10 * t)(self.b))
 
 class TestLadder(TestCase):
-    S = bigger.load.ladder()
+    S = bigger.load.spotted_ladder()
     T = S.triangulation
     L = T.as_lamination()
     edges = list(islice(T, 10))
