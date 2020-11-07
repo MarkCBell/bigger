@@ -60,7 +60,6 @@ External Links
 * `PyPI`_
 * `ReadTheDocs`_
 * `GitHub`_
-* `Travis`_
 * `AppVeyor`_
 * `Azure`_
 
@@ -69,5 +68,4 @@ External Links
 .. _GitHub: https://github.com/MarkCBell/bigger
 .. _PyPI: https://pypi.org/project/bigger
 .. _ReadTheDocs: http://biggermcg.readthedocs.io
-.. _Travis: https://travis-ci.com/MarkCBell/bigger
 
