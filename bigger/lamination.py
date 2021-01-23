@@ -16,7 +16,7 @@ class Lamination(Generic[Edge]):
 
     The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure."""
 
-    def __init__(self, triangulation: bigger.Triangulation[Edge], weight: Callable[[Edge], int], support: Iterable[Edge]) -> None:
+    def __init__(self, triangulation: bigger.Triangulation[Edge], weight: Callable[[Edge], int], support: Callable[[], Iterable[Edge]]) -> None:
         self.triangulation = triangulation
         self.weight = weight
         self.support = support
@@ -31,7 +31,7 @@ class Lamination(Generic[Edge]):
 
     def is_finitely_supported(self) -> bool:
         """ Return whether this lamination is supported on finitely many edges of the underlying Triangulation. """
-        return isinstance(self.support, set)
+        return isinstance(self.support(), set)
 
     def __eq__(self, other: Any) -> bool:
         if not self.is_finitely_supported():
@@ -41,17 +41,17 @@ class Lamination(Generic[Edge]):
             if not other.is_finitely_supported():
                 raise ValueError("Can only determine equality between finitely supported laminations")
 
-            return self.support == other.support and all(self(edge) == other(edge) for edge in self.support)
+            return self.support() == other.support() and all(self(edge) == other(edge) for edge in self.support())
         elif isinstance(other, dict):
-            return self.support == set(other) and all(self(edge) == other[edge] for edge in self.support)
+            return self.support() == set(other) and all(self(edge) == other[edge] for edge in self.support())
 
         return NotImplemented
 
     def __str__(self) -> str:
         if not self.is_finitely_supported():
-            return "Infinitely supported lamination {} ...".format(self.describe(islice(self.support, 10)))
+            return "Infinitely supported lamination {} ...".format(self.describe(islice(self.support(), 10)))
 
-        return "Lamination {}".format(self.describe(self.support))
+        return "Lamination {}".format(self.describe(self.support()))
 
     def __repr__(self) -> str:
         return str(self)
@@ -63,9 +63,10 @@ class Lamination(Generic[Edge]):
             return self(edge) + other(edge)
 
         if self.is_finitely_supported() and other.is_finitely_supported():
-            return self.triangulation(weight, set(self.support).union(other.support))
+            support = set(self.support()).union(other.support())
+            return self.triangulation(weight, lambda: support)
         else:
-            return self.triangulation(weight, lambda: chain(self.support, other.support))
+            return self.triangulation(weight, lambda: chain(self.support(), other.support()))
 
     def __mul__(self, other: int) -> Lamination[Edge]:
         """ Return this lamination scaled by other. """
@@ -82,13 +83,13 @@ class Lamination(Generic[Edge]):
 
     def complexity(self) -> int:
         """ Return the number of intersections between this Lamination and its underlying Triangulation. """
-        return sum(max(self(edge), 0) for edge in self.support)
+        return sum(max(self(edge), 0) for edge in self.support())
 
     def is_short(self) -> bool:
         """Return whether this Lamination intersects its underlying Triangulation exactly twice.
 
         Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short."""
-        return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support)
+        return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support())
 
     def shorten(self) -> Tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:
         """Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
@@ -104,7 +105,7 @@ class Lamination(Generic[Edge]):
         while not lamination.is_short():
             time_since_last_progress += 1
             best_complexity, best_h = complexity, lamination.triangulation.identity()
-            for edge in lamination.support:  # Uses finite support assumption.
+            for edge in lamination.support():  # Uses finite support assumption.
                 h = lamination.triangulation.flip({edge})
                 new_complexity = h(lamination).complexity()
                 if new_complexity <= best_complexity:

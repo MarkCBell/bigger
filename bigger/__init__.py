@@ -17,4 +17,4 @@ from .draw import draw  # noqa: F401
 MCG = MappingClassGroup
 
 __version__ = pkg_resources.get_distribution("bigger").version
-sys.setrecursionlimit(10000)  # We may need a large stack.
+sys.setrecursionlimit(10000)  # We may need a large call stack.

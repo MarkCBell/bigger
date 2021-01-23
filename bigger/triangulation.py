@@ -3,21 +3,11 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, Union
+from typing import Any, Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, Union, Optional
 from PIL import Image  # type: ignore
 
 import bigger
 from bigger.types import Edge
-
-
-class IterableStore(Generic[Edge]):  # pylint: disable=too-few-public-methods
-    """ A restartable iterable that yields Edges. """
-
-    def __init__(self, iterable_spawner: Callable[[], Iterable[Edge]]) -> None:
-        self.iterable_spawner = iterable_spawner
-
-    def __iter__(self) -> Iterator[Edge]:
-        return iter(self.iterable_spawner())
 
 
 class Triangulation(Generic[Edge]):
@@ -30,7 +20,7 @@ class Triangulation(Generic[Edge]):
 
     Note that this cannot be used to define S_{1,1} since its edge links are invariant under the hyperelliptic involution."""
 
-    def __init__(self, edges: Union[Iterable[Edge], Callable[[], Iterable[Edge]]], link: Callable[[Edge], Tuple[Edge, Edge, Edge, Edge]]) -> None:
+    def __init__(self, edges: Callable[[], Iterable[Edge]], link: Callable[[Edge], Tuple[Edge, Edge, Edge, Edge]]) -> None:
         # Use the following for reference:
         # #----a----#
         # |        /|
@@ -42,25 +32,22 @@ class Triangulation(Generic[Edge]):
         #
         # link(e) = (a, b, c, d)
 
-        if callable(edges):
-            edges = IterableStore(edges)
         self.edges = edges
         self._link = link
 
     def link(self, edge: Edge, **kwargs: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
         """ Return the link of an edge. """
 
-        a, b, c, d = self._link(edge)
-        if "a" in kwargs and a != kwargs["a"]:
-            a, b, c, d = c, d, a, b
-        if "b" in kwargs and b != kwargs["b"]:
-            a, b, c, d = c, d, a, b
-        if "c" in kwargs and c != kwargs["c"]:
-            a, b, c, d = c, d, a, b
-        if "d" in kwargs and d != kwargs["d"]:
-            a, b, c, d = c, d, a, b
+        link = self._link(edge)
+        swapped = False
+        for index, letter in enumerate("abcd"):
+            if kwargs.get(letter, link[index]) != link[index]:
+                if swapped:  # We have already found an inconsistency in the other rotation of the link.
+                    raise ValueError("Edge link cannot be consistently oriented")
+                link = (link[2], link[3], link[0], link[1])
+                swapped = True
 
-        return a, b, c, d
+        return link
 
     def star(self, edge: Edge, **kwargs: Edge) -> Tuple[Edge, Edge, Edge, Edge, Edge]:
         """ Return the link of an Edge together with the Edge itself. """
@@ -68,7 +55,7 @@ class Triangulation(Generic[Edge]):
         return self.link(edge, **kwargs) + (edge,)
 
     def __iter__(self) -> Iterator[Edge]:
-        return iter(self.edges)
+        return iter(self.edges())
 
     def flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
@@ -150,10 +137,11 @@ class Triangulation(Generic[Edge]):
                     return max(ai0 + ci0, bi0 + di0) - ei
 
             # Determine support.
-            if isinstance(lamination.support, set):
-                return target(weight, set(edge for arc in lamination.support for edge in target.star(arc) if weight(edge)))
+            if lamination.is_finitely_supported():
+                support = set(edge for arc in lamination.support() for edge in target.star(arc) if weight(edge))
+                return target(weight, lambda: support)
 
-            return target(weight, lambda: (edge for arc in lamination.support for edge in target.star(arc) if weight(edge)))
+            return target(weight, lambda: (edge for arc in lamination.support() for edge in target.star(arc) if weight(edge)))
 
         action = partial(helper, self, target)
         inv_action = partial(helper, target, self)
@@ -174,19 +162,21 @@ class Triangulation(Generic[Edge]):
             def weight(edge: Edge) -> int:
                 return lamination(inv_isom(edge))
 
-            if isinstance(lamination.support, set):
-                return target(weight, set(isom(arc) for arc in lamination.support))
+            if lamination.is_finitely_supported():
+                support = set(isom(arc) for arc in lamination.support())
+                return target(weight, lambda: support)
 
-            return target(weight, lambda: (isom(arc) for arc in lamination.support))
+            return target(weight, lambda: (isom(arc) for arc in lamination.support()))
 
         def inv_action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
                 return lamination(isom(edge))
 
-            if isinstance(lamination.support, set):
-                return self(weight, set(inv_isom(arc) for arc in lamination.support))
+            if lamination.is_finitely_supported():
+                support = set(inv_isom(arc) for arc in lamination.support())
+                return self(weight, lambda: support)
 
-            return self(weight, lambda: (inv_isom(arc) for arc in lamination.support))
+            return self(weight, lambda: (inv_isom(arc) for arc in lamination.support()))
 
         return bigger.Move(self, target, action, inv_action).encode()
 
@@ -233,21 +223,17 @@ class Triangulation(Generic[Edge]):
 
         return h
 
-    def __call__(
-        self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Union[Iterable[Edge], Callable[[], Iterable[Edge]], None] = None
-    ) -> bigger.Lamination[Edge]:
+    def __call__(self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None) -> bigger.Lamination[Edge]:
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
 
             def weight(edge: Edge) -> int:
                 return weight_dict.get(edge, 0)
 
-            return bigger.Lamination(self, weight, set(weight_dict))
+            return bigger.Lamination(self, weight, lambda: set(weight_dict))
 
         if support is None:
             support = self.edges
-        elif callable(support):
-            support = IterableStore(support)
 
         return bigger.Lamination(self, weights, support)
 
