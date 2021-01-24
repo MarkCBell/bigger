@@ -198,7 +198,7 @@ class Triangulation(Generic[Edge]):
 
     def encode(
         self,
-        sequence: List[Union[Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Callable[[Edge], bool], Edge, Set[Edge], Dict[Edge, Edge]]],
+        sequence: List[Union[Callable[[Edge], bool], Set[Edge], Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Dict[Edge, Edge], Edge]],
     ) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
 
@@ -211,12 +211,12 @@ class Triangulation(Generic[Edge]):
         The sequence is read in reverse in order to respect composition."""
         h = self.identity()
         for term in reversed(sequence):
-            if isinstance(term, set) or callable(term):
+            if callable(term) or isinstance(term, set):
                 move = h.target.flip(term)
-            elif isinstance(term, dict):
-                move = h.target.isometry_from_dict(term)
             elif isinstance(term, tuple):  # and len(term) == 2 and all(callable(item) for item in term):
                 move = h.target.isometry(*term)
+            elif isinstance(term, dict):
+                move = h.target.isometry_from_dict(term)
             else:  # Assume term is the label of an edge to flip.
                 move = h.target.flip({term})
             h = move * h

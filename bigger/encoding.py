@@ -59,7 +59,7 @@ class Encoding(Generic[Edge]):
     def __getitem__(self, index: int) -> bigger.Move[Edge]:
         ...
 
-    def __getitem__(self, index: Union[int, slice]) -> Union[bigger.Move[Edge], bigger.Encoding[Edge]]:
+    def __getitem__(self, index):
         if isinstance(index, slice):
             return Encoding(self.sequence[index])
         else:

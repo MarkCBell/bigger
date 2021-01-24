@@ -15,7 +15,7 @@ class Half:
     def __mul__(self, other: int) -> int:
         ...
 
-    def __mul__(self, other: Union[Fraction, int]) -> Union[Fraction, int]:
+    def __mul__(self, other):
         if isinstance(other, int):
             int_result = other // 2
             assert 2 * int_result == other, "{} is not halvable in its field".format(other)
