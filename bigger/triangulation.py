@@ -240,7 +240,7 @@ class Triangulation(Generic[Edge]):
     def empty_lamination(self) -> bigger.Lamination[Edge]:
         """ Return the zero Lamination on this triangulation. """
 
-        return self(lambda edge: 0)
+        return self(lambda edge: 0, support=set)  # set is a callable that returns the empty set.
 
     def as_lamination(self) -> bigger.Lamination[Edge]:
         """ Return this Triangulation as a Lamination on self. """
