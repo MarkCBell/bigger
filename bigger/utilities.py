@@ -5,6 +5,7 @@ from typing import TypeVar
 
 IntFraction = TypeVar("IntFraction", int, Fraction)
 
+
 class Half:
     """ A class for representing 1/2 in such a way that multiplication preserves types. """
 
