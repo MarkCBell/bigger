@@ -24,6 +24,7 @@ ZOOM_FRACTION = 0.8
 VERTEX_BUFFER = 0.2
 
 LAMINATION_COLOUR = "#555555"
+VERTEX_COLOUR = "#404040"
 TRIANGLE_COLOURS = {"bw": ["#b5b5b5", "#c0c0c0", "#c7c7c7", "#cfcfcf"], "rainbow": ["hsl({}, 50%, 50%)".format(i) for i in range(0, 360, 10)]}
 
 
@@ -400,6 +401,11 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
                     canvas.text(add(point, offset), text, fill="White", font=font)
 
                 canvas.text(point, text, fill="Black", font=font)
+
+        # Draw vertices.
+        for vertices in layout4.values():
+            for vertex in vertices:
+                canvas.ellipse([vertex[0] - 2, vertex[1] - 2, vertex[0] + 2, vertex[1] + 2], fill=VERTEX_COLOUR)
 
         return image
 
