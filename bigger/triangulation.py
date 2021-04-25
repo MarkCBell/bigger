@@ -3,11 +3,35 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Callable, Dict, Generic, Iterable, Iterator, List, Mapping, Set, Tuple, Union, Optional
+from dataclasses import dataclass
+from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, Union, Optional, Tuple, cast
 from PIL import Image  # type: ignore
 
 import bigger
 from bigger.types import Edge
+
+
+@dataclass(order=True, frozen=True)
+class Side(Generic[Edge]):
+    """ Represents a side of an edge. """
+
+    edge: Edge
+    orientation: bool = True
+
+    def __invert__(self) -> Side[Edge]:
+        """ Return the other side of this edge. """
+        return Side(self.edge, not self.orientation)
+
+
+Triangle = Tuple[Side[Edge], Side[Edge], Side[Edge]]
+Square = Tuple[Side[Edge], Side[Edge], Side[Edge], Side[Edge]]
+Star = Tuple[Side[Edge], Side[Edge], Side[Edge], Side[Edge], Side[Edge]]
+Tetra = Tuple[Side[Edge], Side[Edge], Side[Edge], Side[Edge], Side[Edge], Side[Edge]]
+
+
+def unorient_functor(f: Callable[[Side[Edge]], Side[Edge]]) -> Callable[[Edge], Edge]:
+    """ Return a function on edges from a function on sides. """
+    return lambda edge: f(Side(edge)).edge
 
 
 class Triangulation(Generic[Edge]):
@@ -16,52 +40,71 @@ class Triangulation(Generic[Edge]):
     The triangulation is specified via two functions:
 
      - edges: which returns an iterable over the edges of the triangulation, and
-     - link: which maps an edge to its link.
+     - link: which maps an oriented edge to its link, i.e., link(e) = (a, b, c, d)
 
-    Note that this cannot be used to define S_{1,1} since its edge links are invariant under the hyperelliptic involution."""
+    #<---a----#
+    |        ^^
+    |      /  |
+    b    e    d
+    |  /      |
+    V/        |
+    #----c--->#
+    """
 
-    def __init__(self, edges: Callable[[], Iterable[Edge]], link: Callable[[Edge], Tuple[Edge, Edge, Edge, Edge]]) -> None:
-        # Use the following for reference:
-        # #----a----#
-        # |        /|
-        # |      /  |
-        # b    e    d
-        # |  /      |
-        # |/        |
-        # #----c----#
-        #
-        # link(e) = (a, b, c, d)
+    def __init__(self, edges: Callable[[], Iterable[Edge]], link: Callable[[Side[Edge]], Square[Edge]]) -> None:
+
+        # We could define the link by a function that takes Edges as input
+        # It could also return Side[Edge] or Tuples[Edge, bool].
 
         self.edges = edges
-        self._link = link
+        self.link = link
 
-    def link(self, edge: Edge, **kwargs: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
-        """ Return the link of an edge. """
+    @classmethod
+    def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[tuple[Edge, bool], ...]]) -> Triangulation[Edge]:
+        """ Return a triangulation from a link function defined on only the positive edges. """
 
-        link = self._link(edge)
-        swapped = False
-        for index, letter in enumerate("abcd"):
-            if kwargs.get(letter, link[index]) != link[index]:
-                if swapped:  # We have already found an inconsistency in the other rotation of the link.
-                    raise ValueError("Edge link cannot be consistently oriented")
-                link = (link[2], link[3], link[0], link[1])
-                swapped = True
+        def link(side: Side[Edge]) -> Square[Edge]:
+            """ The full link function. """
 
-        return link
+            a, b, c, d = ulink(side.edge)
+            if not side.orientation:
+                a, b, c, d = c, d, a, b
 
-    def star(self, edge: Edge, **kwargs: Edge) -> Tuple[Edge, Edge, Edge, Edge, Edge]:
-        """ Return the link of an Edge together with the Edge itself. """
+            return Side(*a), Side(*b), Side(*c), Side(*d)
 
-        return self.link(edge, **kwargs) + (edge,)
+        return cls(edges, link)
+
+    def star(self, side: Side[Edge]) -> Star[Edge]:
+        """ Return the link of an Side together with the Side itself. """
+
+        return self.link(side) + (side,)
+
+    def tetra(self, side: Side[Edge]) -> Tetra[Edge]:
+        """ Return the link of an Side together with the Side itself and its inverse. """
+
+        return self.link(side) + (side, ~side)
+
+    def corner(self, side: bigger.Side[Edge]) -> Triangle[Edge]:
+        """ Return the triangle starting at this side. """
+
+        a, b, _, _ = self.link(side)
+        return (side, a, b)
+
+    def triangle(self, side: Side[Edge]) -> Triangle[Edge]:
+        """ Return the triangle containing this side. """
+
+        triangle = self.corner(side)
+        triangle = min(triangle, triangle[1:] + triangle[:1], triangle[2:] + triangle[:2])
+        return triangle
 
     def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges())
 
-    def flip(self, is_flipped: Union[Callable[[Edge], bool], Set[Edge]]) -> bigger.Encoding[Edge]:
+    def flip(self, is_flipped: Union[Callable[[Side[Edge]], bool], set[Side[Edge]]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
-        Alternatively, this can be given a set of Edges and will use membership of this set to test which edges flip.
-        Note that if :attr:`is_flipped` is True for an Edge then it must be False for all edge in its link."""
+        Alternatively, this can be given a set of OrientedEdges and will use membership of this set to test which edges flip.
+        Note that if :attr:`is_flipped` is True for edge then it must be False for all edge in its link and ~edge."""
 
         if isinstance(is_flipped, set):
             # Start again with the function lambda edge: edge in is_flipped.
@@ -70,52 +113,64 @@ class Triangulation(Generic[Edge]):
         flipped = is_flipped
 
         # Use the following for reference:
-        # #----a----#     #----a----#
-        # |        /|     |\        |
+        # #<---a----#     #<---a----#
+        # |        ^^     |\        ^
         # |      /  |     |  \      |
         # b    e    d --> b    e    d
         # |  /      |     |      \  |
-        # |/        |     |        \|
-        # #----c----#     #----c----#
+        # V/        |     V        V|
+        # #----c--->#     #----c--->#
 
         # Define the new triangulation.
-        def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
-            a, b, c, d = self.link(edge)
-            if flipped(edge):
-                assert not flipped(a), "Flipping edges {} and {} which do not have disjoint support".format(edge, a)
-                assert not flipped(b), "Flipping edges {} and {} which do not have disjoint support".format(edge, b)
-                assert not flipped(c), "Flipping edges {} and {} which do not have disjoint support".format(edge, c)
-                assert not flipped(d), "Flipping edges {} and {} which do not have disjoint support".format(edge, d)
+        def link(e: Side[Edge]) -> Square[Edge]:
+            a, b, c, d = self.link(e)
+            for x in [a, b, c, d, e]:
+                assert not (flipped(x) and flipped(~x)), "Flipping both {} and {}".format(x, ~x)
+
+            if flipped(e):
+                assert not flipped(~e), "Flipping both {} and {}".format(e, ~e)
+                for x in [a, ~a, b, ~b, c, ~c, d, ~d]:
+                    assert not flipped(x), "Flipping {} and {} which do not have disjoint support".format(e, x)
+
+                return (d, a, b, c)
+            elif flipped(~e):
+                assert not flipped(e), "Flipping both {} and {}".format(e, ~e)
+                for x in [a, ~a, b, ~b, c, ~c, d, ~d]:
+                    assert not flipped(x), "Flipping {} and {} which do not have disjoint support".format(~e, x)
 
                 return (b, c, d, a)
 
-            if flipped(a):
-                w, _, _, _, x = self.star(a, c=b, d=edge)
-            elif flipped(b):
-                _, x, _, _, w = self.star(b, c=edge, d=a)
-            else:
-                w, x = a, b
+            def side_edges(p: Side[Edge], q: Side[Edge]) -> tuple[Side[Edge], Side[Edge]]:
+                """ Return the two new sides formed by p & q. """
+                if flipped(p):
+                    _, _, w, _, _, x = self.tetra(p)
+                elif flipped(~p):
+                    _, _, w, _, x, _ = self.tetra(p)
+                elif flipped(q):
+                    _, _, _, x, w, _ = self.tetra(q)
+                elif flipped(~q):
+                    _, _, _, x, _, w = self.tetra(q)
+                else:
+                    w, x = p, q
+                return w, x
 
-            if flipped(c):
-                y, _, _, _, z = self.star(c, c=d, d=edge)
-            elif flipped(d):
-                _, z, _, _, y = self.star(d, c=edge, d=c)
-            else:
-                y, z = c, d
+            w, x = side_edges(a, b)
+            y, z = side_edges(c, d)
 
-            return (w, x, y, z)
+            return w, x, y, z
 
         target = Triangulation(self.edges, link)
 
         # Since the action and inv_action are so similar, we define both at once and just use a partial function to set the correct source / target.
         def helper(source: bigger.Triangulation[Edge], target: bigger.Triangulation[Edge], lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
-                if not flipped(edge):
+                oedge = Side(edge)
+                if not flipped(oedge) and not flipped(~oedge):
                     return lamination(edge)
 
                 # Compute fi.
                 ei = lamination(edge)
-                ai0, bi0, ci0, di0 = [max(lamination(edge), 0) for edge in source.link(edge)]
+                ai0, bi0, ci0, di0 = [max(lamination(side.edge), 0) for side in source.link(Side(edge))]
 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -138,25 +193,18 @@ class Triangulation(Generic[Edge]):
 
             # Determine support.
             if lamination.is_finitely_supported():
-                support = set(edge for arc in lamination.support() for edge in target.star(arc) if weight(edge))
+                support = set(side.edge for edge in lamination.support() for side in target.star(Side(edge)) if weight(side.edge))
                 return target(weight, lambda: support)
 
-            return target(weight, lambda: (edge for arc in lamination.support() for edge in target.star(arc) if weight(edge)))
+            return target(weight, lambda: (side.edge for edge in lamination.support() for side in target.star(Side(edge)) if weight(side.edge)))
 
         action = partial(helper, self, target)
         inv_action = partial(helper, target, self)
 
         return bigger.Move(self, target, action, inv_action).encode()
 
-    def isometry(self, isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> bigger.Encoding[Edge]:
+    def isometry(self, target: Triangulation[Edge], isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. """
-
-        # Define the new triangulation.
-        def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
-            a, b, c, d = self.link(inv_isom(edge))
-            return (isom(a), isom(b), isom(c), isom(d))
-
-        target = Triangulation(self.edges, link)
 
         def action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
@@ -180,25 +228,49 @@ class Triangulation(Generic[Edge]):
 
         return bigger.Move(self, target, action, inv_action).encode()
 
-    def isometry_from_dict(self, isom_dict: Mapping[Edge, Edge]) -> bigger.Encoding[Edge]:
+    def relabel(self, isom: Callable[[Side[Edge]], Side[Edge]], inv_isom: Callable[[Side[Edge]], Side[Edge]]) -> bigger.Encoding[Edge]:
+        """ Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. """
+
+        # Define the new triangulation.
+        def link(edge: Side[Edge]) -> Square[Edge]:
+            a, b, c, d = self.link(inv_isom(edge))
+            return (isom(a), isom(b), isom(c), isom(d))
+
+        target = Triangulation(self.edges, link)
+
+        u_isom = unorient_functor(isom)
+        u_inv_isom = unorient_functor(inv_isom)
+
+        return self.isometry(target, u_isom, u_inv_isom)
+
+    def relabel_from_dict(self, isom_dict: Mapping[Side[Edge], Side[Edge]]) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. """
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
 
-        def isom(edge: Edge) -> Edge:
+        def isom(edge: Side[Edge]) -> Side[Edge]:
             return isom_dict.get(edge, edge)
 
-        def inv_isom(edge: Edge) -> Edge:
+        def inv_isom(edge: Side[Edge]) -> Side[Edge]:
             return inv_isom_dict.get(edge, edge)
 
-        return self.isometry(isom, inv_isom)
+        return self.relabel(isom, inv_isom)
 
     def identity(self) -> bigger.Encoding[Edge]:
         """ Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class. """
-        return self.isometry_from_dict(dict())
+        return self.relabel_from_dict(dict())
 
     def encode(
         self,
-        sequence: List[Union[Callable[[Edge], bool], Set[Edge], Tuple[Callable[[Edge], Edge], Callable[[Edge], Edge]], Dict[Edge, Edge], Edge]],
+        sequence: list[
+            Union[
+                Callable[[Side[Edge]], bool],
+                set[Side[Edge]],
+                tuple[Callable[[Side[Edge]], Side[Edge]], Callable[[Side[Edge]], Side[Edge]]],
+                tuple[int, Callable[[Edge], Edge], Callable[[Edge], Edge]],
+                dict[Side[Edge], Side[Edge]],
+                Side[Edge],
+            ]
+        ],
     ) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` from a small sequence of data.
 
@@ -213,17 +285,22 @@ class Triangulation(Generic[Edge]):
         for term in reversed(sequence):
             if callable(term) or isinstance(term, set):
                 move = h.target.flip(term)
-            elif isinstance(term, tuple):  # and len(term) == 2 and all(callable(item) for item in term):
-                move = h.target.isometry(*term)
+            elif isinstance(term, tuple):
+                if len(term) == 2:  # and len(term) == 2 and all(callable(item) for item in term):
+                    term = cast(tuple[Callable[[Side[Edge]], Side[Edge]], Callable[[Side[Edge]], Side[Edge]]], term)
+                    move = h.target.relabel(*term)
+                else:  # len(term) == 3
+                    term = cast(tuple[int, Callable[[Edge], Edge], Callable[[Edge], Edge]], term)
+                    move = h.target.isometry(h[term[0]].target, term[1], term[2])
             elif isinstance(term, dict):
-                move = h.target.isometry_from_dict(term)
+                move = h.target.relabel_from_dict(term)
             else:  # Assume term is the label of an edge to flip.
                 move = h.target.flip({term})
             h = move * h
 
         return h
 
-    def __call__(self, weights: Union[Dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None) -> bigger.Lamination[Edge]:
+    def __call__(self, weights: Union[dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None) -> bigger.Lamination[Edge]:
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
 
@@ -247,7 +324,7 @@ class Triangulation(Generic[Edge]):
 
         return self(lambda edge: -1)
 
-    def draw(self, edges: List[Edge], **options: Any) -> Image:
+    def draw(self, edges: list[Edge], **options: Any) -> Image:
         """ Return a PIL image of this Triangulation around the given edges. """
 
         return bigger.draw(self, edges=edges, **options)

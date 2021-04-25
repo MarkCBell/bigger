@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import chain, islice
-from typing import Any, Callable, Generic, Iterable, List, Tuple
+from typing import Any, Callable, Generic, Iterable
 from PIL import Image  # type: ignore
 
 import bigger
@@ -23,6 +23,8 @@ class Lamination(Generic[Edge]):
 
     @memoize
     def __call__(self, edge: Edge) -> int:
+        # This could also support being called with a Side
+
         return self.weight(edge)
 
     def describe(self, edges: Iterable[Edge]) -> str:
@@ -91,7 +93,7 @@ class Lamination(Generic[Edge]):
         Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short."""
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support())
 
-    def shorten(self) -> Tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:
+    def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:
         """Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
 
         Note that in the future this should do curvers full Lamination shortening algorithm."""
@@ -106,7 +108,7 @@ class Lamination(Generic[Edge]):
             time_since_last_progress += 1
             best_complexity, best_h = complexity, lamination.triangulation.identity()
             for edge in lamination.support():  # Uses finite support assumption.
-                h = lamination.triangulation.flip({edge})
+                h = lamination.triangulation.flip({bigger.Side(edge)})
                 new_complexity = h(lamination).complexity()
                 if new_complexity <= best_complexity:
                     best_complexity, best_h = new_complexity, h
@@ -125,6 +127,7 @@ class Lamination(Generic[Edge]):
     def twist(self, power: int = 1) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
 
+        Assumes but does not check that this lamination is a single curve.
         Note that this currently only works on non-isolating curves."""
         short, conjugator = self.shorten()
 
@@ -153,7 +156,7 @@ class Lamination(Generic[Edge]):
 
         return ~conjugator * twist ** power * conjugator
 
-    def draw(self, edges: List[Edge], **options: Any) -> Image:
+    def draw(self, edges: list[Edge], **options: Any) -> Image:
         """ Return a PIL image of this Lamination around the given edges. """
 
         return bigger.draw(self, edges=edges, **options)

@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Tuple
 
 import bigger
-from bigger.types import Triangle, FlatTriangle
+from bigger.types import FlatTriangle
+from bigger.triangulation import Triangle
 from .utils import integers, extract_curve_and_test
 
 Edge = Tuple[int, int]
@@ -45,9 +46,9 @@ def ladder() -> bigger.MCG[Edge]:
             5: ((n, 3), (n, 4), (n, 2), (n, 4)),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(6)), link)
+    T = bigger.Triangulation(lambda: ((x, y) for x in integers()() for y in range(6)), link)
 
-    shift = T.isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
+    shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
     def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):
@@ -116,9 +117,9 @@ def spotted_ladder() -> bigger.MCG[Edge]:
             8: ((n + 1, 0), (n, 7), (n, 4), (n, 7)),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(9)), link)
+    T = bigger.Triangulation(lambda: ((x, y) for x in integers()() for y in range(9)), link)
 
-    shift = T.isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
+    shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
     def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):

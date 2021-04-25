@@ -5,13 +5,13 @@ from __future__ import annotations
 import os
 from copy import deepcopy
 from math import sin, cos, pi, ceil
-from queue import PriorityQueue
-from typing import Any, Dict, Generic, List, Optional, Set, Tuple, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from PIL import Image, ImageDraw, ImageFont  # type: ignore
 
 import bigger
-from bigger.types import Edge, Triangle, Coord, FlatTriangle
+from bigger.types import Edge, Coord, FlatTriangle
+from .triangulation import Triangle
 
 # Vectors to offset a label by to produce backing.
 OFFSETS = [(1.5 * cos(2 * pi * i / 12), 1.5 * sin(2 * pi * i / 12)) for i in range(12)]
@@ -27,8 +27,10 @@ LAMINATION_COLOUR = "#555555"
 VERTEX_COLOUR = "#404040"
 TRIANGLE_COLOURS = {"bw": ["#b5b5b5", "#c0c0c0", "#c7c7c7", "#cfcfcf"], "rainbow": ["hsl({}, 50%, 50%)".format(i) for i in range(0, 360, 10)]}
 
+T = TypeVar("T")
 
-def deduplicate(items: List[Edge]) -> List[Edge]:
+
+def deduplicate(items: list[T]) -> list[T]:
     """ Return the same list but without duplicates. """
 
     output = []
@@ -52,66 +54,33 @@ def interpolate(A: Coord, B: Coord, r: float = 0.5) -> Coord:
     return add(A, B, r, 1 - r)
 
 
-def support(triangulation: bigger.Triangulation[Edge], edge: Edge) -> Tuple[Triangle, Triangle]:
+def support(triangulation: bigger.Triangulation[Edge], edge: Edge) -> tuple[Triangle[Edge], Triangle[Edge]]:
     """ Return the two triangles that support and edge. """
 
-    a, b, c, d = triangulation.link(edge)
-    triangle1, triangle2 = (a, b, edge), (c, d, edge)
-    # Cyclically permute to the canonical position.
-    triangle1 = min(triangle1, triangle1[1:] + triangle1[:1], triangle1[2:] + triangle1[:2])
-    triangle2 = min(triangle2, triangle2[1:] + triangle2[:1], triangle2[2:] + triangle2[:2])
-    return triangle1, triangle2
+    side = bigger.Side(edge)
+    return triangulation.triangle(side), triangulation.triangle(~side)
 
 
-def adjacent(triangulation: bigger.Triangulation[Edge], current: Triangle, side: int) -> Tuple[Triangle, int]:
-    """ Return the (other triangle, other side) which shares an edge with triangle[side]. """
-
-    return next(
-        (other, other_side)
-        for other in support(triangulation, current[side])
-        for other_side in range(3)
-        if other[other_side] == current[side] and (other != current or other_side != side)
-    )
-
-
-def supporting_triangles(triangulation: bigger.Triangulation[Edge], edges: List[Edge]) -> Tuple[List[List[Triangle]], Set[Edge]]:
+def supporting_triangles(triangulation: bigger.Triangulation[Edge], edges: list[Edge]) -> tuple[list[list[Triangle[Edge]]], set[Edge]]:
     """ Return a list of list of triangles that support these edges, grouped by connectedness, and a set of edges that in the interior. """
 
     position_index = dict((edge, index) for index, edge in enumerate(edges))
-    edge_set = set(edges)
 
-    # Compute the connect components of the supporting triangles of the given edges.
+    interior = set()
     components = bigger.UnionFind(deduplicate([triangle for edge in edges for triangle in support(triangulation, edge)]))
     for edge in edges:
-        components.union(*support(triangulation, edge))
+        t1, t2 = support(triangulation, edge)
+        if components(t1) != components(t2):
+            interior.add(edge)
+            components.union2(t1, t2)
 
     # Order the triangles of each component by their position_index.
-    ordered_components = [sorted(list(component), key=lambda triangle: tuple(position_index.get(edge, len(position_index)) for edge in triangle)) for component in components]
-    interior = set()
-    for component in ordered_components:
-        # Get a starting triangle.
-        start = component[0]
-
-        # Expore out to find out which edges are in the interior.
-        placed = set([start])
-        to_check: PriorityQueue = PriorityQueue()
-        for i in range(3):
-            if start[i] in edge_set:
-                to_check.put((position_index.get(start[i], len(position_index)), (start, i)))
-        while not to_check.empty():
-            _, (current, side) = to_check.get()
-            other, _ = adjacent(triangulation, current, side)
-            if other not in placed:
-                interior.add(current[side])
-                placed.add(other)
-                for other_side in range(3):
-                    if other[other_side] != current[side] and other[other_side] in edge_set:
-                        to_check.put((position_index.get(other[other_side], len(position_index)), (other, other_side)))
+    ordered_components = [sorted(list(component), key=lambda triangle: tuple(position_index.get(side.edge, len(position_index)) for side in triangle)) for component in components]
 
     return ordered_components, interior
 
 
-def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], components: List[List[Triangle]], interior: Set[Edge]) -> Dict[Triangle, FlatTriangle]:
+def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], component: list[Triangle[Edge]], interior: set[Edge]) -> dict[Triangle[Edge], FlatTriangle]:
     """Return a dictionary mapping the triangles that meet the given edges to coordinates in the plane.
 
     Triangle T is mapped to ((x1, y1), (x2, y2), (x3, y3)) where (xi, yi) is at the tail of side i of T when oriented anti-clockwise.
@@ -120,55 +89,52 @@ def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], comp
     r = 1000.0
 
     layout = dict()
-    for component in components:
-        # Create the vertices.
-        num_outside = sum(1 for triangle in component for edge in triangle if edge not in interior)
-        vertices = [(r * sin(2 * pi * (i - 0.5) / num_outside), r * cos(2 * pi * (i - 0.5) / num_outside)) for i in range(num_outside)]
-        # Determine how many boundary edges occur between each edge's endpoints.
-        # We really should do this in a sensible order so that it only takes a single pass.
-        num_decendents = dict(((triangle, side), 1) for triangle in component for side in range(3) if triangle[side] not in interior)
-        stack = [(triangle, side) for triangle in component for side in range(3)]
-        while stack:
-            current, side = stack.pop()
-            if (current, side) in num_decendents:
-                continue
+    # Create the vertices.
+    num_outside = sum(1 for triangle in component for side in triangle if side.edge not in interior)
+    vertices = [(r * sin(2 * pi * (i - 0.5) / num_outside), r * cos(2 * pi * (i - 0.5) / num_outside)) for i in range(num_outside)]
+    # Determine how many boundary edges occur between each edge's endpoints.
+    # We really should do this in a sensible order so that it only takes a single pass.
+    num_descendants = dict((side, 1) for triangle in component for side in triangle if side.edge not in interior)
+    stack = [side for triangle in component for side in triangle]
+    while stack:
+        current = stack.pop()
+        if current in num_descendants:
+            continue
 
-            # So current[side] is in interior.
-            other, _ = adjacent(triangulation, current, side)
-            other_sides = [other_side for other_side in range(3) if other[other_side] != current[side]]
-            try:
-                num_decendents[(current, side)] = sum(num_decendents[(other, other_side)] for other_side in other_sides)
-            except KeyError:  # We need to evaluate one of the other sides first.
-                stack.append((current, side))  # Re-evaluate when we get back here.
-                stack.extend([(other, other_side) for other_side in other_sides])
+        # So current is in interior.
+        other = ~current
+        other_sides = [other_side for other_side in triangulation.triangle(other) if other_side != other]
+        try:
+            num_descendants[current] = sum(num_descendants[other_side] for other_side in other_sides)
+        except KeyError:  # We need to evaluate one of the other sides first.
+            stack.append(current)  # Re-evaluate when we get back here.
+            stack.extend(other_sides)
 
-        # Work out which vertex (number) each side of each triangle starts at.
-        start = component[0]
-        triangle_vertex_number = {
-            (start, 0): 0,
-            (start, 1): num_decendents[(start, 0)],
-            (start, 2): num_decendents[(start, 0)] + num_decendents[(start, 1)],
-        }
-        to_extend = [(start, side) for side in range(3) if start[side] in interior]
-        while to_extend:
-            current, side = to_extend.pop()
-            other, other_side = adjacent(triangulation, current, side)
+    # Work out which vertex (number) each side of each triangle starts at.
+    start = component[0]
+    triangle_vertex_number = {start[0]: 0, start[1]: num_descendants[start[0]], start[2]: num_descendants[start[0]] + num_descendants[start[1]]}
+    to_extend = [side for side in start if side.edge in interior]
+    while to_extend:
+        current = to_extend.pop()
 
-            triangle_vertex_number[(other, (other_side + 0) % 3)] = triangle_vertex_number[(current, (side + 1) % 3)]
-            triangle_vertex_number[(other, (other_side + 1) % 3)] = triangle_vertex_number[(current, (side + 0) % 3)]
-            triangle_vertex_number[(other, (other_side + 2) % 3)] = triangle_vertex_number[(other, (other_side + 1) % 3)] + num_decendents[(other, (other_side + 1) % 3)]
+        A = triangulation.corner(current)
+        B = triangulation.corner(~current)
 
-            for i in [1, 2]:
-                if other[(other_side + i) % 3] in interior:
-                    to_extend.append((other, (other_side + i) % 3))
+        triangle_vertex_number[B[0]] = triangle_vertex_number[A[1]]
+        triangle_vertex_number[B[1]] = triangle_vertex_number[A[0]]
+        triangle_vertex_number[B[2]] = triangle_vertex_number[B[1]] + num_descendants[B[1]]
 
-        for triangle in component:
-            layout[triangle] = (vertices[triangle_vertex_number[(triangle, 0)]], vertices[triangle_vertex_number[(triangle, 1)]], vertices[triangle_vertex_number[(triangle, 2)]])
+        for i in [1, 2]:
+            if B[i].edge in interior:
+                to_extend.append(B[i])
+
+    for triangle in component:
+        layout[triangle] = (vertices[triangle_vertex_number[triangle[0]]], vertices[triangle_vertex_number[triangle[1]]], vertices[triangle_vertex_number[triangle[2]]])
 
     return layout
 
 
-def draw_block_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
+def draw_block_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: list[int], master: int) -> None:
     """ Draw a flat triangle with (blocks of) lines inside it. """
 
     weights_0 = [max(weight, 0) for weight in weights]
@@ -222,7 +188,7 @@ def draw_block_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: List
             canvas.polygon([S, P, E], fill=LAMINATION_COLOUR)
 
 
-def draw_line_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: List[int], master: int) -> None:
+def draw_line_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: list[int], master: int) -> None:
     """ Draw a flat triangle with (individual) lines inside it. """
 
     weights_0 = [max(weight, 0) for weight in weights]
@@ -271,7 +237,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
     """ A class to record intermediate draw commands. """
 
     def __init__(self, **options: Any):
-        self.edges: Optional[List[Edge]] = None
+        self.edges: Optional[list[Edge]] = None
         self.w = 400
         self.h = 400
         self.label = "none"
@@ -327,7 +293,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         # Draw these triangles.
         components, interior = supporting_triangles(triangulation, self.edges)
         if self.layout is None:
-            layout2 = default_layout_triangulation(triangulation, components, interior)
+            layout2 = dict(item for component in components for item in default_layout_triangulation(triangulation, component, interior).items())
         else:
             layout2 = dict((triangle, self.layout.layout(triangle)) for component in components for triangle in component)
 
@@ -372,28 +338,28 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
 
         laminations = [obj for obj in objs if isinstance(obj, bigger.Lamination)]
         for lamination in laminations:
-            weights = dict((edge, lamination(edge)) for edge in set(edge for triangle in layout4 for edge in triangle))
+            weights = dict((edge, lamination(edge)) for edge in set(side.edge for triangle in layout4 for side in triangle))
 
-            master = max(abs(weights[edge]) for triangle in layout4 for edge in triangle)
+            master = max(abs(weights[side.edge]) for triangle in layout4 for side in triangle)
             shown_is_integral = all(isinstance(weights[edge], int) for edge in weights)
 
             # Draw lamination.
             for index, (triangle, vertices) in enumerate(layout4.items()):
                 if master < MAX_DRAWABLE and shown_is_integral:
-                    draw_line_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
+                    draw_line_triangle(canvas, vertices, [weights[side.edge] for side in triangle], master)
                 else:  # Draw everything. Caution, this is is VERY slow (O(n) not O(log(n))) so we only do it when the weight is low.
-                    draw_block_triangle(canvas, vertices, [weights[edge] for edge in triangle], master)
+                    draw_block_triangle(canvas, vertices, [weights[side.edge] for side in triangle], master)
 
         # Draw labels.
-        for index, (triangle, vertices) in enumerate(layout4.items()):
-            for side in range(3):
+        for triangle, vertices in layout4.items():
+            for index, side in enumerate(triangle):
                 if self.label == "edge":
-                    text = str(triangle[side])
+                    text = str(side.edge)
                 elif self.label == "weight" and len(laminations) == 1:  # Only draw weights if there is a single lamination.
-                    text = str(weights[triangle[side]])
+                    text = str(weights[side.edge])
                 else:
                     text = ""
-                point = interpolate(vertices[side - 0], vertices[side - 2])
+                point = interpolate(vertices[index - 0], vertices[index - 2])
                 # For some reason anchor="mm" does not work. So we will have to manually center the text ourselves.
                 w, h = canvas.textsize(text, font=font)
                 point = (point[0] - w / 2, point[1] - h / 2)
@@ -410,7 +376,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         return image
 
 
-def draw(*objs: Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]], edges: Optional[List[Edge]] = None, **options: Any) -> Union[DrawStructure, Image]:
+def draw(*objs: Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]], edges: Optional[list[Edge]] = None, **options: Any) -> Union[DrawStructure, Image]:
     """ Draw the given object with the provided options. """
 
     # This is only really here so we can provide "edges" as a keyword argument to users.

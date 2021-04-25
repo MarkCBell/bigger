@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Generic, Iterable, List, Optional
+from typing import Any, Callable, Generic, Iterable, Optional
 from PIL import Image  # type: ignore
 
 import bigger
-from .types import Edge, Triangle, FlatTriangle
+from .types import Edge, FlatTriangle
+from .triangulation import Triangle
 
 
 def splitter(strn: str) -> Iterable[str]:
@@ -57,7 +58,7 @@ class MappingClassGroup(Generic[Edge]):
     """ A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names. """
 
     def __init__(
-        self, triangulation: bigger.Triangulation[Edge], generator: Callable[[str], bigger.Encoding[Edge]], layout: Optional[Callable[[Triangle], FlatTriangle]] = None
+        self, triangulation: bigger.Triangulation[Edge], generator: Callable[[str], bigger.Encoding[Edge]], layout: Optional[Callable[[Triangle[Edge]], FlatTriangle]] = None
     ) -> None:
         self.triangulation = triangulation
         self.generator = generator
@@ -73,7 +74,7 @@ class MappingClassGroup(Generic[Edge]):
         sequence = [item for name in splitter(strn) for item in self._helper(name).sequence]
         return bigger.Encoding(sequence) if sequence else self.triangulation.identity()
 
-    def draw(self, edges: List[Edge], **options: Any) -> Image:
+    def draw(self, edges: list[Edge], **options: Any) -> Image:
         """ Return a PIL image of the triangulation of this MCG around the given edges. """
 
         return bigger.draw(self, edges=edges, **options)

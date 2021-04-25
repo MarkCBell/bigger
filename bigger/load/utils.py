@@ -2,16 +2,14 @@
 
 from itertools import count as naturals
 from math import inf
-from typing import Any, Callable, Iterable, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple
 import re
 
 
-def integers() -> Iterable[int]:
+def integers(minimum: Optional[int] = None, maximum: Optional[int] = None) -> Callable[[], Iterable[int]]:
     """ Return an iterable that yields all of the integers. """
 
-    for i in naturals():
-        yield i
-        yield ~i
+    return lambda: (x for n in naturals() for x in (n, ~n) if (minimum is None or minimum <= x) and (maximum is None or x <= maximum))
 
 
 def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[Any], bool]]:

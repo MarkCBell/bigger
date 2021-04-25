@@ -52,5 +52,10 @@ class UnionFind(Generic[X]):
 
     def union(self, *args: X) -> None:
         """ Combine all of the classes containing the given items. """
-        for item in args:
-            self.union2(args[0], item)
+        if not args:
+            return
+
+        items = iter(args)
+        head = next(items)
+        for item in items:
+            self.union2(head, item)
