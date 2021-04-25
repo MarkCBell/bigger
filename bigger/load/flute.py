@@ -35,7 +35,7 @@ def flute() -> bigger.MCG[Edge]:
     #             #----2----#----5----#----8----#---
 
     T = bigger.Triangulation.from_pos(
-        integers(-1),
+        lambda: integers(-1),
         lambda edge: ((0, True), (-1, False), (-1, True), (0, True))
         if edge == -1
         else ((-1, False), (-1, True), (1, True), (2, False))
@@ -130,7 +130,7 @@ def biflute() -> bigger.MCG[Edge]:
     #  ---#----2----#----5----#----8----#---
 
     T = bigger.Triangulation.from_pos(
-        integers(),
+        integers,
         lambda edge: [
             ((edge - 2, False), (edge - 1, True), (edge + 1, True), (edge + 2, False)),
             ((edge + 1, False), (edge - 1, False), (edge + 1, True), (edge + 2, True)),

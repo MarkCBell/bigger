@@ -60,7 +60,7 @@ class Triangulation(Generic[Edge]):
         self.link = link
 
     @classmethod
-    def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[tuple[Edge, bool], ...]]) -> Triangulation[Edge]:
+    def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]]) -> Triangulation[Edge]:
         """ Return a triangulation from a link function defined on only the positive edges. """
 
         def link(side: Side[Edge]) -> Square[Edge]:
@@ -287,10 +287,10 @@ class Triangulation(Generic[Edge]):
                 move = h.target.flip(term)
             elif isinstance(term, tuple):
                 if len(term) == 2:  # and len(term) == 2 and all(callable(item) for item in term):
-                    term = cast(tuple[Callable[[Side[Edge]], Side[Edge]], Callable[[Side[Edge]], Side[Edge]]], term)
+                    term = cast(Tuple[Callable[[Side[Edge]], Side[Edge]], Callable[[Side[Edge]], Side[Edge]]], term)
                     move = h.target.relabel(*term)
                 else:  # len(term) == 3
-                    term = cast(tuple[int, Callable[[Edge], Edge], Callable[[Edge], Edge]], term)
+                    term = cast(Tuple[int, Callable[[Edge], Edge], Callable[[Edge], Edge]], term)
                     move = h.target.isometry(h[term[0]].target, term[1], term[2])
             elif isinstance(term, dict):
                 move = h.target.relabel_from_dict(term)

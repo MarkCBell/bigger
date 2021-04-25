@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, Iterable
 
 import bigger
 from bigger.types import FlatTriangle
@@ -35,18 +35,23 @@ def ladder() -> bigger.MCG[Edge]:
     #  |/        |
     #  #---n,2---#
 
-    def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
+    def link(edge: Edge) -> Tuple[Tuple[Edge, bool], Tuple[Edge, bool], Tuple[Edge, bool], Tuple[Edge, bool]]:
         n, k = edge
         return {
-            0: ((n, 1), (n, 2), (n - 1, 1), (n - 1, 3)),
-            1: ((n, 2), (n, 0), (n, 3), (n + 1, 0)),
-            2: ((n, 0), (n, 1), (n, 4), (n, 5)),
-            3: ((n + 1, 0), (n, 1), (n, 4), (n, 5)),
-            4: ((n, 5), (n, 3), (n, 5), (n, 2)),
-            5: ((n, 3), (n, 4), (n, 2), (n, 4)),
+            0: (((n - 1, 1), False), ((n - 1, 3), True), ((n, 1), True), ((n, 2), False)),
+            1: (((n, 2), False), ((n, 0), False), ((n, 3), True), ((n + 1, 0), True)),
+            2: (((n, 4), True), ((n, 5), False), ((n, 0), False), ((n, 1), True)),
+            3: (((n + 1, 0), True), ((n, 1), False), ((n, 4), False), ((n, 5), True)),
+            4: (((n, 5), False), ((n, 2), True), ((n, 5), True), ((n, 3), False)),
+            5: (((n, 3), False), ((n, 4), False), ((n, 2), True), ((n, 4), True)),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers()() for y in range(6)), link)
+    def edges() -> Iterable[Edge]:
+        for x in integers():
+            for y in range(6):
+                yield x, y
+
+    T = bigger.Triangulation[Edge].from_pos(edges, link)
 
     shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
@@ -58,15 +63,15 @@ def ladder() -> bigger.MCG[Edge]:
 
         if curve == "a":
             isom = lambda edge: (edge[0], [0, 5, 3, 2, 4, 1][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] in {1, 5} and test(edge[0]), lambda edge: edge[1] in {2, 3} and test(edge[0])])
+            return T.encode([(2, isom, isom), lambda side: side.edge[1] in {1, 5} and side.orientation and test(side.edge[0]), lambda side: side.edge[1] in {2, 3} and side.orientation and test(side.edge[0])])  # Recheck this 2!!!
         if curve == "b":
             isom = lambda edge: (edge[0], [0, 1, 2, 3, 5, 4][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] == 5 and test(edge[0])])
+            return T.encode([(1, isom, isom), lambda side: side.edge[1] == 5 and side.orientation and test(side.edge[0])])  # Recheck this 1!!!
 
         raise ValueError("Unknown mapping class {}".format(name))
 
-    def layout(triangle: Triangle) -> FlatTriangle:
-        n, k = triangle[0]
+    def layout(triangle: Triangle[Edge]) -> FlatTriangle:
+        n, k = triangle[0].edge
         return {
             0: ((n, 2.0), (n, 1.0), (n + 1.0, 2.0)),
             1: ((n + 1.0, 2.0), (n, 1.0), (n + 1.0, 1.0)),
@@ -117,7 +122,7 @@ def spotted_ladder() -> bigger.MCG[Edge]:
             8: ((n + 1, 0), (n, 7), (n, 4), (n, 7)),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers()() for y in range(9)), link)
+    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(9)), link)
 
     shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
