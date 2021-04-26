@@ -55,36 +55,47 @@ def flute() -> bigger.MCG[Edge]:
             return T.encode([(a_isom, a_isom), lambda side: side.edge % 3 == 2 and side.edge >= 0 and side.orientation and test(side.edge // 3)])
         if curve == "b":
 
-            def b_isom(side: bigger.Side[Edge]) -> bigger.Side[Edge]:
-                n, k = divmod(side.edge, 3)
-                if k == 0:
+            def build(k: Edge) -> bigger.Encoding[Edge]:
+                # Build the encoding which twists around b[n] when test(n) and n % 3 == k.
+
+                def retest(n: Edge) -> bool:
+                    if n % 3 != k:
+                        return False
+
                     if test(n):
-                        return bigger.Side(side.edge + 3, side.orientation)  # Recheck these orientations
-                    if test(n - 1):
-                        return bigger.Side(side.edge - 3, side.orientation)
-                elif k == 1:
-                    if test(n - 1):
-                        return bigger.Side(side.edge - 6, side.orientation)
-                    if test(n + 1):
-                        return bigger.Side(side.edge + 6, side.orientation)
+                        if test(n - 1):
+                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n - 1, n))
 
-                return side
+                        if test(n + 1):
+                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n, n + 1))
 
-            prefix = T.encode(
-                [
-                    lambda side: side.edge % 3 == 2 and (test(side.edge // 3 - 1) or test(side.edge // 3 + 1)),
-                    lambda side: side.edge % 3 == 1 and test(side.edge // 3),
-                    lambda side: side.edge % 3 == 0 and (test(side.edge // 3) or test(side.edge // 3 - 1)),
-                ]
-            )
-            twist = prefix.target.encode(
-                [
-                    (b_isom, b_isom),
-                    lambda side: side.edge % 3 == 1 and (test(side.edge // 3 - 1) or test(side.edge // 3 + 1)),
-                    lambda side: side.edge % 3 == 0 and (test(side.edge // 3) or test(side.edge // 3 - 1)),
-                ]
-            )
-            return ~prefix * twist * prefix
+                        return True
+
+                    return False
+
+                def b_isom(side: bigger.Side[Edge]) -> bigger.Side[Edge]:
+                    n, r = divmod(side.edge, 3)
+                    modifier = +3 if r == 0 and retest(n) else -3 if r == 0 and retest(n - 1) else +6 if r == 1 and retest(n + 1) else -6 if r == 1 and retest(n - 1) else 0
+
+                    return bigger.Side(side.edge + modifier, side.orientation)
+
+                prefix = T.encode(
+                    [
+                        lambda side: side.edge % 3 == 2 and side.orientation and (retest(side.edge // 3 - 1) or retest(side.edge // 3 + 1)),
+                        lambda side: side.edge % 3 == 1 and side.orientation and retest(side.edge // 3),
+                        lambda side: side.edge % 3 == 0 and side.orientation and (retest(side.edge // 3) or retest(side.edge // 3 - 1)),
+                    ]
+                )
+                twist = prefix.target.encode(
+                    [
+                        (b_isom, b_isom),
+                        lambda side: side.edge % 3 == 1 and side.orientation and (retest(side.edge // 3 - 1) or retest(side.edge // 3 + 1)),
+                        lambda side: side.edge % 3 == 0 and side.orientation and (retest(side.edge // 3) or retest(side.edge // 3 - 1)),
+                    ]
+                )
+                return ~prefix * twist * prefix
+
+            return build(0) * build(1) * build(2)
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -178,18 +189,10 @@ def biflute() -> bigger.MCG[Edge]:
                     return False
 
                 def b_isom(side: bigger.Side[Edge]) -> bigger.Side[Edge]:
-                    edge = side.edge
-                    if edge % 3 == 0:
-                        if retest(edge // 3):
-                            return bigger.Side(edge + 3, side.orientation)
-                        if retest(edge // 3 - 1):
-                            return bigger.Side(edge - 3, side.orientation)
-                    if edge % 3 == 1:
-                        if retest(edge // 3 - 1):
-                            return bigger.Side(edge - 6, side.orientation)
-                        if retest(edge // 3 + 1):
-                            return bigger.Side(edge + 6, side.orientation)
-                    return side
+                    n, r = divmod(side.edge, 3)
+                    modifier = +3 if r == 0 and retest(n) else -3 if r == 0 and retest(n - 1) else +6 if r == 1 and retest(n + 1) else -6 if r == 1 and retest(n - 1) else 0
+
+                    return bigger.Side(side.edge + modifier, side.orientation)
 
                 prefix = T.encode(
                     [

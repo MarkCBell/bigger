@@ -13,7 +13,7 @@ class TestFlute(TestCase):
     m = T(dict((e, -i) for i, e in enumerate(edges)))
     
     def test_str(self):
-        self.assertEqual(str(self.L), 'Infinitely supported lamination 0: -1, -1: -1, 1: -1, -2: -1, 2: -1, -3: -1, 3: -1, -4: -1, 4: -1, -5: -1 ...')
+        self.assertEqual(str(self.L), 'Infinitely supported lamination 0: -1, -1: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1 ...')
         self.assertEqual(str(self.a), 'Lamination 0: -1')
         self.assertEqual(repr(self.L), str(self.L))
     
@@ -29,7 +29,7 @@ class TestFlute(TestCase):
     
     def test_slice(self):
         h = self.S('a.a.b_1.a_3')
-        self.assertEqual((h[:5] * h[5:])(self.m), h(self.m))
+        self.assertEqual(h[:5](h[5:](self.m)), h(self.m))
 
 class TestBiflute(TestCase):
     S = bigger.load.biflute()
@@ -51,8 +51,9 @@ class TestBiflute(TestCase):
         self.assertEqual(self.S('b_1')(self.b), {3: 1, 4: 1, 6: 2, 7: 1, 8: 1})
     
     def test_flip(self):
-        h = self.T.encode([{0}, {0}])
-        self.assertEqualSquares(h.target.link(0), h.source.link(0))
+        s = bigger.Side(0, True)
+        h = self.T.encode([{s}, {s}])
+        self.assertEqualSquares(h.target.link(s), h.source.link(s))
     
     def test_expr(self):
         h = self.S('a{n > 7 or n % 6 == 3}')
