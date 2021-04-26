@@ -60,7 +60,9 @@ class Triangulation(Generic[Edge]):
         self.link = link
 
     @classmethod
-    def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]]) -> Triangulation[Edge]:
+    def from_pos(
+        cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]]
+    ) -> Triangulation[Edge]:
         """ Return a triangulation from a link function defined on only the positive edges. """
 
         def link(side: Side[Edge]) -> Square[Edge]:
@@ -291,7 +293,8 @@ class Triangulation(Generic[Edge]):
                     move = h.target.relabel(*term)
                 else:  # len(term) == 3
                     term = cast(Tuple[int, Callable[[Edge], Edge], Callable[[Edge], Edge]], term)
-                    move = h.target.isometry(h[term[0]].target, term[1], term[2])
+                    T = h[term[0]].source
+                    move = h.target.isometry(T, term[1], term[2])
             elif isinstance(term, dict):
                 move = h.target.relabel_from_dict(term)
             else:  # Assume term is the label of an edge to flip.

@@ -35,7 +35,7 @@ def ladder() -> bigger.MCG[Edge]:
     #  |/        |
     #  #---n,2---#
 
-    def link(edge: Edge) -> Tuple[Tuple[Edge, bool], Tuple[Edge, bool], Tuple[Edge, bool], Tuple[Edge, bool]]:
+    def link(edge: Edge) -> tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]:
         n, k = edge
         return {
             0: (((n - 1, 1), False), ((n - 1, 3), True), ((n, 1), True), ((n, 2), False)),
@@ -63,10 +63,16 @@ def ladder() -> bigger.MCG[Edge]:
 
         if curve == "a":
             isom = lambda edge: (edge[0], [0, 5, 3, 2, 4, 1][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(2, isom, isom), lambda side: side.edge[1] in {1, 5} and side.orientation and test(side.edge[0]), lambda side: side.edge[1] in {2, 3} and side.orientation and test(side.edge[0])])  # Recheck this 2!!!
+            return T.encode(
+                [
+                    (-1, isom, isom),
+                    lambda side: side.edge[1] in {1, 5} and side.orientation and test(side.edge[0]),
+                    lambda side: side.edge[1] in {2, 3} and side.orientation and test(side.edge[0]),
+                ]
+            )
         if curve == "b":
             isom = lambda edge: (edge[0], [0, 1, 2, 3, 5, 4][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(1, isom, isom), lambda side: side.edge[1] == 5 and side.orientation and test(side.edge[0])])  # Recheck this 1!!!
+            return T.encode([(-1, isom, isom), lambda side: side.edge[1] == 5 and side.orientation and test(side.edge[0])])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -108,21 +114,26 @@ def spotted_ladder() -> bigger.MCG[Edge]:
     #  |/        |
     #  #--n+1,1--#
 
-    def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
+    def link(edge: Edge) -> tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]:
         n, k = edge
         return {
-            0: ((n, 1), (n, 2), (n - 1, 7), (n - 1, 8)),
-            1: ((n - 1, 5), (n - 1, 6), (n, 2), (n, 0)),
-            2: ((n, 0), (n, 1), (n, 3), (n, 4)),
-            3: ((n, 4), (n, 2), (n, 5), (n, 6)),
-            4: ((n, 2), (n, 3), (n, 7), (n, 8)),
-            5: ((n, 6), (n, 3), (n, 6), (n + 1, 1)),
-            6: ((n, 3), (n, 5), (n + 1, 1), (n, 5)),
-            7: ((n, 8), (n, 4), (n, 8), (n + 1, 0)),
-            8: ((n + 1, 0), (n, 7), (n, 4), (n, 7)),
+            0: (((n - 1, 7), False), ((n - 1, 8), True), ((n, 1), False), ((n, 2), True)),
+            1: (((n - 1, 5), True), ((n - 1, 6), False), ((n, 2), True), ((n, 0), False)),
+            2: (((n, 0), False), ((n, 1), False), ((n, 3), True), ((n, 4), True)),
+            3: (((n, 4), True), ((n, 2), False), ((n, 5), False), ((n, 6), True)),
+            4: (((n, 2), False), ((n, 3), True), ((n, 7), True), ((n, 8), False)),
+            5: (((n, 6), False), ((n + 1, 1), True), ((n, 6), True), ((n, 3), False)),
+            6: (((n, 3), False), ((n, 5), False), ((n + 1, 1), True), ((n, 5), True)),
+            7: (((n, 8), False), ((n, 4), False), ((n, 8), True), ((n + 1, 0), True)),
+            8: (((n + 1, 0), True), ((n, 7), False), ((n, 4), False), ((n, 7), True)),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(9)), link)
+    def edges() -> Iterable[Edge]:
+        for x in integers():
+            for y in range(9):
+                yield x, y
+
+    T = bigger.Triangulation(edges, link)
 
     shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
@@ -134,15 +145,15 @@ def spotted_ladder() -> bigger.MCG[Edge]:
 
         if curve == "a":
             isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] == 8 and test(edge[0])])
+            return T.encode([(-1, isom, isom), lambda side: side.edge[1] == 8 and side.orientation and test(side.edge[0])])
         if curve == "b":
             isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] == 6 and test(edge[0])])
+            return T.encode([(-1, isom, isom), lambda side: side.edge[1] == 6 and side.orientation and test(side.edge[0])])
 
         raise ValueError("Unknown mapping class {}".format(name))
 
     def layout(triangle: Triangle) -> FlatTriangle:
-        n, k = triangle[0]
+        n, k = triangle[0].edge
         return {
             0: ((n + 0.25, -0.25), (n, 0.0), (n + 0.25, 0.25)),
             2: ((n + 0.25, -0.25), (n + 0.25, 0.25), (n + 0.5, 0.0)),
