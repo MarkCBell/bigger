@@ -35,21 +35,21 @@ def ladder() -> bigger.MCG[Edge]:
     #  |/        |
     #  #---n,2---#
 
-    def link(edge: Edge) -> tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]:
-        n, k = edge
-        return {
-            0: (((n - 1, 1), False), ((n - 1, 3), True), ((n, 1), True), ((n, 2), False)),
-            1: (((n, 2), False), ((n, 0), False), ((n, 3), True), ((n + 1, 0), True)),
-            2: (((n, 4), True), ((n, 5), False), ((n, 0), False), ((n, 1), True)),
-            3: (((n + 1, 0), True), ((n, 1), False), ((n, 4), False), ((n, 5), True)),
-            4: (((n, 5), False), ((n, 2), True), ((n, 5), True), ((n, 3), False)),
-            5: (((n, 3), False), ((n, 4), False), ((n, 2), True), ((n, 4), True)),
-        }[k]
-
     def edges() -> Iterable[Edge]:
         for x in integers():
             for y in range(6):
                 yield x, y
+
+    def link(edge: Edge) -> tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]:
+        n, k = edge
+        return {
+            0: ((n - 1, 1), False, (n - 1, 3), True, (n, 1), True, (n, 2), False),
+            1: ((n, 2), False, (n, 0), False, (n, 3), True, (n + 1, 0), True),
+            2: ((n, 4), True, (n, 5), False, (n, 0), False, (n, 1), True),
+            3: ((n + 1, 0), True, (n, 1), False, (n, 4), False, (n, 5), True),
+            4: ((n, 5), False, (n, 2), True, (n, 5), True, (n, 3), False),
+            5: ((n, 3), False, (n, 4), False, (n, 2), True, (n, 4), True),
+        }[k]
 
     T = bigger.Triangulation[Edge].from_pos(edges, link)
 
@@ -114,26 +114,26 @@ def spotted_ladder() -> bigger.MCG[Edge]:
     #  |/        |
     #  #--n+1,1--#
 
-    def link(edge: Edge) -> tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]:
-        n, k = edge
-        return {
-            0: (((n - 1, 7), False), ((n - 1, 8), True), ((n, 1), False), ((n, 2), True)),
-            1: (((n - 1, 5), True), ((n - 1, 6), False), ((n, 2), True), ((n, 0), False)),
-            2: (((n, 0), False), ((n, 1), False), ((n, 3), True), ((n, 4), True)),
-            3: (((n, 4), True), ((n, 2), False), ((n, 5), False), ((n, 6), True)),
-            4: (((n, 2), False), ((n, 3), True), ((n, 7), True), ((n, 8), False)),
-            5: (((n, 6), False), ((n + 1, 1), True), ((n, 6), True), ((n, 3), False)),
-            6: (((n, 3), False), ((n, 5), False), ((n + 1, 1), True), ((n, 5), True)),
-            7: (((n, 8), False), ((n, 4), False), ((n, 8), True), ((n + 1, 0), True)),
-            8: (((n + 1, 0), True), ((n, 7), False), ((n, 4), False), ((n, 7), True)),
-        }[k]
-
     def edges() -> Iterable[Edge]:
         for x in integers():
             for y in range(9):
                 yield x, y
 
-    T = bigger.Triangulation(edges, link)
+    def link(edge: Edge) -> tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]:
+        n, k = edge
+        return {
+            0: ((n - 1, 7), False, (n - 1, 8), True, (n, 1), False, (n, 2), True),
+            1: ((n - 1, 5), True, (n - 1, 6), False, (n, 2), True, (n, 0), False),
+            2: ((n, 0), False, (n, 1), False, (n, 3), True, (n, 4), True),
+            3: ((n, 4), True, (n, 2), False, (n, 5), False, (n, 6), True),
+            4: ((n, 2), False, (n, 3), True, (n, 7), True, (n, 8), False),
+            5: ((n, 6), False, (n + 1, 1), True, (n, 6), True, (n, 3), False),
+            6: ((n, 3), False, (n, 5), False, (n + 1, 1), True, (n, 5), True),
+            7: ((n, 8), False, (n, 4), False, (n, 8), True, (n + 1, 0), True),
+            8: ((n + 1, 0), True, (n, 7), False, (n, 4), False, (n, 7), True),
+        }[k]
+
+    T = bigger.Triangulation.from_pos(edges, link)
 
     shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 

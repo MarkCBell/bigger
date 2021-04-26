@@ -51,7 +51,7 @@ class Encoding(Generic[Edge]):
     def __invert__(self) -> bigger.Encoding[Edge]:
         return Encoding([~move for move in self])
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.sequence)
 
     @overload

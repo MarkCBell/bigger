@@ -60,19 +60,17 @@ class Triangulation(Generic[Edge]):
         self.link = link
 
     @classmethod
-    def from_pos(
-        cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool], tuple[Edge, bool]]]
-    ) -> Triangulation[Edge]:
+    def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]]) -> Triangulation[Edge]:
         """ Return a triangulation from a link function defined on only the positive edges. """
 
         def link(side: Side[Edge]) -> Square[Edge]:
             """ The full link function. """
 
-            a, b, c, d = ulink(side.edge)
+            X = ulink(side.edge)
             if not side.orientation:
-                a, b, c, d = c, d, a, b
+                X = X[4:] + X[:4]
 
-            return Side(*a), Side(*b), Side(*c), Side(*d)
+            return Side(X[0], X[1]), Side(X[2], X[3]), Side(X[4], X[5]), Side(X[6], X[7])
 
         return cls(edges, link)
 
