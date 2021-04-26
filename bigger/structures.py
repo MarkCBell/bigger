@@ -7,7 +7,7 @@ X = TypeVar("X")
 
 
 class UnionFind(Generic[X]):
-    """ A fast union--find data structure. Given items must be hashable. """
+    """A fast union--find data structure. Given items must be hashable."""
 
     def __init__(self, items: Iterable[X]) -> None:
         self.items = items
@@ -15,7 +15,7 @@ class UnionFind(Generic[X]):
         self.rank = dict((item, 0) for item in items)
 
     def __iter__(self) -> Iterator[List[X]]:
-        """ Iterate through the groups of self. """
+        """Iterate through the groups of self."""
         groups = defaultdict(list)
         for item in self.items:
             groups[self(item)].append(item)
@@ -31,7 +31,7 @@ class UnionFind(Generic[X]):
         return ", ".join("{" + ", ".join(str(item) for item in g) + "}" for g in self)
 
     def __call__(self, x: X) -> X:
-        """ Find the root of x. Two items are in the same group iff they have the same root. """
+        """Find the root of x. Two items are in the same group iff they have the same root."""
         root = x
         while self.parent[root] != root:
             root = self.parent[root]
@@ -40,7 +40,7 @@ class UnionFind(Generic[X]):
         return root
 
     def union2(self, x: X, y: X) -> None:
-        """ Combine the class containing x and the class containing y. """
+        """Combine the class containing x and the class containing y."""
         rx, ry = self(x), self(y)
         if self.rank[x] > self.rank[y]:
             self.parent[ry] = rx
@@ -51,7 +51,7 @@ class UnionFind(Generic[X]):
             self.rank[rx] += 1
 
     def union(self, *args: X) -> None:
-        """ Combine all of the classes containing the given items. """
+        """Combine all of the classes containing the given items."""
         if not args:
             return
 

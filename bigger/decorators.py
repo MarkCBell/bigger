@@ -10,7 +10,7 @@ RT = TypeVar("RT")  # return type
 
 @decorator
 def memoize(function: Callable[..., RT], *args: Any, **kwargs: Any) -> Callable[..., RT]:
-    """ A decorator that memoizes a function. """
+    """A decorator that memoizes a function."""
 
     inputs = inspect.getcallargs(function, *args, **kwargs)  # pylint: disable=deprecated-method
     # We test whether function is a method by looking for a `self` argument. If not we store the cache in the function itself.

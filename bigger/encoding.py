@@ -8,7 +8,7 @@ from bigger.types import Edge
 
 
 class Move(Generic[Edge]):
-    """ A function that takes :class:`Laminations <bigger.lamination.Lamination>` on one :class:`~bigger.triangulation.Triangulation` to another. """
+    """A function that takes :class:`Laminations <bigger.lamination.Lamination>` on one :class:`~bigger.triangulation.Triangulation` to another."""
 
     def __init__(
         self,
@@ -29,12 +29,12 @@ class Move(Generic[Edge]):
         return self.action(lamination)
 
     def encode(self) -> bigger.Encoding[Edge]:
-        """ Return the :class:`~bigger.encoding.Encoding` consisting of only this Move. """
+        """Return the :class:`~bigger.encoding.Encoding` consisting of only this Move."""
         return bigger.Encoding([self])
 
 
 class Encoding(Generic[Edge]):
-    """ A sequence of :class:`Moves <bigger.encoding.Move>` to apply to a :class:`~bigger.lamination.Lamination`. """
+    """A sequence of :class:`Moves <bigger.encoding.Move>` to apply to a :class:`~bigger.lamination.Lamination`."""
 
     def __init__(self, sequence: List[bigger.Move[Edge]]) -> None:
         self.sequence = sequence

@@ -11,7 +11,7 @@ from .triangulation import Triangle
 
 
 def splitter(strn: str) -> Iterable[str]:
-    """ Break strn into words on .'s except when they are inside braces. """
+    """Break strn into words on .'s except when they are inside braces."""
 
     start = 0
     brackets = 0
@@ -34,7 +34,7 @@ def splitter(strn: str) -> Iterable[str]:
 
 
 def swapcase(strn: str) -> str:
-    """ Swapcase of strn, except for items that are inside braces. """
+    """Swapcase of strn, except for items that are inside braces."""
 
     output = []
     brackets = 0
@@ -55,7 +55,7 @@ def swapcase(strn: str) -> str:
 
 
 class MappingClassGroup(Generic[Edge]):
-    """ A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names. """
+    """A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names."""
 
     def __init__(
         self, triangulation: bigger.Triangulation[Edge], generator: Callable[[str], bigger.Encoding[Edge]], layout: Optional[Callable[[Triangle[Edge]], FlatTriangle]] = None
@@ -75,6 +75,6 @@ class MappingClassGroup(Generic[Edge]):
         return bigger.Encoding(sequence) if sequence else self.triangulation.identity()
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
-        """ Return a PIL image of the triangulation of this MCG around the given edges. """
+        """Return a PIL image of the triangulation of this MCG around the given edges."""
 
         return bigger.draw(self, edges=edges, **options)

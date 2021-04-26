@@ -31,7 +31,7 @@ T = TypeVar("T")
 
 
 def deduplicate(items: list[T]) -> list[T]:
-    """ Return the same list but without duplicates. """
+    """Return the same list but without duplicates."""
 
     output = []
     seen = set()
@@ -43,26 +43,26 @@ def deduplicate(items: list[T]) -> list[T]:
 
 
 def add(A: Coord, B: Coord, s: float = 1.0, t: float = 1.0) -> Coord:
-    """ Return the point sA + tB. """
+    """Return the point sA + tB."""
 
     return (s * A[0] + t * B[0], s * A[1] + t * B[1])
 
 
 def interpolate(A: Coord, B: Coord, r: float = 0.5) -> Coord:
-    """ Return the point that is r% from B to A. """
+    """Return the point that is r% from B to A."""
 
     return add(A, B, r, 1 - r)
 
 
 def support(triangulation: bigger.Triangulation[Edge], edge: Edge) -> tuple[Triangle[Edge], Triangle[Edge]]:
-    """ Return the two triangles that support and edge. """
+    """Return the two triangles that support and edge."""
 
     side = bigger.Side(edge)
     return triangulation.triangle(side), triangulation.triangle(~side)
 
 
 def supporting_triangles(triangulation: bigger.Triangulation[Edge], edges: list[Edge]) -> tuple[list[list[Triangle[Edge]]], set[Edge]]:
-    """ Return a list of list of triangles that support these edges, grouped by connectedness, and a set of edges that in the interior. """
+    """Return a list of list of triangles that support these edges, grouped by connectedness, and a set of edges that in the interior."""
 
     position_index = dict((edge, index) for index, edge in enumerate(edges))
 
@@ -135,7 +135,7 @@ def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], comp
 
 
 def draw_block_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: list[int], master: int) -> None:
-    """ Draw a flat triangle with (blocks of) lines inside it. """
+    """Draw a flat triangle with (blocks of) lines inside it."""
 
     weights_0 = [max(weight, 0) for weight in weights]
     sum_weights_0 = sum(weights_0)
@@ -189,7 +189,7 @@ def draw_block_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: list
 
 
 def draw_line_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: list[int], master: int) -> None:
-    """ Draw a flat triangle with (individual) lines inside it. """
+    """Draw a flat triangle with (individual) lines inside it."""
 
     weights_0 = [max(weight, 0) for weight in weights]
     sum_weights_0 = sum(weights_0)
@@ -234,7 +234,7 @@ def draw_line_triangle(canvas: ImageDraw, vertices: FlatTriangle, weights: list[
 
 
 class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attributes
-    """ A class to record intermediate draw commands. """
+    """A class to record intermediate draw commands."""
 
     def __init__(self, **options: Any):
         self.edges: Optional[list[Edge]] = None
@@ -248,7 +248,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         self.set_options(**options)
 
     def set_options(self, **options: Any) -> None:
-        """ Set the options passed in. """
+        """Set the options passed in."""
 
         for key, value in options.items():
             setattr(self, key, value)
@@ -377,7 +377,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
 
 
 def draw(*objs: Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]], edges: Optional[list[Edge]] = None, **options: Any) -> Union[DrawStructure, Image]:
-    """ Draw the given object with the provided options. """
+    """Draw the given object with the provided options."""
 
     # This is only really here so we can provide "edges" as a keyword argument to users.
 

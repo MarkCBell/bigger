@@ -7,13 +7,13 @@ import re
 
 
 def integers(minimum: Optional[int] = None, maximum: Optional[int] = None) -> Iterable[int]:
-    """ Return an iterable that yields all of the integers. """
+    """Return an iterable that yields all of the integers."""
 
     return (x for n in naturals() for x in (n, ~n) if (minimum is None or minimum <= x) and (maximum is None or x <= maximum))
 
 
 def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[Any], bool]]:
-    """ Return a curve and a test to apply for which of it's components to twist. """
+    """Return a curve and a test to apply for which of it's components to twist."""
 
     twist_match = re.match(r"(?P<curve>[%s])_(?P<n>-?\d+)$" % (curve_names), name)
     twist_index_match = re.match(r"(?P<curve>[%s])\[ *(?P<n>-?\d+) *\]$" % (curve_names), name)

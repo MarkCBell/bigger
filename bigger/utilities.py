@@ -7,7 +7,7 @@ IntFraction = TypeVar("IntFraction", int, Fraction)
 
 
 class Half:
-    """ A class for representing 1/2 in such a way that multiplication preserves types. """
+    """A class for representing 1/2 in such a way that multiplication preserves types."""
 
     def __mul__(self, other: IntFraction) -> IntFraction:
         if isinstance(other, int):

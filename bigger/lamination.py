@@ -28,11 +28,11 @@ class Lamination(Generic[Edge]):
         return self.weight(edge)
 
     def describe(self, edges: Iterable[Edge]) -> str:
-        """ Return a string describing this Lamination on the given edges. """
+        """Return a string describing this Lamination on the given edges."""
         return ", ".join("{}: {}".format(edge, self(edge)) for edge in edges)
 
     def is_finitely_supported(self) -> bool:
-        """ Return whether this lamination is supported on finitely many edges of the underlying Triangulation. """
+        """Return whether this lamination is supported on finitely many edges of the underlying Triangulation."""
         return isinstance(self.support(), set)
 
     def __eq__(self, other: Any) -> bool:
@@ -59,7 +59,7 @@ class Lamination(Generic[Edge]):
         return str(self)
 
     def __add__(self, other: Lamination[Edge]) -> Lamination[Edge]:
-        """ Return the Haken sum of this lamination and another. """
+        """Return the Haken sum of this lamination and another."""
 
         def weight(edge: Edge) -> int:
             return self(edge) + other(edge)
@@ -71,7 +71,7 @@ class Lamination(Generic[Edge]):
             return self.triangulation(weight, lambda: chain(self.support(), other.support()))
 
     def __mul__(self, other: int) -> Lamination[Edge]:
-        """ Return this lamination scaled by other. """
+        """Return this lamination scaled by other."""
 
         def weight(edge: Edge) -> int:
             return other * self(edge)
@@ -79,12 +79,12 @@ class Lamination(Generic[Edge]):
         return self.triangulation(weight, self.support)
 
     def __rmul__(self, other: int) -> Lamination[Edge]:
-        """ Return this lamination scaled by other. """
+        """Return this lamination scaled by other."""
 
         return self * other
 
     def complexity(self) -> int:
-        """ Return the number of intersections between this Lamination and its underlying Triangulation. """
+        """Return the number of intersections between this Lamination and its underlying Triangulation."""
         return sum(max(self(edge), 0) for edge in self.support())
 
     def is_short(self) -> bool:
@@ -157,6 +157,6 @@ class Lamination(Generic[Edge]):
         return ~conjugator * twist ** power * conjugator
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
-        """ Return a PIL image of this Lamination around the given edges. """
+        """Return a PIL image of this Lamination around the given edges."""
 
         return bigger.draw(self, edges=edges, **options)

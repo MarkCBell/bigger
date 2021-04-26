@@ -13,13 +13,13 @@ from bigger.types import Edge
 
 @dataclass(order=True, frozen=True)
 class Side(Generic[Edge]):
-    """ Represents a side of an edge. """
+    """Represents a side of an edge."""
 
     edge: Edge
     orientation: bool = True
 
     def __invert__(self) -> Side[Edge]:
-        """ Return the other side of this edge. """
+        """Return the other side of this edge."""
         return Side(self.edge, not self.orientation)
 
 
@@ -30,7 +30,7 @@ Tetra = Tuple[Side[Edge], Side[Edge], Side[Edge], Side[Edge], Side[Edge], Side[E
 
 
 def unorient_functor(f: Callable[[Side[Edge]], Side[Edge]]) -> Callable[[Edge], Edge]:
-    """ Return a function on edges from a function on sides. """
+    """Return a function on edges from a function on sides."""
     return lambda edge: f(Side(edge)).edge
 
 
@@ -61,10 +61,10 @@ class Triangulation(Generic[Edge]):
 
     @classmethod
     def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]]) -> Triangulation[Edge]:
-        """ Return a triangulation from a link function defined on only the positive edges. """
+        """Return a triangulation from a link function defined on only the positive edges."""
 
         def link(side: Side[Edge]) -> Square[Edge]:
-            """ The full link function. """
+            """The full link function."""
 
             X = ulink(side.edge)
             if not side.orientation:
@@ -75,23 +75,23 @@ class Triangulation(Generic[Edge]):
         return cls(edges, link)
 
     def star(self, side: Side[Edge]) -> Star[Edge]:
-        """ Return the link of an Side together with the Side itself. """
+        """Return the link of an Side together with the Side itself."""
 
         return self.link(side) + (side,)
 
     def tetra(self, side: Side[Edge]) -> Tetra[Edge]:
-        """ Return the link of an Side together with the Side itself and its inverse. """
+        """Return the link of an Side together with the Side itself and its inverse."""
 
         return self.link(side) + (side, ~side)
 
     def corner(self, side: bigger.Side[Edge]) -> Triangle[Edge]:
-        """ Return the triangle starting at this side. """
+        """Return the triangle starting at this side."""
 
         a, b, _, _ = self.link(side)
         return (side, a, b)
 
     def triangle(self, side: Side[Edge]) -> Triangle[Edge]:
-        """ Return the triangle containing this side. """
+        """Return the triangle containing this side."""
 
         triangle = self.corner(side)
         triangle = min(triangle, triangle[1:] + triangle[:1], triangle[2:] + triangle[:2])
@@ -141,7 +141,7 @@ class Triangulation(Generic[Edge]):
                 return (b, c, d, a)
 
             def side_edges(p: Side[Edge], q: Side[Edge]) -> tuple[Side[Edge], Side[Edge]]:
-                """ Return the two new sides formed by p & q. """
+                """Return the two new sides formed by p & q."""
                 if flipped(p):
                     _, _, w, _, _, x = self.tetra(p)
                 elif flipped(~p):
@@ -204,7 +204,7 @@ class Triangulation(Generic[Edge]):
         return bigger.Move(self, target, action, inv_action).encode()
 
     def isometry(self, target: Triangulation[Edge], isom: Callable[[Edge], Edge], inv_isom: Callable[[Edge], Edge]) -> bigger.Encoding[Edge]:
-        """ Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. """
+        """Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling."""
 
         def action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
@@ -229,7 +229,7 @@ class Triangulation(Generic[Edge]):
         return bigger.Move(self, target, action, inv_action).encode()
 
     def relabel(self, isom: Callable[[Side[Edge]], Side[Edge]], inv_isom: Callable[[Side[Edge]], Side[Edge]]) -> bigger.Encoding[Edge]:
-        """ Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling. """
+        """Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling."""
 
         # Define the new triangulation.
         def link(edge: Side[Edge]) -> Square[Edge]:
@@ -244,7 +244,7 @@ class Triangulation(Generic[Edge]):
         return self.isometry(target, u_isom, u_inv_isom)
 
     def relabel_from_dict(self, isom_dict: Mapping[Side[Edge], Side[Edge]]) -> bigger.Encoding[Edge]:
-        """ Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged. """
+        """Return an :class:`~bigger.encoding.Encoding` which relabels Edges in :attr:`isom_dict` an leaves all other edges unchanged."""
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
 
         def isom(edge: Side[Edge]) -> Side[Edge]:
@@ -256,7 +256,7 @@ class Triangulation(Generic[Edge]):
         return self.relabel(isom, inv_isom)
 
     def identity(self) -> bigger.Encoding[Edge]:
-        """ Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class. """
+        """Return an :class:`~bigger.encoding.Encoding` which represents the identity mapping class."""
         return self.relabel_from_dict(dict())
 
     def encode(
@@ -316,16 +316,16 @@ class Triangulation(Generic[Edge]):
         return bigger.Lamination(self, weights, support)
 
     def empty_lamination(self) -> bigger.Lamination[Edge]:
-        """ Return the zero Lamination on this triangulation. """
+        """Return the zero Lamination on this triangulation."""
 
         return self(lambda edge: 0, support=set)  # set is a callable that returns the empty set.
 
     def as_lamination(self) -> bigger.Lamination[Edge]:
-        """ Return this Triangulation as a Lamination on self. """
+        """Return this Triangulation as a Lamination on self."""
 
         return self(lambda edge: -1)
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
-        """ Return a PIL image of this Triangulation around the given edges. """
+        """Return a PIL image of this Triangulation around the given edges."""
 
         return bigger.draw(self, edges=edges, **options)
