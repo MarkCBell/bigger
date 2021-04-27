@@ -6,10 +6,17 @@ from typing import Any, Callable, Iterable, Optional, Tuple
 import re
 
 
-def integers(minimum: Optional[int] = None, maximum: Optional[int] = None) -> Iterable[int]:
+def integers(start: Optional[int] = None, stop: Optional[int] = None) -> Iterable[int]:
     """Return an iterable that yields all of the integers."""
 
-    return (x for n in naturals() for x in (n, ~n) if (minimum is None or minimum <= x) and (maximum is None or x <= maximum))
+    if start is not None and stop is not None:
+        return range(start, stop)
+    elif start is None and stop is not None:
+        return naturals(stop, -1)
+    elif start is not None and stop is None:
+        return naturals(start)
+
+    return (z for n in naturals() for z in (n, ~n))
 
 
 def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[Any], bool]]:
