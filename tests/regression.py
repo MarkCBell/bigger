@@ -13,8 +13,8 @@ class TestFlute(TestCase):
     m = T(dict((e, -i) for i, e in enumerate(edges)))
     
     def test_str(self):
-        self.assertEqual(str(self.L), 'Infinitely supported lamination 0: -1, -1: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1 ...')
-        self.assertEqual(str(self.a), 'Lamination 0: -1')
+        self.assertEqual(str(self.L), 'Infinitely supported lamination -1: -1, 0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: -1, 8: -1 ...')
+        self.assertEqual(str(self.a), 'Lamination -1: -1')
         self.assertEqual(repr(self.L), str(self.L))
     
     def test_twist(self):
@@ -25,7 +25,7 @@ class TestFlute(TestCase):
     def test_flip(self):
         self.assertEqual(self.S('a_0')(self.T({1: 4, 2: 2, 3: 4})), {1: 6, 2: 4, 3: 4})
         self.assertEqual(self.S('a_0')(self.T({0: 4, 1: 4, 2: 2})), {0: 4, 1: 6, 2: 4})
-        self.assertEqual(self.T.encode([1])(self.a), {0: -1})
+        self.assertEqual(self.T.encode([1])(self.a), {-1: -1})
     
     def test_slice(self):
         h = self.S('a.a.b_1.a_3')
