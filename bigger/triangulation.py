@@ -133,14 +133,14 @@ class Triangulation(Generic[Edge]):
             for x in [a, b, c, d, e]:
                 assert not (flipped(x) and flipped(~x)), "Flipping both {} and {}".format(x, ~x)
 
-            if flipped(e):
-                assert not flipped(~e), "Flipping both {} and {}".format(e, ~e)
+            if flipped(+e):
+                assert not flipped(-e), "Flipping both {} and {}".format(e, ~e)
                 for x in [a, ~a, b, ~b, c, ~c, d, ~d]:
                     assert not flipped(x), "Flipping {} and {} which do not have disjoint support".format(e, x)
 
                 return (d, a, b, c)
-            elif flipped(~e):
-                assert not flipped(e), "Flipping both {} and {}".format(e, ~e)
+            elif flipped(-e):
+                assert not flipped(+e), "Flipping both {} and {}".format(e, ~e)
                 for x in [a, ~a, b, ~b, c, ~c, d, ~d]:
                     assert not flipped(x), "Flipping {} and {} which do not have disjoint support".format(~e, x)
 
