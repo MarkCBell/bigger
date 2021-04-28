@@ -65,14 +65,16 @@ class MappingClassGroup(Generic[Edge]):
         self.layout = layout
 
     def _helper(self, name: str) -> bigger.Encoding[Edge]:
+        if not name:
+            return self.triangulation.identity()
+
         try:
             return self.generator(name)
         except ValueError:
             return ~(self.generator(swapcase(name)))
 
     def __call__(self, strn: str) -> bigger.Encoding[Edge]:
-        sequence = [item for name in splitter(strn) for item in self._helper(name).sequence]
-        return bigger.Encoding(sequence) if sequence else self.triangulation.identity()
+        return bigger.Encoding([item for name in splitter(strn) for item in self._helper(name).sequence])
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
         """Return a PIL image of the triangulation of this MCG around the given edges."""
