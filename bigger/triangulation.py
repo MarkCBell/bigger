@@ -22,6 +22,12 @@ class Side(Generic[Edge]):
         """Return the other side of this edge."""
         return Side(self.edge, not self.orientation)
 
+    def __pos__(self) -> Side[Edge]:
+        return Side(self.edge, True)
+
+    def __neg__(self) -> Side[Edge]:
+        return Side(self.edge, False)
+
 
 Triangle = Tuple[Side[Edge], Side[Edge], Side[Edge]]
 Square = Tuple[Side[Edge], Side[Edge], Side[Edge], Side[Edge]]
@@ -103,7 +109,7 @@ class Triangulation(Generic[Edge]):
     def flip(self, is_flipped: Union[Callable[[Side[Edge]], bool], set[Side[Edge]]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
-        Alternatively, this can be given a set of OrientedEdges and will use membership of this set to test which edges flip.
+        Alternatively, this can be given a set of Sides and will use membership of this set to test which edges flip.
         Note that if :attr:`is_flipped` is True for edge then it must be False for all edge in its link and ~edge."""
 
         if isinstance(is_flipped, set):
@@ -142,13 +148,13 @@ class Triangulation(Generic[Edge]):
 
             def side_edges(p: Side[Edge], q: Side[Edge]) -> tuple[Side[Edge], Side[Edge]]:
                 """Return the two new sides formed by p & q."""
-                if flipped(p):
+                if flipped(+p):
                     _, _, w, _, _, x = self.tetra(p)
-                elif flipped(~p):
+                elif flipped(-p):
                     _, _, w, _, x, _ = self.tetra(p)
-                elif flipped(q):
+                elif flipped(+q):
                     _, _, _, x, w, _ = self.tetra(q)
-                elif flipped(~q):
+                elif flipped(-q):
                     _, _, _, x, _, w = self.tetra(q)
                 else:
                     w, x = p, q
@@ -170,7 +176,7 @@ class Triangulation(Generic[Edge]):
 
                 # Compute fi.
                 ei = lamination(edge)
-                ai0, bi0, ci0, di0 = [max(lamination(side.edge), 0) for side in source.link(Side(edge))]
+                ai0, bi0, ci0, di0 = [max(lamination(side), 0) for side in source.link(Side(edge))]
 
                 if ei >= ai0 + bi0 and ai0 >= di0 and bi0 >= ci0:  # CASE: A(ab)
                     return ai0 + bi0 - ei
@@ -232,8 +238,8 @@ class Triangulation(Generic[Edge]):
         """Return an :class:`~bigger.encoding.Encoding` which maps edges under the specified relabelling."""
 
         # Define the new triangulation.
-        def link(edge: Side[Edge]) -> Square[Edge]:
-            a, b, c, d = self.link(inv_isom(edge))
+        def link(side: Side[Edge]) -> Square[Edge]:
+            a, b, c, d = self.link(inv_isom(side))
             return (isom(a), isom(b), isom(c), isom(d))
 
         target = Triangulation(self.edges, link)
@@ -248,10 +254,10 @@ class Triangulation(Generic[Edge]):
         inv_isom_dict = dict((value, key) for key, value in isom_dict.items())
 
         def isom(edge: Side[Edge]) -> Side[Edge]:
-            return isom_dict.get(edge, edge)
+            return isom_dict.get(edge, ~isom_dict.get(~edge, ~edge))
 
         def inv_isom(edge: Side[Edge]) -> Side[Edge]:
-            return inv_isom_dict.get(edge, edge)
+            return inv_isom_dict.get(edge, ~inv_isom_dict.get(~edge, ~edge))
 
         return self.relabel(isom, inv_isom)
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import chain, islice
-from typing import Any, Callable, Generic, Iterable
+from typing import Any, Callable, Generic, Iterable, Union
 from PIL import Image  # type: ignore
 
 import bigger
@@ -22,10 +22,20 @@ class Lamination(Generic[Edge]):
         self.support = support
 
     @memoize
-    def __call__(self, edge: Edge) -> int:
-        # This could also support being called with a Side
+    def __call__(self, edge: Union[Edge, bigger.Side[Edge]]) -> int:
+        if isinstance(edge, bigger.Side):
+            return self(edge.edge)
 
         return self.weight(edge)
+
+    def dual(self, side: bigger.Side[Edge]) -> int:
+        """Return the weight of this lamination dual to the given side."""
+
+        corner = self.triangulation.corner(side)
+        a, b, c = self(corner[0].edge), self(corner[1].edge), self(corner[2].edge)
+        af, bf, cf = max(a, 0), max(b, 0), max(c, 0)  # Correct for negatives.
+        correction = min(af + bf - cf, bf + cf - af, cf + af - bf, 0)
+        return bigger.utilities.half(bf + cf - af + correction)
 
     def describe(self, edges: Iterable[Edge]) -> str:
         """Return a string describing this Lamination on the given edges."""
@@ -132,26 +142,30 @@ class Lamination(Generic[Edge]):
         short, conjugator = self.shorten()
 
         # Use the following for reference:
-        # #---------#     #---------#
-        # |    a   /|     |\   a    |
-        # |------/--|     |  \      |
-        # |b  e/   d| --> |b   \e' d|
+        # #<---a----#     #<---a----#
+        # |        ^^     |\        ^
+        # |======/==|     |  \      |
+        # b    e    d --> b    e    d
         # |  /      |     |      \  |
-        # |/   c    |     |    c   \|
-        # #---------#     #---------#
+        # V/        |     V        V|
+        # #----c--->#     #----c--->#
+        support = short.support()
+        # We used to make these asserts, but these mess up mypy's knowledge of support.
+        # assert isinstance(support, set)
+        # assert len(support) == 2
 
-        assert isinstance(short.support, set)
-        assert len(short.support) == 2
-
-        e, e2 = short.support
+        x, y = support
+        e = bigger.Side(x)
         a, b, c, d = short.triangulation.link(e)
         if short(a) == 1:
-            assert a == c
-            e, e2 = e2, e
+            assert short(c) == 1
+            assert a == ~c, (a, c)
+            e = bigger.Side(y)
             a, b, c, d = short.triangulation.link(e)
 
         assert short(b) == 1
-        assert b == d
+        assert b == ~d
+
         twist = short.triangulation.encode([{e: b, b: e}, {e}])
 
         return ~conjugator * twist ** power * conjugator

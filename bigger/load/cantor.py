@@ -118,7 +118,7 @@ def cantor() -> bigger.MCG[Edge]:  # pylint: disable=too-many-statements
         elif r == 1:
             return invert(k, ((6 * N - 2, POS), False, (6 * N - 3, POS), False, (n - 1, POS), False, (incoming, POS), True))
         else:  # r == 2:
-            return invert(k, ((6 * N + 1, POS), True, (6 * N + 0, POS), False, (n - 2, POS), True, (N, EQ), False))
+            return invert(k, ((6 * N + 1, POS), False, (6 * N + 0, POS), False, (n - 2, POS), True, (N, EQ), False))
 
     T = bigger.Triangulation.from_pos(edges, link)
 

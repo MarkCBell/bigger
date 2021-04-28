@@ -61,16 +61,17 @@ def support(triangulation: bigger.Triangulation[Edge], edge: Edge) -> tuple[Tria
     return triangulation.triangle(side), triangulation.triangle(~side)
 
 
-def supporting_triangles(triangulation: bigger.Triangulation[Edge], edges: list[Edge]) -> tuple[list[list[Triangle[Edge]]], set[Edge]]:
+def connected_components(triangulation: bigger.Triangulation[Edge], edges: list[Edge]) -> tuple[list[list[Triangle[Edge]]], set[Edge]]:
     """Return a list of list of triangles that support these edges, grouped by connectedness, and a set of edges that in the interior."""
 
     position_index = dict((edge, index) for index, edge in enumerate(edges))
 
     interior = set()
+    # Kruskal's algorithm
     components = bigger.UnionFind(deduplicate([triangle for edge in edges for triangle in support(triangulation, edge)]))
     for edge in edges:
         t1, t2 = support(triangulation, edge)
-        if components(t1) != components(t2):
+        if components(t1) != components(t2):  # Don't merge if it would create a loop in the dual graph.
             interior.add(edge)
             components.union2(t1, t2)
 
@@ -88,14 +89,13 @@ def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], comp
 
     r = 1000.0
 
-    layout = dict()
     # Create the vertices.
     num_outside = sum(1 for triangle in component for side in triangle if side.edge not in interior)
     vertices = [(r * sin(2 * pi * (i - 0.5) / num_outside), r * cos(2 * pi * (i - 0.5) / num_outside)) for i in range(num_outside)]
     # Determine how many boundary edges occur between each edge's endpoints.
     # We really should do this in a sensible order so that it only takes a single pass.
     num_descendants = dict((side, 1) for triangle in component for side in triangle if side.edge not in interior)
-    stack = [side for triangle in component for side in triangle]
+    stack = [side for triangle in component for side in triangle if side.edge in interior]
     while stack:
         current = stack.pop()
         if current in num_descendants:
@@ -128,6 +128,7 @@ def default_layout_triangulation(triangulation: bigger.Triangulation[Edge], comp
             if B[i].edge in interior:
                 to_extend.append(B[i])
 
+    layout = dict()
     for triangle in component:
         layout[triangle] = (vertices[triangle_vertex_number[triangle[0]]], vertices[triangle_vertex_number[triangle[1]]], vertices[triangle_vertex_number[triangle[2]]])
 
@@ -291,7 +292,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
             raise TypeError("Unable to draw objects of type: {}".format(type(objs[0])))
 
         # Draw these triangles.
-        components, interior = supporting_triangles(triangulation, self.edges)
+        components, interior = connected_components(triangulation, self.edges)
         if self.layout is None:
             layout2 = dict(item for component in components for item in default_layout_triangulation(triangulation, component, interior).items())
         else:
