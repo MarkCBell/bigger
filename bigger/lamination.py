@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from itertools import chain, islice
-from typing import Any, Callable, Generic, Iterable, Union
+from typing import Any, Callable, Dict, Generic, Iterable, Union
 from PIL import Image  # type: ignore
 
 import bigger
@@ -28,6 +29,7 @@ class Lamination(Generic[Edge]):
 
         return self.weight(edge)
 
+    @memoize
     def dual(self, side: bigger.Side[Edge]) -> int:
         """Return the weight of this lamination dual to the given side."""
 
@@ -96,6 +98,45 @@ class Lamination(Generic[Edge]):
     def complexity(self) -> int:
         """Return the number of intersections between this Lamination and its underlying Triangulation."""
         return sum(max(self(edge), 0) for edge in self.support())
+
+    def trace(self, side: bigger.Side[Edge], intersection: int) -> Iterable[tuple[bigger.Side[Edge], int]]:
+        """Yield the intersections of the triangulation run over by this lamination from a starting point.
+
+        The starting point is specified by a `Side` and how many intersections into that side."""
+
+        start = (side, intersection)
+
+        assert 0 <= intersection < self(side)  # Sanity.
+        while True:
+            yield side, intersection
+            corner = self.triangulation.corner(~side)
+            x, y, z = corner
+            if intersection < self.dual(z):  # Turn right.
+                side, intersection = y, intersection  # pylint: disable=self-assigning-variable
+            elif self.dual(x) < 0 and self.dual(z) <= intersection < self.dual(z) - self.dual(x):  # Terminate.
+                break
+            else:  # Turn left.
+                side, intersection = z, self(z) - self(x) + intersection
+
+            if (side, intersection) == start:
+                break
+
+    def restrict(self, edge: Edge) -> Lamination[Edge]:
+        """Return the components of self which meet the given edge.
+
+        Note: self does not need to be finitely supported but the result does need to be.
+        Unfortunately we have no way of knowing this in advance."""
+
+        intersections = set(range(self(edge)))
+        hits: Dict[Edge, int] = defaultdict(int)
+        while intersections:
+            start = intersections.pop()
+            for side, i in self.trace(bigger.Side(edge), start):
+                hits[side.edge] += 1
+                if side.edge == start:
+                    intersections.remove(i)
+
+        return self.triangulation(hits)
 
     def is_short(self) -> bool:
         """Return whether this Lamination intersects its underlying Triangulation exactly twice.
