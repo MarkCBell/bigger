@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, Union, Optional, Tuple, cast
 from PIL import Image  # type: ignore
@@ -319,6 +320,17 @@ class Triangulation(Generic[Edge]):
 
         return h
 
+    def walk_vertex(self, side: bigger.Side[Edge]) -> Iterable[bigger.Side[Edge]]:
+        """Walk about the vertex at the tail of the given side until you get back to the same edge."""
+        
+        x = side
+        while True:
+            yield x
+            x = ~self.left(x)
+            if x.edge == side.edge:
+                yield x
+                return
+
     def __call__(
         self, weight: Union[dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None, is_finitely_supported: bool = False
     ) -> bigger.Lamination[Edge]:
@@ -349,6 +361,31 @@ class Triangulation(Generic[Edge]):
         """Return this Triangulation as a Lamination on self."""
 
         return self(lambda edge: -1)
+
+    def side_arc(self, side: bigger.Side[Edge]) -> bigger.Lamination[Edge]:
+        """Return the given side as a Lamination."""
+        return self({side.edge: -1})
+
+    def side_curve(self, side: bigger.Side[Edge]) -> bigger.Lamination[Edge]:
+        """Return the curve \\partial N(side)."""
+
+        walk1 = list(self.walk_vertex(side))
+
+        if walk1[-1] == side:  # Same endpoints.
+            hits = Counter(sidey.edge for sidey in walk1[1:-1])
+            return self(hits)
+
+        # Have to walk the other side now too.
+        walk2 = list(self.walk_vertex(~side))
+
+        if len(walk1) == 2:  # Folded triangle.
+            hits = Counter(sidey.edge for sidey in walk2[2:-2])
+        elif len(walk2) == 2:  # Folded triangle.
+            hits = Counter(sidey.edge for sidey in walk1[2:-2])
+        else:
+            hits = Counter(sidey.edge for sidey in walk1[1:-1] + walk2[1:-1])
+
+        return self(hits)
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
         """Return a PIL image of this Triangulation around the given edges."""
