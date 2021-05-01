@@ -198,11 +198,17 @@ class Triangulation(Generic[Edge]):
                     return max(ai0 + ci0, bi0 + di0) - ei
 
             # Determine support.
-            if lamination.is_finitely_supported():
-                support = set(side.edge for edge in lamination.support() for side in target.star(Side(edge)) if weight(side.edge))
-                return target(weight, lambda: support)
+            def support() -> Iterable[Edge]:
+                for edge in lamination.support():
+                    for side in target.star(Side(edge)):
+                        if weight(side.edge):
+                            yield side.edge
 
-            return target(weight, lambda: (side.edge for edge in lamination.support() for side in target.star(Side(edge)) if weight(side.edge)))
+            if lamination.is_finitely_supported():
+                support_set = set(support())
+                return target(weight, lambda: support_set)
+
+            return target(weight, support)
 
         action = partial(helper, self, target)
         inv_action = partial(helper, target, self)
@@ -216,21 +222,29 @@ class Triangulation(Generic[Edge]):
             def weight(edge: Edge) -> int:
                 return lamination(inv_isom(edge))
 
-            if lamination.is_finitely_supported():
-                support = set(isom(arc) for arc in lamination.support())
-                return target(weight, lambda: support)
+            def support() -> Iterable[Edge]:
+                for arc in lamination.support():
+                    yield isom(arc)
 
-            return target(weight, lambda: (isom(arc) for arc in lamination.support()))
+            if lamination.is_finitely_supported():
+                support_set = set(support())
+                return target(weight, lambda: support_set)
+
+            return target(weight, support)
 
         def inv_action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
                 return lamination(isom(edge))
 
-            if lamination.is_finitely_supported():
-                support = set(inv_isom(arc) for arc in lamination.support())
-                return self(weight, lambda: support)
+            def support() -> Iterable[Edge]:
+                for arc in lamination.support():
+                    yield inv_isom(arc)
 
-            return self(weight, lambda: (inv_isom(arc) for arc in lamination.support()))
+            if lamination.is_finitely_supported():
+                support_set = set(support())
+                return target(weight, lambda: support_set)
+
+            return target(weight, support)
 
         return bigger.Move(self, target, action, inv_action).encode()
 

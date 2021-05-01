@@ -190,36 +190,84 @@ class Lamination(Generic[Edge]):
 
         Assumes but does not check that this lamination is a single curve.
         Note that this currently only works on non-isolating curves."""
-        short, conjugator = self.shorten()
 
-        # Use the following for reference:
-        # #<---a----#     #<---a----#
-        # |        ^^     |\        ^
-        # |======/==|     |  \      |
-        # b    e    d --> b    e    d
-        # |  /      |     |      \  |
-        # V/        |     V        V|
-        # #----c--->#     #----c--->#
-        support = short.support()
-        # We used to make these asserts, but these mess up mypy's knowledge of support.
-        # assert isinstance(support, set)
-        # assert len(support) == 2
+        if self.is_finitely_supported():
+            short, conjugator = self.shorten()
 
-        x, y = support
-        e = bigger.Side(x)
-        a, b, c, d = short.triangulation.link(e)
-        if short(a) == 1:
-            assert short(c) == 1
-            assert a == ~c, (a, c)
-            e = bigger.Side(y)
+            # Use the following for reference:
+            # #<---a----#     #<---a----#
+            # |        ^^     |\        ^
+            # |======/==|     |  \      |
+            # b    e    d --> b    e    d
+            # |  /      |     |      \  |
+            # V/        |     V        V|
+            # #----c--->#     #----c--->#
+            support = short.support()
+            # We used to make these asserts, but these mess up mypy's knowledge of support.
+            # assert isinstance(support, set)
+            # assert len(support) == 2
+
+            x, y = support
+            e = bigger.Side(x)
             a, b, c, d = short.triangulation.link(e)
+            if short(a) == 1:
+                assert short(c) == 1
+                assert a == ~c, (a, c)
+                e = bigger.Side(y)
+                a, b, c, d = short.triangulation.link(e)
 
-        assert short(b) == 1
-        assert b == ~d
+            assert short(b) == 1
+            assert b == ~d
 
-        twist = short.triangulation.encode([{e: b, b: e}, {e}])
+            twist = short.triangulation.encode([{e: b, b: e}, {e}])
 
-        return ~conjugator * twist ** power * conjugator
+            return ~conjugator * twist ** power * conjugator
+
+        def action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
+            def weight(edge: Edge) -> int:
+                X = lamination  # Linters get confused if we use the non-local variable.
+                for curve in self.meeting_components(edge):
+                    X = curve.twist(power=power)(X)
+                return X(edge)
+
+            def support() -> Iterable[Edge]:
+                for edge in lamination.support():
+                    if weight(edge):
+                        yield edge
+
+                    for edgy in self.meeting(edge).support():
+                        if weight(edgy):
+                            yield edgy
+
+            if lamination.is_finitely_supported():
+                support_set = set(support())
+                return self.triangulation(weight, lambda: support_set)
+
+            return self.triangulation(weight, support)
+
+        def inv_action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
+            def weight(edge: Edge) -> int:
+                X = lamination  # Linters get confused if we use the non-local variable.
+                for curve in self.meeting_components(edge):
+                    X = curve.twist(power=-power)(X)
+                return X(edge)
+
+            def support() -> Iterable[Edge]:
+                for edge in lamination.support():
+                    if weight(edge):
+                        yield edge
+
+                    for edgy in self.meeting(edge).support():
+                        if weight(edgy):
+                            yield edgy
+
+            if lamination.is_finitely_supported():
+                support_set = set(support())
+                return self.triangulation(weight, lambda: support_set)
+
+            return self.triangulation(weight, support)
+
+        return bigger.Move(self.triangulation, self.triangulation, action, inv_action).encode()
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
         """Return a PIL image of this Lamination around the given edges."""
