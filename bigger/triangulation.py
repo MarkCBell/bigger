@@ -96,6 +96,16 @@ class Triangulation(Generic[Edge]):
         a, b, _, _ = self.link(side)
         return (side, a, b)
 
+    def left(self, side: bigger.Side[Edge]) -> bigger.Side[Edge]:
+        """Return the side to the left of the given one in its triangle."""
+
+        return self.corner(side)[2]
+
+    def right(self, side: bigger.Side[Edge]) -> bigger.Side[Edge]:
+        """Return the side to the right of the given one in its triangle."""
+
+        return self.corner(side)[1]
+
     def triangle(self, side: Side[Edge]) -> Triangle[Edge]:
         """Return the triangle containing this side."""
 

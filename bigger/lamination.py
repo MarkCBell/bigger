@@ -45,6 +45,16 @@ class Lamination(Generic[Edge]):
         correction = min(af + bf - cf, bf + cf - af, cf + af - bf, 0)
         return bigger.utilities.half(bf + cf - af + correction)
 
+    def left(self, side: bigger.Side[Edge]) -> int:
+        """Return the dual weight to the left of this side."""
+
+        return self.dual(self.triangulation.right(side))
+
+    def right(self, side: bigger.Side[Edge]) -> int:
+        """Return the dual weight to the right of this side."""
+
+        return self.dual(self.triangulation.left(side))
+
     def describe(self, edges: Iterable[Edge]) -> str:
         """Return a string describing this Lamination on the given edges."""
         return ", ".join("{}: {}".format(edge, self(edge)) for edge in edges)
@@ -83,8 +93,7 @@ class Lamination(Generic[Edge]):
             return self(edge) + other(edge)
 
         if self.is_finitely_supported() and other.is_finitely_supported():
-            support = set(self.support()).union(other.support())
-            return self.triangulation(weight, lambda: support)
+            return self.triangulation(weight, lambda: set(self.support()).union(other.support()), True)
         else:
             return self.triangulation(weight, lambda: chain(self.support(), other.support()))
 
@@ -103,6 +112,9 @@ class Lamination(Generic[Edge]):
 
     def complexity(self) -> int:
         """Return the number of intersections between this Lamination and its underlying Triangulation."""
+
+        assert self.is_finitely_supported()
+
         return sum(max(self(edge), 0) for edge in self.support())
 
     def trace(self, side: bigger.Side[Edge], intersection: int) -> Iterable[tuple[bigger.Side[Edge], int]]:
@@ -240,7 +252,7 @@ class Lamination(Generic[Edge]):
                 #  for curve in self.meeting_components(edge):
                 #      X = curve.twist(power=power)(X)
                 #  return X
-                # But by now using twisted_by we can get additional performance.
+                # But by now using twisted_by we can get additional performance through memoization.
                 return lamination.twisted_by(frozenset(self.meeting_components(edge)), power=power)(edge)
 
             def support() -> Iterable[Edge]:
