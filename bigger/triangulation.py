@@ -204,11 +204,7 @@ class Triangulation(Generic[Edge]):
                         if weight(side.edge):
                             yield side.edge
 
-            if lamination.is_finitely_supported():
-                support_set = set(support())
-                return target(weight, lambda: support_set)
-
-            return target(weight, support)
+            return target(weight, support, lamination.is_finitely_supported())
 
         action = partial(helper, self, target)
         inv_action = partial(helper, target, self)
@@ -226,11 +222,7 @@ class Triangulation(Generic[Edge]):
                 for arc in lamination.support():
                     yield isom(arc)
 
-            if lamination.is_finitely_supported():
-                support_set = set(support())
-                return target(weight, lambda: support_set)
-
-            return target(weight, support)
+            return target(weight, support, lamination.is_finitely_supported())
 
         def inv_action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
@@ -321,7 +313,9 @@ class Triangulation(Generic[Edge]):
 
         return h
 
-    def __call__(self, weights: Union[dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None) -> bigger.Lamination[Edge]:
+    def __call__(
+        self, weights: Union[dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None, is_finitely_supported: bool = False
+    ) -> bigger.Lamination[Edge]:
         if isinstance(weights, dict):
             weight_dict = dict((key, value) for key, value in weights.items() if value)
 
@@ -332,6 +326,10 @@ class Triangulation(Generic[Edge]):
 
         if support is None:
             support = self.edges
+
+        if is_finitely_supported:
+            support_set = set(support())
+            support = lambda: support_set
 
         return bigger.Lamination(self, weights, support)
 

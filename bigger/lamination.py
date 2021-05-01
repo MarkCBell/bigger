@@ -239,11 +239,7 @@ class Lamination(Generic[Edge]):
                         if weight(edgy):
                             yield edgy
 
-            if lamination.is_finitely_supported():
-                support_set = set(support())
-                return self.triangulation(weight, lambda: support_set)
-
-            return self.triangulation(weight, support)
+            return self.triangulation(weight, support, lamination.is_finitely_supported())
 
         def inv_action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
@@ -261,11 +257,7 @@ class Lamination(Generic[Edge]):
                         if weight(edgy):
                             yield edgy
 
-            if lamination.is_finitely_supported():
-                support_set = set(support())
-                return self.triangulation(weight, lambda: support_set)
-
-            return self.triangulation(weight, support)
+            return self.triangulation(weight, support, lamination.is_finitely_supported())
 
         return bigger.Move(self.triangulation, self.triangulation, action, inv_action).encode()
 
