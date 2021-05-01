@@ -121,20 +121,30 @@ class Lamination(Generic[Edge]):
             if (side, intersection) == start:
                 break
 
-    def restrict(self, edge: Edge) -> Lamination[Edge]:
-        """Return the components of self which meet the given edge.
+    def meeting_components(self, edge: Edge) -> Iterable[Lamination[Edge]]:
+        """Yield the components of self which meet the given edge.
 
-        Note: self does not need to be finitely supported but the result does need to be.
+        Note: self does not need to be finitely supported but each component meeting edge must be.
         Unfortunately we have no way of knowing this in advance."""
 
         intersections = set(range(self(edge)))
-        hits: Dict[Edge, int] = defaultdict(int)
         while intersections:
+            hits: Dict[Edge, int] = defaultdict(int)
             start = intersections.pop()
             for side, i in self.trace(bigger.Side(edge), start):
                 hits[side.edge] += 1
                 if side.edge == start:
                     intersections.remove(i)
+
+            yield self.triangulation(hits)
+
+    def meeting(self, edge: Edge) -> Lamination[Edge]:
+        """Return the sublamination of self meeting the given edge."""
+
+        hits: Dict[Edge, int] = defaultdict(int)
+        for component in self.meeting_components(edge):
+            for edgy in component.support():
+                hits[edgy] += component(edgy)
 
         return self.triangulation(hits)
 
