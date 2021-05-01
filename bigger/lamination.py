@@ -127,14 +127,18 @@ class Lamination(Generic[Edge]):
         Note: self does not need to be finitely supported but each component meeting edge must be.
         Unfortunately we have no way of knowing this in advance."""
 
-        intersections = set(range(self(edge)))
+        num_intersections = self(edge)
+        start_side = bigger.Side(edge)
+        intersections = set(range(num_intersections))
         while intersections:
             hits: Dict[Edge, int] = defaultdict(int)
-            start = intersections.pop()
-            for side, i in self.trace(bigger.Side(edge), start):
+            start_intersection = next(iter(intersections))  # pylint: disable=stop-iteration-return
+            for side, intersection in self.trace(start_side, start_intersection):
                 hits[side.edge] += 1
-                if side.edge == start:
-                    intersections.remove(i)
+                if side == start_side:
+                    intersections.remove(intersection)
+                elif side == ~start_side:
+                    intersections.remove(num_intersections - 1 - intersection)
 
             yield self.triangulation(hits)
 
