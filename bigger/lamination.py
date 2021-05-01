@@ -29,6 +29,12 @@ class Lamination(Generic[Edge]):
 
         return self.weight(edge)
 
+    def __hash__(self) -> int:
+        if self.is_finitely_supported():
+            return hash(frozenset((edge, self(edge)) for edge in self.support()))
+
+        return NotImplemented
+
     @memoize
     def dual(self, side: bigger.Side[Edge]) -> int:
         """Return the weight of this lamination dual to the given side."""
@@ -229,10 +235,13 @@ class Lamination(Generic[Edge]):
 
         def action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
-                X = lamination  # Linters get confused if we use the non-local variable.
-                for curve in self.meeting_components(edge):
-                    X = curve.twist(power=power)(X)
-                return X(edge)
+                # We used to do:
+                #  X = lamination
+                #  for curve in self.meeting_components(edge):
+                #      X = curve.twist(power=power)(X)
+                #  return X
+                # But by now using twisted_by we can get additional performance.
+                return lamination.twisted_by(frozenset(self.meeting_components(edge)), power=power)(edge)
 
             def support() -> Iterable[Edge]:
                 for edge in lamination.support():
@@ -247,10 +256,7 @@ class Lamination(Generic[Edge]):
 
         def inv_action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
-                X = lamination  # Linters get confused if we use the non-local variable.
-                for curve in self.meeting_components(edge):
-                    X = curve.twist(power=-power)(X)
-                return X(edge)
+                return lamination.twisted_by(frozenset(self.meeting_components(edge)), power=-power)(edge)
 
             def support() -> Iterable[Edge]:
                 for edge in lamination.support():
@@ -264,6 +270,17 @@ class Lamination(Generic[Edge]):
             return self.triangulation(weight, support, lamination.is_finitely_supported())
 
         return bigger.Move(self.triangulation, self.triangulation, action, inv_action).encode()
+
+    @memoize
+    def twisted_by(self, curves: set[Lamination[Edge]], power: int = 1) -> Lamination[Edge]:
+        """Return curves.twist()(self).
+
+        This is used purely for performance by allowing for memoizeation in self.twist."""
+
+        X = self  # Linters get confused if we use the non-local variable.
+        for curve in curves:
+            X = curve.twist(power=power)(X)
+        return X
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
         """Return a PIL image of this Lamination around the given edges."""
