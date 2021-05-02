@@ -89,7 +89,6 @@ class Lamination(Generic[Edge]):
             if not other.is_finitely_supported():
                 raise ValueError("Equality testing requires finitely supported laminations")
 
-
             return self.support() == other.support() and all(self(edge) == other(edge) for edge in self.support())
         elif isinstance(other, dict):
             return self.support() == set(other) and all(self(edge) == other[edge] for edge in self.support())
@@ -162,34 +161,24 @@ class Lamination(Generic[Edge]):
             if (side, intersection) == start:
                 break
 
-    def meeting_components(self, edge: Edge) -> Iterable[Lamination[Edge]]:
-        """Yield the components of self which meet the given edge.
+    def meeting(self, edge: Edge) -> Lamination[Edge]:
+        """Return the sublamination of self meeting the given edge.
 
-        Note: self does not need to be finitely supported but each component meeting edge must be.
+        Note: self does not need to be finitely supported but the sublamination must be.
         Unfortunately we have no way of knowing this in advance."""
 
         num_intersections = self(edge)
         start_side = bigger.Side(edge)
         intersections = set(range(num_intersections))
+        hits: Dict[Edge, int] = defaultdict(int)
         while intersections:
-            hits: Dict[Edge, int] = defaultdict(int)
-            start_intersection = next(iter(intersections))  # pylint: disable=stop-iteration-return
+            start_intersection = next(iter(intersections))
             for side, intersection in self.trace(start_side, start_intersection):
                 hits[side.edge] += 1
                 if side == start_side:
                     intersections.remove(intersection)
                 elif side == ~start_side:
                     intersections.remove(num_intersections - 1 - intersection)
-
-            yield self.triangulation(hits)
-
-    def meeting(self, edge: Edge) -> Lamination[Edge]:
-        """Return the sublamination of self meeting the given edge."""
-
-        hits: Dict[Edge, int] = defaultdict(int)
-        for component in self.meeting_components(edge):
-            for edgy in component.support():
-                hits[edgy] += component(edgy)
 
         return self.triangulation(hits)
 
@@ -352,10 +341,7 @@ class Lamination(Generic[Edge]):
         def action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:
                 # We used to do:
-                #  X = lamination
-                #  for curve in self.meeting_components(edge):
-                #      X = curve.twist(power=power)(X)
-                #  return X
+                #  return self.meeting(edge).twist(lamination, power)
                 # But by now using twisted_by we can get additional performance through memoization.
                 return lamination.twisted_by(self.meeting(edge), power=power)(edge)
 
