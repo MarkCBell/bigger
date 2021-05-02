@@ -24,9 +24,15 @@ class Lamination(Generic[Edge]):
 
     def supporting_sides(self) -> Iterable[bigger.Side[Edge]]:
         """Return the sides supporting this lamination."""
+
         for edge in self.support():
             for b in [True, False]:
                 yield bigger.Side(edge, b)
+
+    def supporting_triangles(self) -> set[bigger.triangulation.Triangle[Edge]]:
+        """Return a set of triangles supporting this lamination, useful for debugging."""
+
+        return set(self.triangulation.triangle(side) for side in self.supporting_sides())
 
     @memoize
     def __call__(self, edge: Union[Edge, bigger.Side[Edge]]) -> int:
@@ -191,7 +197,7 @@ class Lamination(Generic[Edge]):
         assert self.is_finitely_supported()
 
         components = dict()
-        sides = set(side for edge in self.support() for side in self.triangulation.link(bigger.Side(edge)))
+        sides = set(side for edge in self.support() for side in self.triangulation.star(bigger.Side(edge)))
         for side in sides:
             if self(side) > 0:
                 continue
@@ -263,7 +269,8 @@ class Lamination(Generic[Edge]):
             short, conjugator = self.shorten()
 
             twist = short.triangulation.identity()
-            for multiplicity, a in short.parallel_components().values():
+            for multiplicity, a, is_arc in short.parallel_components().values():
+                assert not is_arc
                 num_flips = short.complexity() - short.dual(a)
                 for _ in range(num_flips):
                     twist = twist.target.flip({twist.target.left(a)}) * twist
