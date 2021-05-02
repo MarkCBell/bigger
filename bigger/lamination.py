@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from itertools import chain, islice
-from typing import Any, Callable, Dict, Generic, Iterable, List, Union
+from typing import Any, Callable, Dict, Generic, Iterable, Union
 from PIL import Image  # type: ignore
 
 import bigger
@@ -264,15 +264,14 @@ class Lamination(Generic[Edge]):
                 break
 
             # The arcs will be dealt with in the first round and once they are gone, they are gone.
-            extra: List[bigger.Side[Edge]] = []  # High priority edges to check.
+            extra: Iterable[bigger.Side[Edge]] = []  # High priority edges to check.
             while True:
                 try:
                     side = next(side for side in chain(extra, lamination.supporting_sides()) if shorten_strategy(lamination, side))
                 except StopIteration:
                     break
 
-                _, _, c, d = lamination.triangulation.link(side)
-                extra = [c, d]
+                extra = lamination.triangulation.corner(~side)[1:]
 
                 move = lamination.triangulation.flip({side})  # side is always flippable.
                 conjugator = move * conjugator
