@@ -342,6 +342,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
     def __call__(
         self, weight: Union[dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None, is_finitely_supported: bool = False
     ) -> bigger.Lamination[Edge]:
+
         if isinstance(weight, dict):
             weight_dict = dict((key, value) for key, value in weight.items() if value)
 
@@ -379,7 +380,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         walk1 = list(self.walk_vertex(side))
 
-        if walk1[-1] == side:  # Same endpoints.
+        if walk1[-1] == ~side:  # Same endpoints.
             hits = Counter(sidey.edge for sidey in walk1[1:-1])
             return self(hits)
 
