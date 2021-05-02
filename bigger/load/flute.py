@@ -51,8 +51,8 @@ def flute() -> bigger.MCG[Edge]:
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            a_isom = lambda side: bigger.Side(side.edge + [0, +1, -1][side.edge % 3], side.orientation) if side.edge >= 0 and test(side.edge // 3) else side
-            return T.encode([(a_isom, a_isom), lambda side: side.edge % 3 == 2 and side.edge >= 0 and side.orientation and test(side.edge // 3)])
+            a = T(lambda n: 1 if n >= 0 and n % 3 != 0 and test(n // 3) else 0)
+            return a.twist()
         if curve == "b":
 
             def build(k: Edge) -> bigger.Encoding[Edge]:
@@ -166,51 +166,21 @@ def biflute() -> bigger.MCG[Edge]:
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            a_isom = lambda side: bigger.Side(side.edge + [0, +1, -1][side.edge % 3], side.orientation) if test(side.edge // 3) else side
-            return T.encode([(a_isom, a_isom), lambda side: side.edge % 3 == 2 and side.orientation and test(side.edge // 3)])
+            return T(lambda n: 1 if n % 3 != 0 and test(n // 3) else 0).twist()
         if curve == "b":
+            def weight(n: Edge) -> int:
+                n, r = divmod(n, 3)
+                if r == 0:
+                    return 2 if test(n) or test(n - 1) else 0
+                if r == 1:
+                    if test(n) or (test(n - 1) and test(n + 1)): return 2
+                    return 1 if test(n - 1) or test(n + 1) else 0
+                if r == 2:
+                    if test(n): return 0
+                    if test(n - 1) and test(n + 1): return 2
+                    return 1 if test(n - 1) or test(n + 1) else 0
 
-            def build(k: Edge) -> bigger.Encoding[Edge]:
-                # Build the encoding which twists around b[n] when test(n) and n % 3 == k.
-
-                def retest(n: Edge) -> bool:
-                    if n % 3 != k:
-                        return False
-
-                    if test(n):
-                        if test(n - 1):
-                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n - 1, n))
-
-                        if test(n + 1):
-                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n, n + 1))
-
-                        return True
-
-                    return False
-
-                def b_isom(side: bigger.Side[Edge]) -> bigger.Side[Edge]:
-                    n, r = divmod(side.edge, 3)
-                    modifier = +3 if r == 0 and retest(n) else -3 if r == 0 and retest(n - 1) else +6 if r == 1 and retest(n + 1) else -6 if r == 1 and retest(n - 1) else 0
-
-                    return bigger.Side(side.edge + modifier, side.orientation)
-
-                prefix = T.encode(
-                    [
-                        lambda side: side.edge % 3 == 2 and side.orientation and (retest(side.edge // 3 - 1) or retest(side.edge // 3 + 1)),
-                        lambda side: side.edge % 3 == 1 and side.orientation and retest(side.edge // 3),
-                        lambda side: side.edge % 3 == 0 and side.orientation and (retest(side.edge // 3) or retest(side.edge // 3 - 1)),
-                    ]
-                )
-                twist = prefix.target.encode(
-                    [
-                        (b_isom, b_isom),
-                        lambda side: side.edge % 3 == 1 and side.orientation and (retest(side.edge // 3 - 1) or retest(side.edge // 3 + 1)),
-                        lambda side: side.edge % 3 == 0 and side.orientation and (retest(side.edge // 3) or retest(side.edge // 3 - 1)),
-                    ]
-                )
-                return ~prefix * twist * prefix
-
-            return build(0) * build(1) * build(2)
+            return T(weight).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
