@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from functools import partial
 from collections import Counter
 from dataclasses import dataclass
+from functools import partial
+from itertools import chain
 from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, Union, Optional, Tuple, cast
 from PIL import Image  # type: ignore
 
@@ -41,7 +42,7 @@ def unorient_functor(f: Callable[[Side[Edge]], Side[Edge]]) -> Callable[[Edge], 
     return lambda edge: f(Side(edge)).edge
 
 
-class Triangulation(Generic[Edge]):
+class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
     """A triangulation of a (possibly infinite type) surface.
 
     The triangulation is specified via two functions:
@@ -393,6 +394,28 @@ class Triangulation(Generic[Edge]):
             hits = Counter(sidey.edge for sidey in walk1[1:-1] + walk2[1:-1])
 
         return self(hits)
+
+    def disjoint_sum(self, laminations: dict[bigger.Lamination[Edge], int]) -> bigger.Lamination[Edge]:
+        """Return the lamination made from summing the given laminations."""
+
+        # Note: Unlike curver we don't automatically convert an iterable to dictionary of multiplicities.
+
+        if any(multiplicity < 0 for multiplicity in laminations.values()):
+            raise ValueError("Laminations must occur with non-negative multiplicity")
+
+        # Discard laminations of multiplicity 0.
+        laminations = dict((lamination, multiplicity) for lamination, multiplicity in laminations.items() if multiplicity > 0)
+
+        if not laminations:
+            return self.empty_lamination()
+
+        def weight(edge: Edge) -> int:
+            return sum(lamination(edge) * multiplicity for lamination, multiplicity in laminations.items())
+
+        def support() -> Iterable[Edge]:
+            return chain(*(lamination.support() for lamination in laminations))
+
+        return self(weight, support, all(lamination.is_finitely_supported() for lamination in laminations))
 
     def draw(self, edges: list[Edge], **options: Any) -> Image:
         """Return a PIL image of this Triangulation around the given edges."""
