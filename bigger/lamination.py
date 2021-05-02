@@ -226,15 +226,13 @@ class Lamination(Generic[Edge]):
     def is_short(self) -> bool:
         """Return whether this Lamination is short."""
 
-        # Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short.
-        return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support())
+        assert self.is_finitely_supported()
+
+        return self == self.triangulation.disjoint_sum(dict((component, multiplicity) for component, (multiplicity, _, _) in self.parallel_components().items()))
 
     @memoize
     def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:  # pylint: disable=too-many-branches
-        """Return an :class:`~bigger.encoding.Encoding` that maps self to a short lamination.
-
-        Currently this assumes, but does not check, that self is a curve.
-        In the future this should do curvers full Lamination shortening algorithm."""
+        """Return an :class:`~bigger.encoding.Encoding` that maps self to a short lamination."""
 
         if not self.is_finitely_supported():
             raise ValueError("Only finitely supported laminations can be shortened")
