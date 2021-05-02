@@ -322,7 +322,7 @@ class Triangulation(Generic[Edge]):
 
     def walk_vertex(self, side: bigger.Side[Edge]) -> Iterable[bigger.Side[Edge]]:
         """Walk about the vertex at the tail of the given side until you get back to the same edge."""
-        
+
         x = side
         while True:
             yield x

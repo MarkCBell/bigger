@@ -92,10 +92,7 @@ class Lamination(Generic[Edge]):
         def weight(edge: Edge) -> int:
             return self(edge) + other(edge)
 
-        if self.is_finitely_supported() and other.is_finitely_supported():
-            return self.triangulation(weight, lambda: set(self.support()).union(other.support()), True)
-        else:
-            return self.triangulation(weight, lambda: chain(self.support(), other.support()))
+        return self.triangulation(weight, lambda: chain(self.support(), other.support()), self.is_finitely_supported() and other.is_finitely_supported())
 
     def __mul__(self, other: int) -> Lamination[Edge]:
         """Return this lamination scaled by other."""

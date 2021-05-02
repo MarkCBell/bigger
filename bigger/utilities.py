@@ -44,14 +44,14 @@ def maximin(*iterables: Iterable[int]) -> int:
     try:
         result = min(next(iter_iterables))  # Get the first one through a full evaluation.
     except StopIteration:
-        raise ValueError('max() arg is an empty sequence') from None
+        raise ValueError("max() arg is an empty sequence") from None
 
     for iterable in iter_iterables:
         iterable = iter(iterable)
         try:
             best = next(iterable)
         except StopIteration:
-            raise ValueError('min() arg is an empty sequence') from None
+            raise ValueError("min() arg is an empty sequence") from None
 
         if best <= result:
             continue
