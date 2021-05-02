@@ -22,6 +22,12 @@ class Lamination(Generic[Edge]):
         self.weight = weight
         self.support = support
 
+    def supporting_sides(self) -> Iterable[bigger.Side[Edge]]:
+        """Return the sides supporting this lamination."""
+        for edge in self.support():
+            for b in [True, False]:
+                yield bigger.Side(edge, b)
+
     @memoize
     def __call__(self, edge: Union[Edge, bigger.Side[Edge]]) -> int:
         if isinstance(edge, bigger.Side):
@@ -34,6 +40,12 @@ class Lamination(Generic[Edge]):
             return hash(frozenset((edge, self(edge)) for edge in self.support()))
 
         return NotImplemented
+
+    def __bool__(self) -> bool:
+        if not self.is_finitely_supported():
+            raise ValueError("Cannot determine truthiness of non-finitely supported laminations")
+
+        return not any(self(edge) for edge in self.support())
 
     @memoize
     def dual(self, side: bigger.Side[Edge]) -> int:
@@ -91,6 +103,12 @@ class Lamination(Generic[Edge]):
 
         def weight(edge: Edge) -> int:
             return self(edge) + other(edge)
+
+        return self.triangulation(weight, lambda: chain(self.support(), other.support()), self.is_finitely_supported() and other.is_finitely_supported())
+
+    def __sub__(self, other: Lamination[Edge]) -> Lamination[Edge]:
+        def weight(edge: Edge) -> int:
+            return self(edge) - other(edge)
 
         return self.triangulation(weight, lambda: chain(self.support(), other.support()), self.is_finitely_supported() and other.is_finitely_supported())
 
