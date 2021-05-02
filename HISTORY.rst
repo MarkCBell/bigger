@@ -2,6 +2,12 @@
 History
 =======
 
+0.3.0 (2021-XX-YY)
+------------------
+
+* Re-engineered triangulations to use oriented edges.
+* Can now perform infinitely supported multitwists.
+
 0.2.5 (2020-11-03)
 ------------------
 
@@ -38,7 +44,7 @@ History
 
 * Triangulations and laminations can now be drawn.
 * Changed documented examples to show the new drawing methods.
-* Fixed bug in which some twists occured in the wrong direction.
+* Fixed bug in which some twists occurred in the wrong direction.
 * Supporting and testing PyPy3.
 
 
