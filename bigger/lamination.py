@@ -257,38 +257,26 @@ class Lamination(Generic[Edge]):
     def twist(self, power: int = 1) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
 
-        Assumes but does not check that this lamination is a single curve.
-        Note that this currently only works on non-isolating curves."""
+        Assumes but does not check that this lamination is a multicurve."""
 
         if self.is_finitely_supported():
             short, conjugator = self.shorten()
 
-            # Use the following for reference:
-            # #<---a----#     #<---a----#
-            # |        ^^     |\        ^
-            # |======/==|     |  \      |
-            # b    e    d --> b    e    d
-            # |  /      |     |      \  |
-            # V/        |     V        V|
-            # #----c--->#     #----c--->#
-            support = short.support()
-            # We used to make these asserts, but these mess up mypy's knowledge of support.
-            # assert isinstance(support, set)
-            # assert len(support) == 2
+            twist = short.triangulation.identity()
+            for multiplicity, a in short.parallel_components().values():
+                num_flips = short.complexity() - short.dual(a)
+                for _ in range(num_flips):
+                    twist = twist.target.flip({twist.target.left(a)}) * twist
 
-            x, y = support
-            e = bigger.Side(x)
-            a, b, c, d = short.triangulation.link(e)
-            if short(a) == 1:
-                assert short(c) == 1
-                assert a == ~c, (a, c)
-                e = bigger.Side(y)
-                a, b, c, d = short.triangulation.link(e)
+                isom = dict()
+                x = y = a
+                while x != ~a:
+                    isom[y] = x
+                    x = ~twist.source.left(x)
+                    y = ~twist.target.left(y)
 
-            assert short(b) == 1
-            assert b == ~d
-
-            twist = short.triangulation.encode([{e: b, b: e}, {e}])
+                twist = twist.target.relabel_from_dict(isom) * twist
+                twist = twist ** multiplicity
 
             return ~conjugator * twist ** power * conjugator
 
