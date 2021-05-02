@@ -151,7 +151,7 @@ class Triangulation(Generic[Edge]):
 
             if flipped(+e):
                 assert self.is_flippable(e), f"Trying to flip unflippable {e}"
-                assert not flipped(+e), f"Flipping both {+e} and {-e}"
+                assert not flipped(-e), f"Flipping both {+e} and {-e}"
                 for x in [a, ~a, b, ~b, c, ~c, d, ~d]:
                     assert not flipped(x), f"Flipping {+e} and {x} which do not have disjoint support"
 
