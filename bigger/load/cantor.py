@@ -63,8 +63,7 @@ def spotted_cantor() -> bigger.MCG[Edge]:
         curve, test = extract_curve_and_test("a", name)
 
         if curve == "a":
-            isom = lambda edge: (edge[0], [1, 0, 2, 3][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(-1, isom, isom), lambda side: side.edge[1] == 0 and side.orientation and test(side.edge[0])])
+            return T(lambda edge: 1 if edge[1] in {0, 1} and test(edge[0]) else 0).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 

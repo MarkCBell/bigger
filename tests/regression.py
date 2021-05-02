@@ -29,7 +29,7 @@ class TestFlute(TestCase):
 
     def test_slice(self):
         h = self.S("a.a.b_1.a_3")
-        self.assertEqual(h[:5](h[5:](self.m)), h(self.m))
+        self.assertEqual(h[:2](h[2:](self.m)), h(self.m))
 
 
 class TestBiflute(TestCase):

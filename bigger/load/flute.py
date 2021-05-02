@@ -51,51 +51,36 @@ def flute() -> bigger.MCG[Edge]:
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            a = T(lambda n: 1 if n >= 0 and n % 3 != 0 and test(n // 3) else 0)
-            return a.twist()
+            return T(lambda n: 1 if n >= 0 and n % 3 != 0 and test(n // 3) else 0).twist()
         if curve == "b":
 
-            def build(k: Edge) -> bigger.Encoding[Edge]:
-                # Build the encoding which twists around b[n] when test(n) and n % 3 == k.
+            def weight(n: Edge) -> int:
+                N, r = divmod(n, 3)
+                if n == -1:
+                    return 1 if test(N + 1) else 0
+                elif n == 0:
+                    return 2 if test(N) else 0
+                elif n == 1:
+                    if test(N):
+                        return 2
+                    return 1 if test(N + 1) else 0
+                elif n == 2:
+                    return 1 if test(N + 1) else 0
 
-                def retest(n: Edge) -> bool:
-                    if n % 3 != k:
-                        return False
+                if r == 0:
+                    return 2 if test(N) or test(N - 1) else 0
+                elif r == 1:
+                    if test(N) or (test(N - 1) and test(N + 1)):
+                        return 2
+                    return 1 if test(N - 1) or test(N + 1) else 0
+                else:  # r == 2:
+                    if test(N):
+                        return 0
+                    if test(N - 1) and test(N + 1):
+                        return 2
+                    return 1 if test(N - 1) or test(N + 1) else 0
 
-                    if test(n):
-                        if test(n - 1):
-                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n - 1, n))
-
-                        if test(n + 1):
-                            raise ValueError("Cannot twist along b[{}] and b[{}] simultaneously".format(n, n + 1))
-
-                        return True
-
-                    return False
-
-                def b_isom(side: bigger.Side[Edge]) -> bigger.Side[Edge]:
-                    n, r = divmod(side.edge, 3)
-                    modifier = +3 if r == 0 and retest(n) else -3 if r == 0 and retest(n - 1) else +6 if r == 1 and retest(n + 1) else -6 if r == 1 and retest(n - 1) else 0
-
-                    return bigger.Side(side.edge + modifier, side.orientation)
-
-                prefix = T.encode(
-                    [
-                        lambda side: side.edge % 3 == 2 and side.orientation and (retest(side.edge // 3 - 1) or retest(side.edge // 3 + 1)),
-                        lambda side: side.edge % 3 == 1 and side.orientation and retest(side.edge // 3),
-                        lambda side: side.edge % 3 == 0 and side.orientation and (retest(side.edge // 3) or retest(side.edge // 3 - 1)),
-                    ]
-                )
-                twist = prefix.target.encode(
-                    [
-                        (b_isom, b_isom),
-                        lambda side: side.edge % 3 == 1 and side.orientation and (retest(side.edge // 3 - 1) or retest(side.edge // 3 + 1)),
-                        lambda side: side.edge % 3 == 0 and side.orientation and (retest(side.edge // 3) or retest(side.edge // 3 - 1)),
-                    ]
-                )
-                return ~prefix * twist * prefix
-
-            return build(0) * build(1) * build(2)
+            return T(weight).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -149,36 +134,33 @@ def biflute() -> bigger.MCG[Edge]:
         ][edge % 3],
     )
 
-    shift = T.isometry(T, lambda edge: edge + 3, lambda edge: edge - 3)
-    rotate = T.isometry(
-        T,
-        lambda edge: [3, 2, 4][edge % 3] - edge,
-        lambda edge: [3, 2, 4][edge % 3] - edge,
-    )
-
     def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):
-            return shift
+            return T.isometry(T, lambda edge: edge + 3, lambda edge: edge - 3)
 
         if name in ("r", "rotate"):
-            return rotate
+            return T.isometry(T, lambda edge: [3, 2, 4][edge % 3] - edge, lambda edge: [3, 2, 4][edge % 3] - edge)
 
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
             return T(lambda n: 1 if n % 3 != 0 and test(n // 3) else 0).twist()
         if curve == "b":
+
             def weight(n: Edge) -> int:
-                n, r = divmod(n, 3)
+                N, r = divmod(n, 3)
                 if r == 0:
-                    return 2 if test(n) or test(n - 1) else 0
-                if r == 1:
-                    if test(n) or (test(n - 1) and test(n + 1)): return 2
-                    return 1 if test(n - 1) or test(n + 1) else 0
-                if r == 2:
-                    if test(n): return 0
-                    if test(n - 1) and test(n + 1): return 2
-                    return 1 if test(n - 1) or test(n + 1) else 0
+                    return 2 if test(N) or test(N - 1) else 0
+                elif r == 1:
+                    if test(N) or (test(N - 1) and test(N + 1)):
+                        return 2
+                    return 1 if test(N - 1) or test(N + 1) else 0
+                else:  # r == 2:
+                    if test(N):
+                        return 0
+                    if test(N - 1) and test(N + 1):
+                        return 2
+                    return 1 if test(N - 1) or test(N + 1) else 0
 
             return T(weight).twist()
 

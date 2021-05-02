@@ -62,17 +62,9 @@ def ladder() -> bigger.MCG[Edge]:
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            isom = lambda edge: (edge[0], [0, 5, 3, 2, 4, 1][edge[1]]) if test(edge[0]) else edge
-            return T.encode(
-                [
-                    (-1, isom, isom),
-                    lambda side: side.edge[1] in {1, 5} and side.orientation and test(side.edge[0]),
-                    lambda side: side.edge[1] in {2, 3} and side.orientation and test(side.edge[0]),
-                ]
-            )
+            return T(lambda edge: 1 if edge[1] in {1, 2, 3, 5} and test(edge[0]) else 0).twist()
         if curve == "b":
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 5, 4][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(-1, isom, isom), lambda side: side.edge[1] == 5 and side.orientation and test(side.edge[0])])
+            return T(lambda edge: 1 if edge[1] in {4, 5} and test(edge[0]) else 0).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -135,20 +127,16 @@ def spotted_ladder() -> bigger.MCG[Edge]:
 
     T = bigger.Triangulation.from_pos(edges, link)
 
-    shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
-
     def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):
-            return shift
+            return T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(-1, isom, isom), lambda side: side.edge[1] == 8 and side.orientation and test(side.edge[0])])
+            return T(lambda edge: 1 if edge[1] in {7, 8} and test(edge[0]) else 0).twist()
         if curve == "b":
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(-1, isom, isom), lambda side: side.edge[1] == 6 and side.orientation and test(side.edge[0])])
+            return T(lambda edge: 1 if edge[1] in {5, 6} and test(edge[0]) else 0).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
