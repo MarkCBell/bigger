@@ -49,7 +49,7 @@ class Lamination(Generic[Edge]):
 
     def __bool__(self) -> bool:
         if not self.is_finitely_supported():
-            raise ValueError("Cannot determine truthiness of non-finitely supported laminations")
+            raise ValueError("Truthiness requires a lamination to be finitely supported laminations")
 
         return any(self(edge) for edge in self.support())
 
@@ -83,11 +83,12 @@ class Lamination(Generic[Edge]):
 
     def __eq__(self, other: Any) -> bool:
         if not self.is_finitely_supported():
-            raise ValueError("Can only determine equality between finitely supported laminations")
+            raise ValueError("Equality testing requires finitely supported laminations")
 
         if isinstance(other, Lamination):
             if not other.is_finitely_supported():
-                raise ValueError("Can only determine equality between finitely supported laminations")
+                raise ValueError("Equality testing requires finitely supported laminations")
+
 
             return self.support() == other.support() and all(self(edge) == other(edge) for edge in self.support())
         elif isinstance(other, dict):
@@ -134,7 +135,8 @@ class Lamination(Generic[Edge]):
     def complexity(self) -> int:
         """Return the number of intersections between this Lamination and its underlying Triangulation."""
 
-        assert self.is_finitely_supported()
+        if not self.is_finitely_supported():
+            raise ValueError("Complexity is only defined for finitely supported laminations")
 
         return sum(max(self(edge), 0) for edge in self.support())
 

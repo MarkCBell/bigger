@@ -352,7 +352,9 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
             return bigger.Lamination(self, weight_func, lambda: set(weight_dict))
 
         if support is None:
-            assert not is_finitely_supported
+            if is_finitely_supported:
+                raise ValueError("support must be specified for finitely supported laminations")
+
             support = self.edges
 
         if is_finitely_supported:
