@@ -185,10 +185,42 @@ class Lamination(Generic[Edge]):
 
         return self.triangulation(hits)
 
-    def is_short(self) -> bool:
-        """Return whether this Lamination intersects its underlying Triangulation exactly twice.
+    def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge]]]:
+        """Return a dictionary mapping component to (multiplicity, edge) for each component of self that is parallel to an edge."""
 
-        Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short."""
+        assert self.is_finitely_supported()
+
+        components = dict()
+        sides = set(side for edge in self.support() for side in self.triangulation.link(bigger.Side(edge)))
+        for side in sides:
+            if self(side):
+                continue
+
+            if side.orientation:  # Don't double count.
+                multiplicity = -self(side)
+                if multiplicity > 0:
+                    components[self.triangulation.side_arc(side)] = (multiplicity, side)
+
+            walk = list(self.triangulation.walk_vertex(side))
+
+            if walk[-1] == ~side:
+                v_edges = walk[:-1]
+                if len(v_edges) > 2:
+                    around_v = bigger.utilities.maximin([0], (self.left(sidey) for sidey in v_edges))
+                    twisting = bigger.utilities.maximin([0], (self.left(sidey) - around_v for sidey in v_edges[1:-1]))
+
+                    if self.left(v_edges[0]) == self.left(v_edges[-1]) == around_v:
+                        multiplicity = twisting
+
+                        if multiplicity > 0:
+                            components[self.triangulation.side_curve(side)] = (multiplicity, side)
+
+        return components
+
+    def is_short(self) -> bool:
+        """Return whether this Lamination is short."""
+
+        # Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short.
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support())
 
     def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:
