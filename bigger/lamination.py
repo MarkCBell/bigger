@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from itertools import chain, islice
-from typing import Any, Callable, Dict, Generic, Iterable, Union
+from typing import Any, Callable, Dict, Generic, Iterable, List, Union
 from PIL import Image  # type: ignore
 
 import bigger
@@ -229,36 +229,99 @@ class Lamination(Generic[Edge]):
         # Note that when :meth:`shorten` is upgraded this will need to change to the curver definition of is_short.
         return self.complexity() == 2  # or all(self(edge) == 2 for edge in self.support())
 
-    def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:
-        """Return an :class:`~bigger.encoding.Encoding` that minimises self.complexity.
+    @memoize
+    def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:  # pylint: disable=too-many-branches
+        """Return an :class:`~bigger.encoding.Encoding` that maps self to a short lamination.
 
-        Note that in the future this should do curvers full Lamination shortening algorithm."""
+        Currently this assumes, but does not check, that self is a curve.
+        In the future this should do curvers full Lamination shortening algorithm."""
 
-        assert self.is_finitely_supported()
+        if not self.is_finitely_supported():
+            raise ValueError("Only finitely supported laminations can be shortened")
 
+        def shorten_strategy(self: Lamination[Edge], side: bigger.Side[Edge]) -> bool:
+            """Return whether flipping this side is a good idea."""
+
+            if not self.triangulation.is_flippable(side):
+                return False
+
+            ed, ad, bd = [self.dual(sidey) for sidey in self.triangulation.corner(side)]
+
+            return ed < 0 or (ed == 0 and ad > 0 and bd > 0)  # Non-parallel arc.
+
+        # We don't handle periperal curves.
         lamination = self
-        complexity = lamination.complexity()
-        conjugator = lamination.triangulation.identity()
-        time_since_last_progress = 0
-        while not lamination.is_short():
-            time_since_last_progress += 1
-            best_complexity, best_h = complexity, lamination.triangulation.identity()
-            for edge in lamination.support():  # Uses finite support assumption.
-                h = lamination.triangulation.flip({bigger.Side(edge)})
-                new_complexity = h(lamination).complexity()
-                if new_complexity <= best_complexity:
-                    best_complexity, best_h = new_complexity, h
+        conjugator = self.triangulation.identity()
+        arc_components, curve_components = dict(), dict()
+        while True:
+            # Subtract.
+            for component, (multiplicity, side, is_arc) in lamination.parallel_components().items():
+                lamination = lamination - component * multiplicity
+                if is_arc:
+                    arc_components[side] = multiplicity
+                else:  # is a curve.
+                    curve_components[side] = multiplicity
 
-            if best_complexity < complexity:
-                time_since_last_progress = 0
-            conjugator = best_h * conjugator
-            lamination = best_h(lamination)
-            complexity = best_complexity
+            if not lamination:
+                break
 
-            if time_since_last_progress > 3:
-                raise ValueError("{} is not a non-isolating curve".format(lamination))
+            # The arcs will be dealt with in the first round and once they are gone, they are gone.
+            extra: List[bigger.Side[Edge]] = []  # High priority edges to check.
+            while True:
+                try:
+                    side = next(side for side in chain(extra, lamination.supporting_sides()) if shorten_strategy(lamination, side))
+                except StopIteration:
+                    break
 
-        return lamination, conjugator
+                _, _, c, d = lamination.triangulation.link(side)
+                extra = [c, d]
+
+                move = lamination.triangulation.flip({side})  # side is always flippable.
+                conjugator = move * conjugator
+                lamination = move(lamination)
+
+            # Now all arcs should be parallel to edges and there should now be no bipods.
+            assert all(lamination.left(side) >= 0 for side in lamination.supporting_sides())
+            assert all(sum(1 if lamination.left(side) > 0 else 0 for side in lamination.triangulation.triangle(side)) != 2 for side in lamination.supporting_sides())
+
+            used_sides = set()
+            hits: Dict[Edge, int] = defaultdict(int)
+            triangulation = lamination.triangulation
+            # Build a parallel multiarc. This is pretty inefficient.
+            for starting_side in lamination.supporting_sides():
+                if starting_side in used_sides or not lamination.left(starting_side):
+                    continue
+
+                side = starting_side
+                add_sequence = False
+                while True:  # Until we get back to the starting point.
+                    used_sides.add(side)
+                    if add_sequence:  # Only record the edge in the sequence once we have made a right turn away from the vertex.
+                        hits[side.edge] += 1
+
+                    # Move around to the next edge following the lamination.
+                    side = triangulation.left(~side) if lamination.left(~side) > 0 else triangulation.right(~side)
+
+                    add_sequence = add_sequence or lamination.right(side) <= 0
+                    if side == starting_side:
+                        break
+
+            if hits:
+                multiarc = triangulation(hits)
+                # Recurse an use multiarc.shorten() now.
+                _, sub_conjugator = multiarc.shorten()
+                conjugator = sub_conjugator * conjugator
+                lamination = sub_conjugator(lamination)
+
+        # Rebuild the image of self under conjugator from its components.
+        short = lamination.triangulation.disjoint_sum(
+            dict(
+                [(lamination.triangulation.side_arc(edge), multiplicity) for edge, multiplicity in arc_components.items()]
+                + [(lamination.triangulation.side_curve(edge), multiplicity) for edge, multiplicity in curve_components.items()]
+            )
+        )
+
+        return short, conjugator
 
     def twist(self, power: int = 1) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
