@@ -45,7 +45,7 @@ class Lamination(Generic[Edge]):
         if not self.is_finitely_supported():
             raise ValueError("Cannot determine truthiness of non-finitely supported laminations")
 
-        return not any(self(edge) for edge in self.support())
+        return any(self(edge) for edge in self.support())
 
     @memoize
     def dual(self, side: bigger.Side[Edge]) -> int:
@@ -185,21 +185,21 @@ class Lamination(Generic[Edge]):
 
         return self.triangulation(hits)
 
-    def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge]]]:
-        """Return a dictionary mapping component to (multiplicity, edge) for each component of self that is parallel to an edge."""
+    def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge], bool]]:
+        """Return a dictionary mapping component to (multiplicity, edge, is_arc) for each component of self that is parallel to an edge."""
 
         assert self.is_finitely_supported()
 
         components = dict()
         sides = set(side for edge in self.support() for side in self.triangulation.link(bigger.Side(edge)))
         for side in sides:
-            if self(side):
+            if self(side) > 0:
                 continue
 
             if side.orientation:  # Don't double count.
                 multiplicity = -self(side)
                 if multiplicity > 0:
-                    components[self.triangulation.side_arc(side)] = (multiplicity, side)
+                    components[self.triangulation.side_arc(side)] = (multiplicity, side, True)
 
             walk = list(self.triangulation.walk_vertex(side))
 
@@ -213,7 +213,7 @@ class Lamination(Generic[Edge]):
                         multiplicity = twisting
 
                         if multiplicity > 0:
-                            components[self.triangulation.side_curve(side)] = (multiplicity, side)
+                            components[self.triangulation.side_curve(side)] = (multiplicity, side, False)
 
         return components
 
