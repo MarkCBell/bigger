@@ -117,6 +117,11 @@ class Triangulation(Generic[Edge]):
     def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges())
 
+    def is_flippable(self, side: bigger.Side[Edge]) -> bool:
+        """Return whether the given side is flippable."""
+
+        return self.triangle(side) != self.triangle(~side)
+
     def flip(self, is_flipped: Union[Callable[[Side[Edge]], bool], set[Side[Edge]]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
@@ -145,15 +150,17 @@ class Triangulation(Generic[Edge]):
                 assert not (flipped(x) and flipped(~x)), "Flipping both {} and {}".format(x, ~x)
 
             if flipped(+e):
-                assert not flipped(-e), "Flipping both {} and {}".format(e, ~e)
+                assert self.is_flippable(e), f"Trying to flip unflippable {e}"
+                assert not flipped(+e), f"Flipping both {+e} and {-e}"
                 for x in [a, ~a, b, ~b, c, ~c, d, ~d]:
-                    assert not flipped(x), "Flipping {} and {} which do not have disjoint support".format(e, x)
+                    assert not flipped(x), f"Flipping {+e} and {x} which do not have disjoint support"
 
                 return (d, a, b, c)
             elif flipped(-e):
-                assert not flipped(+e), "Flipping both {} and {}".format(e, ~e)
+                assert self.is_flippable(e), f"Trying to flip unflippable {e}"
+                assert not flipped(+e), f"Flipping both {-e} and {+e}"
                 for x in [a, ~a, b, ~b, c, ~c, d, ~d]:
-                    assert not flipped(x), "Flipping {} and {} which do not have disjoint support".format(~e, x)
+                    assert not flipped(x), f"Flipping {-e} and {x} which do not have disjoint support"
 
                 return (b, c, d, a)
 
