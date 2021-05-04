@@ -40,6 +40,8 @@ class TestBiflute(TestCase):
     a = T({edges[0]: -1})
     b = T({edges[2]: -1})
     m = T(dict((e, -i) for i, e in enumerate(edges)))
+    h = T(lambda e: 1 if e % 3 != 2 else 0)
+    v = T(lambda e: 1 if e % 3 != 0 else 0)
 
     def assertEqualSquares(self, s1, s2):
         """Return whether two squares are equal since they are only defined up to 180 degree rotation."""
@@ -72,6 +74,13 @@ class TestBiflute(TestCase):
         t = self.S("a")
         self.assertEqual((t * s ** 1)(self.b), (s ** 1 * t)(self.b))
         self.assertEqual((t * s ** 10)(self.b), (s ** 10 * t)(self.b))
+
+    def test_intersection(self):
+        x = self.S.triangulation({1: 5, 2: 1})
+        f = self.S('a.B_1')
+        self.assertEqual(x.intersection(self.h), 5)
+        self.assertEqual(f(x).intersection(self.h), 17)
+        self.assertEqual(f(x).intersection(f(self.h)), 5)
 
 
 class TestLadder(TestCase):

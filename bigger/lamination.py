@@ -124,7 +124,7 @@ class Lamination(Generic[Edge]):
         def weight(edge: Edge) -> int:
             return other * self(edge)
 
-        return self.triangulation(weight, self.support)
+        return self.triangulation(weight, self.support, self.is_finitely_supported())
 
     def __rmul__(self, other: int) -> Lamination[Edge]:
         """Return this lamination scaled by other."""
@@ -181,6 +181,26 @@ class Lamination(Generic[Edge]):
                     intersections.remove(num_intersections - 1 - intersection)
 
         return self.triangulation(hits)
+
+    @memoize
+    def peripheral_components(self) -> dict[Lamination[Edge], tuple[int, list[bigger.Side[Edge]]]]:
+        """Return a dictionary mapping component to (multiplicity, vertex) for each component of self that is peripheral around a vertex."""
+
+        assert self.is_finitely_supported()
+
+        components = dict()
+        sides = self.supporting_sides()
+        for side in sides:
+            walk = list(self.triangulation.walk_vertex(side))
+            if walk[0] != min(walk):
+                continue
+
+            multiplicity = bigger.utilities.maximin([0], (self.left(side) for side in walk))
+            if multiplicity > 0:
+                component = self.triangulation({side.edge: 1 for side in walk})
+                components[component] = (multiplicity, walk)
+
+        return components
 
     def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge], bool]]:
         """Return a dictionary mapping component to (multiplicity, edge, is_arc) for each component of self that is parallel to an edge."""
@@ -385,3 +405,36 @@ class Lamination(Generic[Edge]):
         """Return a PIL image of this Lamination around the given edges."""
 
         return bigger.draw(self, edges=edges, **options)
+
+    def intersection(self, *laminations: Lamination[Edge]) -> int:
+        """Return the number of times that self intersects other."""
+
+        if not self.is_finitely_supported():
+            raise ValueError("Intersection requires a lamination to be finitely supported laminations")
+
+        short, conjugator = self.shorten()
+        short_laminations = [conjugator(lamination) for lamination in laminations]
+
+        intersection = 0
+
+        # Peripheral components.
+        for _, (multiplicity, vertex) in short.peripheral_components().items():
+            for lamination in laminations:
+                intersection += multiplicity * sum(max(-lamination(edge), 0) + max(-lamination.left(edge), 0) for edge in vertex)
+
+        # Parallel components.
+        for _, (multiplicity, p, is_arc) in short.parallel_components().items():
+            if is_arc:
+                for short_lamination in short_laminations:
+                    intersection += multiplicity * max(short_lamination(p), 0)
+            else:  # is curve
+                walk = list(self.triangulation.walk_vertex(p))
+                v_edges = walk[:1]  # The set of edges that come out of v from p round to ~p.
+
+                for short_lamination in short_laminations:
+                    around_v = bigger.utilities.maximin([0], (short_lamination.left(edgy) for edgy in v_edges))
+                    out_v = sum(max(-short_lamination.left(edge), 0) for edge in v_edges) + sum(max(-short_lamination(edge), 0) for edge in v_edges[1:])
+                    # around_v > 0 ==> out_v == 0; out_v > 0 ==> around_v == 0.
+                    intersection += multiplicity * (max(short_lamination(p), 0) - 2 * around_v + out_v)
+
+        return intersection
