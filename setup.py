@@ -6,7 +6,6 @@
 from setuptools import setup, find_packages
 
 requirements = [
-    'decorator>=4.3.0',
     'pillow>=7',
     'typing>=3.7',
     'typing_extensions>=3.7',
