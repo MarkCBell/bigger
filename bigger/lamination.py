@@ -42,10 +42,10 @@ class Lamination(Generic[Edge]):
         return self.weight(edge)
 
     def __hash__(self) -> int:
-        if self.is_finitely_supported():
-            return hash(frozenset((edge, self(edge)) for edge in self.support()))
+        if not self.is_finitely_supported():
+            raise TypeError("unhashable type: 'infinitely supported lamination'")
 
-        return NotImplemented
+        return hash(frozenset((edge, self(edge)) for edge in self.support()))
 
     def __bool__(self) -> bool:
         if not self.is_finitely_supported():
