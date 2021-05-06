@@ -401,11 +401,6 @@ class Lamination(Generic[Edge]):
 
         return multicurve.twist(power)(self)
 
-    def draw(self, edges: list[Edge], **options: Any) -> Image:
-        """Return a PIL image of this Lamination around the given edges."""
-
-        return bigger.draw(self, edges=edges, **options)
-
     def intersection(self, *laminations: Lamination[Edge]) -> int:
         """Return the number of times that self intersects other."""
 
@@ -438,3 +433,8 @@ class Lamination(Generic[Edge]):
                     intersection += multiplicity * (max(short_lamination(p), 0) - 2 * around_v + out_v)
 
         return intersection
+
+    def draw(self, edges: list[Edge], **options: Any) -> Image:
+        """Return a PIL image of this Lamination around the given edges."""
+
+        return bigger.draw(self, edges=edges, **options)
