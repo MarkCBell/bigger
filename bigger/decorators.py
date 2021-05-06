@@ -19,7 +19,12 @@ def memoize(function: F) -> F:
 
         if not hasattr(self, "_cache"):
             self._cache = dict()
-        key = (function.__name__, frozenset(inputs.items()))
+
+        try:
+            key = (function.__name__, frozenset(inputs.items()))
+        except TypeError:  # inputs are not hashable.
+            return function(*args, **kwargs)
+
         if key not in self._cache:
             try:
                 self._cache[key] = function(*args, **kwargs)
@@ -29,6 +34,7 @@ def memoize(function: F) -> F:
                 self._cache[key] = error
 
         result = self._cache[key]
+
         if isinstance(result, Exception):
             raise result
         else:
