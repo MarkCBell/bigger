@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 from itertools import chain, islice
 from typing import Any, Callable, Dict, Generic, Iterable, Union
 from PIL import Image  # type: ignore
@@ -177,17 +177,22 @@ class Lamination(Generic[Edge]):
     def peripheral_components(self) -> dict[Lamination[Edge], tuple[int, list[bigger.Side[Edge]]]]:
         """Return a dictionary mapping component to (multiplicity, vertex) for each component of self that is peripheral around a vertex."""
 
+        seen = set()
         components = dict()
-        sides = self.supporting_sides()
-        for side in sides:
-            walk = list(self.triangulation.walk_vertex(side))
-            if walk[0] != min(walk):
-                continue
+        for side in self.supporting_sides():
+            walk = []
+            current = side
+            while current not in seen and self(current) > 0:
+                seen.add(current)
+                walk.append(current)
+                current = ~self.triangulation.left(current)
+                if current == side:  # We made it all the way around.
+                    multiplicity = bigger.utilities.maximin([0], (self.left(side) for side in walk))
+                    if multiplicity > 0:
+                        component = self.triangulation(Counter(side.edge for side in walk))
+                        components[component] = (multiplicity, walk)
 
-            multiplicity = bigger.utilities.maximin([0], (self.left(side) for side in walk))
-            if multiplicity > 0:
-                component = self.triangulation({side.edge: 1 for side in walk})
-                components[component] = (multiplicity, walk)
+                    break
 
         return components
 
