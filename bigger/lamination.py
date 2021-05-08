@@ -9,7 +9,7 @@ from PIL import Image  # type: ignore
 
 import bigger
 from bigger.types import Edge
-from bigger.decorators import memoize
+from bigger.decorators import memoize, finite
 
 
 class Lamination(Generic[Edge]):
@@ -41,16 +41,12 @@ class Lamination(Generic[Edge]):
 
         return self.weight(edge)
 
+    @finite
     def __hash__(self) -> int:
-        if not self.is_finitely_supported():
-            raise TypeError("unhashable type: 'infinitely supported lamination'")
-
         return hash(frozenset((edge, self(edge)) for edge in self.support()))
 
+    @finite
     def __bool__(self) -> bool:
-        if not self.is_finitely_supported():
-            raise ValueError("Truthiness requires a lamination to be finitely supported laminations")
-
         return any(self(edge) for edge in self.support())
 
     @memoize
@@ -75,16 +71,16 @@ class Lamination(Generic[Edge]):
 
     def describe(self, edges: Iterable[Edge]) -> str:
         """Return a string describing this Lamination on the given edges."""
+
         return ", ".join("{}: {}".format(edge, self(edge)) for edge in edges)
 
     def is_finitely_supported(self) -> bool:
         """Return whether this lamination is supported on finitely many edges of the underlying Triangulation."""
+
         return isinstance(self.support(), set)
 
+    @finite
     def __eq__(self, other: Any) -> bool:
-        if not self.is_finitely_supported():
-            raise ValueError("Equality testing requires finitely supported laminations")
-
         if isinstance(other, Lamination):
             if not other.is_finitely_supported():
                 raise ValueError("Equality testing requires finitely supported laminations")
@@ -119,23 +115,17 @@ class Lamination(Generic[Edge]):
         return self.triangulation(weight, lambda: chain(self.support(), other.support()), self.is_finitely_supported() and other.is_finitely_supported())
 
     def __mul__(self, other: int) -> Lamination[Edge]:
-        """Return this lamination scaled by other."""
-
         def weight(edge: Edge) -> int:
             return other * self(edge)
 
         return self.triangulation(weight, self.support, self.is_finitely_supported())
 
     def __rmul__(self, other: int) -> Lamination[Edge]:
-        """Return this lamination scaled by other."""
-
         return self * other
 
+    @finite
     def complexity(self) -> int:
         """Return the number of intersections between this Lamination and its underlying Triangulation."""
-
-        if not self.is_finitely_supported():
-            raise ValueError("Complexity is only defined for finitely supported laminations")
 
         return sum(max(self(edge), 0) for edge in self.support())
 
@@ -183,10 +173,9 @@ class Lamination(Generic[Edge]):
         return self.triangulation(hits)
 
     @memoize
+    @finite
     def peripheral_components(self) -> dict[Lamination[Edge], tuple[int, list[bigger.Side[Edge]]]]:
         """Return a dictionary mapping component to (multiplicity, vertex) for each component of self that is peripheral around a vertex."""
-
-        assert self.is_finitely_supported()
 
         components = dict()
         sides = self.supporting_sides()
@@ -202,10 +191,9 @@ class Lamination(Generic[Edge]):
 
         return components
 
+    @finite
     def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge], bool]]:
         """Return a dictionary mapping component to (multiplicity, edge, is_arc) for each component of self that is parallel to an edge."""
-
-        assert self.is_finitely_supported()
 
         components = dict()
         sides = set(side for edge in self.support() for side in self.triangulation.star(bigger.Side(edge)))
@@ -234,19 +222,16 @@ class Lamination(Generic[Edge]):
 
         return components
 
+    @finite
     def is_short(self) -> bool:
         """Return whether this Lamination is short."""
-
-        assert self.is_finitely_supported()
 
         return self == self.triangulation.disjoint_sum(dict((component, multiplicity) for component, (multiplicity, _, _) in self.parallel_components().items()))
 
     @memoize
+    @finite
     def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:  # pylint: disable=too-many-branches
         """Return an :class:`~bigger.encoding.Encoding` that maps self to a short lamination."""
-
-        if not self.is_finitely_supported():
-            raise ValueError("Only finitely supported laminations can be shortened")
 
         def shorten_strategy(self: Lamination[Edge], side: bigger.Side[Edge]) -> bool:
             """Return whether flipping this side is a good idea."""
@@ -401,11 +386,9 @@ class Lamination(Generic[Edge]):
 
         return multicurve.twist(power)(self)
 
+    @finite
     def intersection(self, *laminations: Lamination[Edge]) -> int:
         """Return the number of times that self intersects other."""
-
-        if not self.is_finitely_supported():
-            raise ValueError("Intersection requires a lamination to be finitely supported laminations")
 
         short, conjugator = self.shorten()
         short_laminations = [conjugator(lamination) for lamination in laminations]

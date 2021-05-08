@@ -41,3 +41,20 @@ def memoize(function: F) -> F:
             return result
 
     return cast(F, inner)
+
+
+def finite(function: F) -> F:
+    """A decorator that only allows its method to be called on finitely supported laminations."""
+
+    @wraps(function)
+    def inner(*args: Any, **kwargs: Any) -> Any:
+
+        inputs = inspect.getcallargs(function, *args, **kwargs)  # pylint: disable=deprecated-method
+        self = inputs.pop("self", function)
+
+        if not self.is_finitely_supported():
+            raise ValueError(f"{function.__name__} requires the lamination be finitely supported")
+
+        return function(*args, **kwargs)
+
+    return cast(F, inner)
