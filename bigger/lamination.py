@@ -223,6 +223,12 @@ class Lamination(Generic[Edge]):
         return components
 
     @finite
+    def peripheral(self) -> Lamination[Edge]:
+        """Return the lamination consisting of the peripheral components of this Lamination."""
+
+        return self.triangulation.disjoint_sum(dict((component, multiplicity) for component, (multiplicity, _) in self.peripheral_components().items()))
+
+    @finite
     def is_short(self) -> bool:
         """Return whether this Lamination is short."""
 
@@ -243,8 +249,8 @@ class Lamination(Generic[Edge]):
 
             return ed < 0 or (ed == 0 and ad > 0 and bd > 0)  # Non-parallel arc.
 
-        # We don't handle periperal curves.
-        lamination = self
+        peripheral = self.peripheral()
+        lamination = self - peripheral
         conjugator = self.triangulation.identity()
         arc_components, curve_components = dict(), dict()
         while True:
@@ -272,6 +278,7 @@ class Lamination(Generic[Edge]):
                 move = lamination.triangulation.flip({side})  # side is always flippable.
                 conjugator = move * conjugator
                 lamination = move(lamination)
+                peripheral = move(peripheral)
 
             # Now all arcs should be parallel to edges and there should now be no bipods.
             assert all(lamination.left(side) >= 0 for side in lamination.supporting_sides())
@@ -305,11 +312,13 @@ class Lamination(Generic[Edge]):
                 _, sub_conjugator = multiarc.shorten()
                 conjugator = sub_conjugator * conjugator
                 lamination = sub_conjugator(lamination)
+                peripheral = sub_conjugator(peripheral)
 
         # Rebuild the image of self under conjugator from its components.
         short = lamination.triangulation.disjoint_sum(
             dict(
-                [(lamination.triangulation.side_arc(edge), multiplicity) for edge, multiplicity in arc_components.items()]
+                [(peripheral, 1)]
+                + [(lamination.triangulation.side_arc(edge), multiplicity) for edge, multiplicity in arc_components.items()]
                 + [(lamination.triangulation.side_curve(edge), multiplicity) for edge, multiplicity in curve_components.items()]
             )
         )
