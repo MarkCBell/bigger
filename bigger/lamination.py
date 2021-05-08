@@ -26,8 +26,8 @@ class Lamination(Generic[Edge]):
         """Return the sides supporting this lamination."""
 
         for edge in self.support():
-            for b in [True, False]:
-                yield bigger.Side(edge, b)
+            for orientation in [True, False]:
+                yield bigger.Side(edge, orientation)
 
     def supporting_triangles(self) -> set[bigger.triangulation.Triangle[Edge]]:
         """Return a set of triangles supporting this lamination, useful for debugging."""
