@@ -336,12 +336,12 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
     def walk_vertex(self, side: bigger.Side[Edge]) -> Iterable[bigger.Side[Edge]]:
         """Walk about the vertex at the tail of the given side until you get back to the same edge."""
 
-        x = side
+        current = side
         while True:
-            yield x
-            x = ~self.left(x)
-            if x.edge == side.edge:
-                yield x
+            yield current
+            current = ~self.left(current)
+            if current.edge == side.edge:
+                yield current
                 return
 
     def __call__(
