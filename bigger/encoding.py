@@ -26,6 +26,9 @@ class Move(Generic[Edge]):
         return Move(self.target, self.source, self.inv_action, self.action)
 
     def __call__(self, lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
+        if lamination.is_finitely_supported() and not lamination:  # Optimisation for empty laminations.
+            return self.target.empty_lamination()
+
         return self.action(lamination)
 
     def encode(self) -> bigger.Encoding[Edge]:
@@ -69,6 +72,9 @@ class Encoding(Generic[Edge]):
             return self.sequence[index]
 
     def __call__(self, lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
+        if lamination.is_finitely_supported() and not lamination:  # Optimisation for empty laminations.
+            return self.target.empty_lamination()
+
         for move in self:
             lamination = move(lamination)
 
