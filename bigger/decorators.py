@@ -12,16 +12,20 @@ def memoize(function: F) -> F:
 
     @wraps(function)
     def inner(*args: Any, **kwargs: Any) -> Any:
+        sig = inspect.signature(function)
 
-        inputs = inspect.getcallargs(function, *args, **kwargs)  # pylint: disable=deprecated-method
-        # We test whether function is a method by looking for a `self` argument. If not we store the cache in the function itself.
-        self = inputs.pop("self", function)
+        inputs = sig.bind(*args, **kwargs)
+        inputs.apply_defaults()
+
+        self = inputs.arguments.pop("self", function)  # We test whether function is a method by looking for a `self` argument. If not we store the cache in the function itself.
+        kwd_key = next((name for name, parameter in sig.parameters.items() if parameter.kind == inspect.Parameter.VAR_KEYWORD), "")
+        kwds = inputs.arguments.pop(kwd_key, dict())  # We grab any **kwargs parameter in the function.
 
         if not hasattr(self, "_cache"):
             self._cache = dict()
 
         try:
-            key = (function.__name__, frozenset(inputs.items()))
+            key = (function.__name__, frozenset(inputs.arguments.items()), frozenset(kwds.items()))
         except TypeError:  # inputs are not hashable.
             return function(*args, **kwargs)
 
