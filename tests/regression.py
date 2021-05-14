@@ -82,6 +82,11 @@ class TestBiflute(TestCase):
         self.assertEqual(f(x).intersection(self.h), 17)
         self.assertEqual(f(x).intersection(f(self.h)), 5)
 
+    def test_multitwist(self):
+        x = self.S.triangulation({0: 4, 1: 9, 2: 5, 3: 4, 4: 3, 5: 3, -1: 2, -2: 2})
+        v = self.S.triangulation.empty_lamination()
+        self.assertEqual(x.twist()(v), dict())
+
 
 class TestLadder(TestCase):
     S = bigger.load.spotted_ladder()
