@@ -339,9 +339,9 @@ class Lamination(Generic[Edge]):
             short, conjugator = self.shorten()
 
             twist = short.triangulation.identity()
-            for multiplicity, a, is_arc in short.parallel_components().values():
+            for component, (multiplicity, a, is_arc) in short.parallel_components().items():
                 assert not is_arc
-                num_flips = short.complexity() - short.dual(a)
+                num_flips = component.complexity() - short.dual(a)
                 for _ in range(num_flips):
                     twist = twist.target.flip({twist.target.left(a)}) * twist
 
