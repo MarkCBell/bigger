@@ -92,18 +92,18 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         return self.link(side) + (side, ~side)
 
-    def corner(self, side: bigger.Side[Edge]) -> Triangle[Edge]:
+    def corner(self, side: Side[Edge]) -> Triangle[Edge]:
         """Return the triangle starting at this side."""
 
         a, b, _, _ = self.link(side)
         return (side, a, b)
 
-    def left(self, side: bigger.Side[Edge]) -> bigger.Side[Edge]:
+    def left(self, side: Side[Edge]) -> Side[Edge]:
         """Return the side to the left of the given one in its triangle."""
 
         return self.corner(side)[2]
 
-    def right(self, side: bigger.Side[Edge]) -> bigger.Side[Edge]:
+    def right(self, side: Side[Edge]) -> Side[Edge]:
         """Return the side to the right of the given one in its triangle."""
 
         return self.corner(side)[1]
@@ -118,7 +118,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
     def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges())
 
-    def is_flippable(self, side: bigger.Side[Edge]) -> bool:
+    def is_flippable(self, side: Side[Edge]) -> bool:
         """Return whether the given side is flippable."""
 
         # We used to do:
@@ -333,7 +333,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         return h
 
-    def walk_vertex(self, side: bigger.Side[Edge]) -> Iterable[bigger.Side[Edge]]:
+    def walk_vertex(self, side: Side[Edge]) -> Iterable[Side[Edge]]:
         """Walk about the vertex at the tail of the given side until you get back to the same edge."""
 
         current = side
@@ -378,11 +378,11 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         return self(lambda edge: -1)
 
-    def side_arc(self, side: bigger.Side[Edge]) -> bigger.Lamination[Edge]:
+    def side_arc(self, side: Side[Edge]) -> bigger.Lamination[Edge]:
         """Return the given side as a Lamination."""
         return self({side.edge: -1})
 
-    def side_curve(self, side: bigger.Side[Edge]) -> bigger.Lamination[Edge]:
+    def side_curve(self, side: Side[Edge]) -> bigger.Lamination[Edge]:
         """Return the curve \\partial N(side)."""
 
         walk1 = list(self.walk_vertex(side))
