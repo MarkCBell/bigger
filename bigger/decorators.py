@@ -1,7 +1,6 @@
 """ A module for decorators. """
 
 from functools import wraps
-import inspect
 from typing import Any, Callable, TypeVar, cast
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -13,29 +12,14 @@ def memoize(is_method: bool = True) -> Callable[[F], F]:
     def helper(function: F) -> F:
         @wraps(function)
         def inner(*args: Any, **kwargs: Any) -> Any:
-            # It's worth caching the signature.
-            if not hasattr(function, "_cached_sig"):
-                sig = inspect.signature(function)
-                kwd_key = next((name for name, parameter in sig.parameters.items() if parameter.kind == inspect.Parameter.VAR_KEYWORD), None)
-                function._cached_sig = (sig, kwd_key)  # type: ignore[attr-defined]
-            sig, kwd_key = function._cached_sig  # type: ignore[attr-defined]
-
             self = args[0] if is_method else function  # Where to store the cache.
             arguments = args[1:] if is_method else args  # Don't include self in the key.
-
-            # Determine the **kwargs parameters in function so we can freeze them separately in the key.
-            if kwd_key is not None and kwargs:
-                inputs = sig.bind(*args, **kwargs)
-                inputs.apply_defaults()
-                kwds = frozenset(inputs.arguments.pop(kwd_key, dict()).items())
-            else:
-                kwds = None
 
             if not hasattr(self, "_cache"):
                 self._cache = dict()
 
             try:
-                key = (function.__name__, arguments, frozenset(kwargs.items()), kwds)
+                key = (function.__name__, arguments, frozenset(kwargs.items()))
             except TypeError:  # inputs are not hashable.
                 return function(*args, **kwargs)
 
