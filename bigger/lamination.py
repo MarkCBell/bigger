@@ -34,7 +34,7 @@ class Lamination(Generic[Edge]):
 
         return set(self.triangulation.triangle(side) for side in self.supporting_sides())
 
-    @memoize
+    @memoize()
     def __call__(self, edge: Union[Edge, bigger.Side[Edge]]) -> int:
         if isinstance(edge, bigger.Side):
             return self(edge.edge)
@@ -49,7 +49,7 @@ class Lamination(Generic[Edge]):
     def __bool__(self) -> bool:
         return any(self(edge) for edge in self.support())
 
-    @memoize
+    @memoize()
     def dual(self, side: bigger.Side[Edge]) -> int:
         """Return the weight of this lamination dual to the given side."""
 
@@ -172,7 +172,7 @@ class Lamination(Generic[Edge]):
 
         return self.triangulation(hits)
 
-    @memoize
+    @memoize()
     @finite
     def peripheral_components(self) -> dict[Lamination[Edge], tuple[int, list[bigger.Side[Edge]]]]:
         """Return a dictionary mapping component to (multiplicity, vertex) for each component of self that is peripheral around a vertex."""
@@ -239,7 +239,7 @@ class Lamination(Generic[Edge]):
 
         return self == self.triangulation.disjoint_sum(dict((component, multiplicity) for component, (multiplicity, _, _) in self.parallel_components().items()))
 
-    @memoize
+    @memoize()
     @finite
     def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:  # pylint: disable=too-many-branches
         """Return an :class:`~bigger.encoding.Encoding` that maps self to a short lamination."""
@@ -392,7 +392,7 @@ class Lamination(Generic[Edge]):
 
         return bigger.Move(self.triangulation, self.triangulation, action, inv_action).encode()
 
-    @memoize
+    @memoize()
     def twisted_by(self, multicurve: Lamination[Edge], power: int = 1) -> Lamination[Edge]:
         """Return multicurve.twist()(self).
 
