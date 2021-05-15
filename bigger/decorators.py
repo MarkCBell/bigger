@@ -12,7 +12,10 @@ def memoize(function: F) -> F:
 
     @wraps(function)
     def inner(*args: Any, **kwargs: Any) -> Any:
-        sig = inspect.signature(function)
+        # It's worth caching the signature.
+        if not hasattr(function, '_cached_sig'):
+            function._cached_sig = inspect.signature(function)
+        sig = function._cached_sig
 
         inputs = sig.bind(*args, **kwargs)
         inputs.apply_defaults()
