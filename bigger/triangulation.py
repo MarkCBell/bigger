@@ -60,12 +60,11 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
     """
 
     def __init__(self, edges: Callable[[], Iterable[Edge]], link: Callable[[Side[Edge]], Square[Edge]]) -> None:
-
         # We could define the link by a function that takes Edges as input
         # It could also return Side[Edge] or Tuples[Edge, bool].
 
         self.edges = edges
-        self.link = link
+        self.link = bigger.decorators.memoize(link)
 
     @classmethod
     def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]]) -> Triangulation[Edge]:
