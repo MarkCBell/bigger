@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Container
 from dataclasses import dataclass
 from functools import partial
 from itertools import chain
@@ -127,13 +128,13 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         a, b, c, d = self.link(side)
         return ~side not in (a, b) and side not in (c, d)
 
-    def flip(self, is_flipped: Union[Callable[[Side[Edge]], bool], set[Side[Edge]]]) -> bigger.Encoding[Edge]:
+    def flip(self, is_flipped: Union[Callable[[Side[Edge]], bool], Container[Side[Edge]]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
         Alternatively, this can be given a set of Sides and will use membership of this set to test which edges flip.
         Note that if :attr:`is_flipped` is True for edge then it must be False for all edge in its link and ~edge."""
 
-        if isinstance(is_flipped, set):
+        if isinstance(is_flipped, Container):
             # Start again with the function lambda edge: edge in is_flipped.
             return self.flip(is_flipped.__contains__)
 
@@ -293,7 +294,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         sequence: list[
             Union[
                 Callable[[Side[Edge]], bool],
-                set[Side[Edge]],
+                Container[Side[Edge]],
                 tuple[Callable[[Side[Edge]], Side[Edge]], Callable[[Side[Edge]], Side[Edge]]],
                 tuple[int, Callable[[Edge], Edge], Callable[[Edge], Edge]],
                 dict[Side[Edge], Side[Edge]],
@@ -312,7 +313,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         The sequence is read in reverse in order to respect composition."""
         h = self.identity()
         for term in reversed(sequence):
-            if callable(term) or isinstance(term, set):
+            if callable(term) or isinstance(term, Container):
                 move = h.target.flip(term)
             elif isinstance(term, tuple):
                 if len(term) == 2:  # and len(term) == 2 and all(callable(item) for item in term):
