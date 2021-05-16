@@ -86,3 +86,8 @@ class Encoding(Generic[Edge]):
 
         abs_power = Encoding(self.sequence * abs(power))
         return abs_power if power > 0 else ~abs_power
+
+    def conjugate_by(self, other: Encoding[Edge]) -> Encoding[Edge]:
+        """Return this Encoding conjugated by other."""
+
+        return ~other * self * other
