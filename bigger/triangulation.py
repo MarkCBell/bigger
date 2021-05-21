@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Container
+from collections.abc import Container, Collection
 from dataclasses import dataclass
 from functools import partial
 from itertools import chain
@@ -115,6 +115,11 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         triangle = min(triangle, triangle[1:] + triangle[:1], triangle[2:] + triangle[:2])
         return triangle
 
+    def is_finite(self) -> bool:
+        """Return whether this triangulation only has finitely many edges."""
+
+        return isinstance(self.edges(), Collection)
+
     def __iter__(self) -> Iterator[Edge]:
         return iter(self.edges())
 
@@ -131,8 +136,8 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
     def flip(self, is_flipped: Union[Callable[[Side[Edge]], bool], Container[Side[Edge]]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
-        Alternatively, this can be given a set of Sides and will use membership of this set to test which edges flip.
-        Note that if :attr:`is_flipped` is True for edge then it must be False for all edge in its link and ~edge."""
+        Alternatively, this can be given a container of Sides and will use membership of this container to test which edges flip.
+        Note that if :attr:`is_flipped` is True for edge then it must be False for all edges in its link and ~edge."""
 
         if isinstance(is_flipped, Container):
             # Start again with the function lambda edge: edge in is_flipped.
@@ -306,7 +311,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         There are several conventions that allow these to be specified by a smaller amount of information:
 
-         - A set or callable is used to flip those edges.
+         - A container or callable is used to flip those edges.
          - A dict or pair of callables is used to encode an isomety.
          - Otherwise, it is assumed to be the label of an edge to flip.
 

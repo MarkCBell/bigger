@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict, Counter
+from collections.abc import Collection
 from itertools import chain, islice
 from typing import Any, Callable, Dict, Generic, Iterable, Union, Optional
 from PIL import Image  # type: ignore
@@ -77,7 +78,7 @@ class Lamination(Generic[Edge]):
     def is_finitely_supported(self) -> bool:
         """Return whether this lamination is supported on finitely many edges of the underlying Triangulation."""
 
-        return isinstance(self.support(), set)
+        return isinstance(self.support(), Collection)
 
     @finite
     def __eq__(self, other: Any) -> bool:
@@ -87,7 +88,7 @@ class Lamination(Generic[Edge]):
 
             return self.support() == other.support() and all(self(edge) == other(edge) for edge in self.support())
         elif isinstance(other, dict):
-            return self.support() == set(other) and all(self(edge) == other[edge] for edge in self.support())
+            return set(self.support()) == set(other) and all(self(edge) == other[edge] for edge in self.support())
 
         return NotImplemented
 
