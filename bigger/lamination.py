@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict, Counter
 from itertools import chain, islice
-from typing import Any, Callable, Dict, Generic, Iterable, Union
+from typing import Any, Callable, Dict, Generic, Iterable, Union, Optional
 from PIL import Image  # type: ignore
 
 import bigger
@@ -431,7 +431,13 @@ class Lamination(Generic[Edge]):
 
         return intersection
 
-    def draw(self, edges: list[Edge], **options: Any) -> Image:
+    def draw(self, edges: Optional[list[Edge]] = None, **options: Any) -> Image:
         """Return a PIL image of this Lamination around the given edges."""
+
+        if edges is None:
+            if self.is_finitely_supported():
+                edges = list(self.support())
+            else:
+                raise ValueError("Edges must be specified for non-finitely supported laminations")
 
         return bigger.draw(self, edges=edges, **options)
