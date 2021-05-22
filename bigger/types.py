@@ -3,6 +3,6 @@
 from typing import Tuple, TypeVar
 
 Edge = TypeVar("Edge")
-Triangle = Tuple[Edge, Edge, Edge]
+
 Coord = Tuple[float, float]
 FlatTriangle = Tuple[Coord, Coord, Coord]

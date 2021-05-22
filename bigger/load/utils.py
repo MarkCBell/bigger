@@ -2,20 +2,25 @@
 
 from itertools import count as naturals
 from math import inf
-from typing import Any, Callable, Iterable, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple
 import re
 
 
-def integers() -> Iterable[int]:
-    """ Return an iterable that yields all of the integers. """
+def integers(start: Optional[int] = None, stop: Optional[int] = None) -> Iterable[int]:
+    """Return an iterable that yields all of the integers."""
 
-    for i in naturals():
-        yield i
-        yield ~i
+    if start is not None and stop is not None:
+        return range(start, stop)
+    elif start is None and stop is not None:
+        return naturals(stop, -1)
+    elif start is not None and stop is None:
+        return naturals(start)
+
+    return (z for n in naturals() for z in (n, ~n))
 
 
 def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[Any], bool]]:
-    """ Return a curve and a test to apply for which of it's components to twist. """
+    """Return a curve and a test to apply for which of it's components to twist."""
 
     twist_match = re.match(r"(?P<curve>[%s])_(?P<n>-?\d+)$" % (curve_names), name)
     twist_index_match = re.match(r"(?P<curve>[%s])\[ *(?P<n>-?\d+) *\]$" % (curve_names), name)

@@ -1,34 +1,58 @@
 """ A module for decorators. """
 
-import inspect
-from typing import Any, Callable, TypeVar
+from functools import wraps
+from typing import Any, Callable, TypeVar, cast
 
-from decorator import decorator
-
-RT = TypeVar("RT")  # return type
+F = TypeVar("F", bound=Callable[..., Any])
 
 
-@decorator
-def memoize(function: Callable[..., RT], *args: Any, **kwargs: Any) -> Callable[..., RT]:
-    """ A decorator that memoizes a function. """
+def memoize(is_method: bool = True) -> Callable[[F], F]:
+    """Return a decorator that memoizes a function or method."""
 
-    inputs = inspect.getcallargs(function, *args, **kwargs)  # pylint: disable=deprecated-method
-    # We test whether function is a method by looking for a `self` argument. If not we store the cache in the function itself.
-    self = inputs.pop("self", function)
+    def helper(function: F) -> F:
+        @wraps(function)
+        def inner(*args: Any, **kwargs: Any) -> Any:
+            self = args[0] if is_method else function  # Where to store the cache.
+            arguments = args[1:] if is_method else args  # Don't include self in the key.
 
-    if not hasattr(self, "_cache"):
-        self._cache = dict()
-    key = (function.__name__, frozenset(inputs.items()))
-    if key not in self._cache:
-        try:
-            self._cache[key] = function(*args, **kwargs)
-        except Exception as error:  # pylint: disable=broad-except
-            if isinstance(error, KeyboardInterrupt):
-                raise
-            self._cache[key] = error
+            if not hasattr(self, "_cache"):
+                self._cache = dict()
 
-    result = self._cache[key]
-    if isinstance(result, Exception):
-        raise result
-    else:
-        return result
+            try:
+                key = (function.__name__, arguments, frozenset(kwargs.items()))
+            except TypeError:  # inputs are not hashable.
+                return function(*args, **kwargs)
+
+            if key not in self._cache:
+                try:
+                    self._cache[key] = function(*args, **kwargs)
+                except Exception as error:  # pylint: disable=broad-except
+                    if isinstance(error, KeyboardInterrupt):
+                        raise
+                    self._cache[key] = error
+
+            result = self._cache[key]
+
+            if isinstance(result, Exception):
+                raise result
+            else:
+                return result
+
+        return cast(F, inner)
+
+    return helper
+
+
+def finite(function: F) -> F:
+    """A decorator that only allows its method to be called on finitely supported laminations."""
+
+    @wraps(function)
+    def inner(*args: Any, **kwargs: Any) -> Any:
+
+        self = args[0]
+        if not self.is_finitely_supported():
+            raise ValueError(f"{function.__name__} requires the lamination be finitely supported")
+
+        return function(*args, **kwargs)
+
+    return cast(F, inner)

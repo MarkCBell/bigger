@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Tuple
+from typing import Iterable, Tuple
 
 import bigger
 from .utils import naturals, extract_curve_and_test
@@ -37,24 +37,33 @@ def spotted_cantor() -> bigger.MCG[Edge]:
     #  |/        |
     #  #---n,2---#
 
-    def link(edge: Edge) -> Link:
+    def edges() -> Iterable[Edge]:
+        for x in naturals():
+            for y in range(4):
+                yield x, y
+
+    def link(edge: Edge) -> tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]:
         n, k = edge
         # Down:
         X, Y = (((n - 3) // 2, 3), (n + 1, 2)) if n % 2 == 1 else ((n - 1, 2), ((n - 3) // 2, 3))
         # Three special down edges (squares 0, 1, & 2).
         if k == 2 and 0 <= n < 3:
-            return {0: ((0, 1), (0, 0), (2, 2), (1, 2)), 1: ((1, 1), (1, 0), (0, 2), (2, 2)), 2: ((2, 1), (2, 0), (1, 2), (0, 2))}[n]
+            return ((n, 1), True, (n, 0), False, ((n + 2) % 3, 2), False, ((n + 1) % 3, 2), False)
 
-        return {0: ((n, 3), (n, 1), (n, 2), (n, 1)), 1: ((n, 0), (n, 3), (n, 0), (n, 2)), 2: ((n, 1), (n, 0), X, Y), 3: ((n, 1), (n, 0), (2 * n + 4, 2), (2 * n + 3, 2))}[k]
+        return {
+            0: ((n, 3), False, (n, 1), False, (n, 2), True, (n, 1), True),
+            1: ((n, 0), False, (n, 2), True, (n, 0), True, (n, 3), False),
+            2: ((n, 1), True, (n, 0), False, X, True, Y, False),
+            3: ((2 * n + 4, 2), False, (2 * n + 3, 2), False, (n, 1), False, (n, 0), True),
+        }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in naturals() for y in range(4)), link)
+    T = bigger.Triangulation.from_pos(edges, link)
 
     def generator(name: str) -> bigger.Encoding[Edge]:
         curve, test = extract_curve_and_test("a", name)
 
         if curve == "a":
-            isom = lambda edge: (edge[0], [1, 0, 2, 3][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] == 0 and test(edge[0])])
+            return T(lambda edge: 1 if edge[1] in {0, 1} and test(edge[0]) else 0).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
@@ -73,38 +82,46 @@ def cantor() -> bigger.MCG[Edge]:  # pylint: disable=too-many-statements
 
     POS, EQ, NEG = +1, 0, -1
 
-    def invert(sign: int, X: Link) -> Link:
-        return X if sign == POS else (X[1], X[0], X[3], X[2])
+    def edges() -> Iterable[Edge]:
+        for x in naturals():
+            for y in [POS, EQ, NEG]:
+                yield x, y
 
-    def link(edge: Edge) -> Link:
+    def negate(X: Edge) -> Edge:
+        return X[0], -X[1]
+
+    def invert(sign: int, X: tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]) -> tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]:
+        return X if sign == POS else (negate(X[6]), not X[7], negate(X[4]), not X[5], negate(X[2]), not X[3], negate(X[0]), not X[1])
+
+    def link(edge: Edge) -> tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]:
         n, k = edge
         if k == EQ:  # Equator
             if n == 0:
-                return ((1, POS), (0, POS), (0, NEG), (1, NEG))
+                return ((0, NEG), False, (1, NEG), True, (1, POS), False, (0, POS), True)
             elif n == 1:
-                return ((2, POS), (0, POS), (0, NEG), (2, NEG))
+                return ((2, POS), False, (0, POS), False, (0, NEG), True, (2, NEG), True)
             else:  # n > 1
-                return ((3 * n - 1, POS), (3 * n - 3, POS), (3 * n - 3, NEG), (3 * n - 1, NEG))
+                return ((3 * n - 3, NEG), False, (3 * n - 1, NEG), True, (3 * n - 1, POS), False, (3 * n - 3, POS), True)
 
         # Northern / Southern hemisphere.
         if n == 0:
-            return invert(k, ((0, EQ), (1, k), (1, EQ), (2, k)))
+            return invert(k, ((0, EQ), False, (1, POS), False, (1, EQ), True, (2, POS), False))
         elif n == 1:
-            return invert(k, ((4, k), (3, k), (0, k), (0, EQ)))
+            return invert(k, ((4, POS), False, (3, POS), False, (0, POS), True, (0, EQ), False))
         elif n == 2:
-            return invert(k, ((0, k), (1, EQ), (7, k), (6, k)))
+            return invert(k, ((7, POS), False, (6, POS), False, (0, POS), False, (1, EQ), True))
         N, r = n // 3 + 1, n % 3
         incoming = 3 * (N // 2) - (1 if N % 2 else 2)
         if r == 0:
-            return invert(k, ((incoming, k), (n + 1, k), (N, EQ), (n + 2, k)))
+            return invert(k, ((N, EQ), False, (n + 2, POS), False, (incoming, POS), True, (n + 1, POS), False))
         elif r == 1:
-            return invert(k, ((n - 1, k), (incoming, k), (6 * N - 2, k), (6 * N - 3, k)))
+            return invert(k, ((6 * N - 2, POS), False, (6 * N - 3, POS), False, (n - 1, POS), False, (incoming, POS), True))
         else:  # r == 2:
-            return invert(k, ((n - 2, k), (N, EQ), (6 * N + 1, k), (6 * N + 0, k)))
+            return invert(k, ((6 * N + 1, POS), False, (6 * N + 0, POS), False, (n - 2, POS), True, (N, EQ), False))
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in naturals() for y in [+1, 0, -1]), link)
+    T = bigger.Triangulation.from_pos(edges, link)
 
-    def generator(name: str) -> bigger.Encoding[Tuple[int, int]]:  # pylint: disable=too-many-branches
+    def generator(name: str) -> bigger.Encoding[Edge]:  # pylint: disable=too-many-branches
         twist_match = re.match(r"(?P<curve>[ab])_(?P<n>-?\d+)$", name)
         rotate_match = re.match(r"r$", name)
 
@@ -164,7 +181,7 @@ def cantor() -> bigger.MCG[Edge]:  # pylint: disable=too-many-statements
                 N, r = n // 3 + 1, n % 3
                 return (3 * (N ^ (1 << N.bit_length() - 2)) - 3 + r, k)
 
-            return T.encode([(isom, isom)])
+            return T.encode([(-1, isom, isom)])
 
         raise ValueError("Unknown mapping class {}".format(name))
 

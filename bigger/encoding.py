@@ -8,7 +8,7 @@ from bigger.types import Edge
 
 
 class Move(Generic[Edge]):
-    """ A function that takes :class:`Laminations <bigger.lamination.Lamination>` on one :class:`~bigger.triangulation.Triangulation` to another. """
+    """A function that takes :class:`Laminations <bigger.lamination.Lamination>` on one :class:`~bigger.triangulation.Triangulation` to another."""
 
     def __init__(
         self,
@@ -26,15 +26,18 @@ class Move(Generic[Edge]):
         return Move(self.target, self.source, self.inv_action, self.action)
 
     def __call__(self, lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
+        if lamination.is_finitely_supported() and not lamination:  # Optimisation for empty laminations.
+            return self.target.empty_lamination()
+
         return self.action(lamination)
 
     def encode(self) -> bigger.Encoding[Edge]:
-        """ Return the :class:`~bigger.encoding.Encoding` consisting of only this Move. """
+        """Return the :class:`~bigger.encoding.Encoding` consisting of only this Move."""
         return bigger.Encoding([self])
 
 
 class Encoding(Generic[Edge]):
-    """ A sequence of :class:`Moves <bigger.encoding.Move>` to apply to a :class:`~bigger.lamination.Lamination`. """
+    """A sequence of :class:`Moves <bigger.encoding.Move>` to apply to a :class:`~bigger.lamination.Lamination`."""
 
     def __init__(self, sequence: List[bigger.Move[Edge]]) -> None:
         self.sequence = sequence
@@ -51,6 +54,9 @@ class Encoding(Generic[Edge]):
     def __invert__(self) -> bigger.Encoding[Edge]:
         return Encoding([~move for move in self])
 
+    def __len__(self) -> int:
+        return len(self.sequence)
+
     @overload
     def __getitem__(self, index: slice) -> bigger.Encoding[Edge]:
         ...
@@ -66,6 +72,9 @@ class Encoding(Generic[Edge]):
             return self.sequence[index]
 
     def __call__(self, lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
+        if lamination.is_finitely_supported() and not lamination:  # Optimisation for empty laminations.
+            return self.target.empty_lamination()
+
         for move in self:
             lamination = move(lamination)
 
@@ -77,3 +86,8 @@ class Encoding(Generic[Edge]):
 
         abs_power = Encoding(self.sequence * abs(power))
         return abs_power if power > 0 else ~abs_power
+
+    def conjugate_by(self, other: Encoding[Edge]) -> Encoding[Edge]:
+        """Return this Encoding conjugated by other."""
+
+        return ~other * self * other

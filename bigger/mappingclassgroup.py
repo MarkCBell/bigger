@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Generic, Iterable, List, Optional
+from typing import Any, Callable, Generic, Iterable, Optional
 from PIL import Image  # type: ignore
 
 import bigger
-from .types import Edge, Triangle, FlatTriangle
+from .types import Edge, FlatTriangle
+from .triangulation import Triangle
 
 
 def splitter(strn: str) -> Iterable[str]:
-    """ Break strn into words on .'s except when they are inside braces. """
+    """Break strn into words on .'s except when they are inside braces."""
 
     start = 0
     brackets = 0
@@ -33,7 +34,7 @@ def splitter(strn: str) -> Iterable[str]:
 
 
 def swapcase(strn: str) -> str:
-    """ Swapcase of strn, except for items that are inside braces. """
+    """Swapcase of strn, except for items that are inside braces."""
 
     output = []
     brackets = 0
@@ -54,26 +55,28 @@ def swapcase(strn: str) -> str:
 
 
 class MappingClassGroup(Generic[Edge]):
-    """ A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names. """
+    """A :class:`~bigger.triangulation.Triangulation` together with a function which produces mapping classes from names."""
 
     def __init__(
-        self, triangulation: bigger.Triangulation[Edge], generator: Callable[[str], bigger.Encoding[Edge]], layout: Optional[Callable[[Triangle], FlatTriangle]] = None
+        self, triangulation: bigger.Triangulation[Edge], generator: Callable[[str], bigger.Encoding[Edge]], layout: Optional[Callable[[Triangle[Edge]], FlatTriangle]] = None
     ) -> None:
         self.triangulation = triangulation
         self.generator = generator
         self.layout = layout
 
     def _helper(self, name: str) -> bigger.Encoding[Edge]:
+        if not name:
+            return self.triangulation.identity()
+
         try:
             return self.generator(name)
         except ValueError:
             return ~(self.generator(swapcase(name)))
 
     def __call__(self, strn: str) -> bigger.Encoding[Edge]:
-        sequence = [item for name in splitter(strn) for item in self._helper(name).sequence]
-        return bigger.Encoding(sequence) if sequence else self.triangulation.identity()
+        return bigger.Encoding([item for name in splitter(strn) for item in self._helper(name).sequence])
 
-    def draw(self, edges: List[Edge], **options: Any) -> Image:
-        """ Return a PIL image of the triangulation of this MCG around the given edges. """
+    def draw(self, edges: list[Edge], **options: Any) -> Image:
+        """Return a PIL image of the triangulation of this MCG around the given edges."""
 
         return bigger.draw(self, edges=edges, **options)

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, Iterable
 
 import bigger
-from bigger.types import Triangle, FlatTriangle
+from bigger.types import FlatTriangle
+from bigger.triangulation import Triangle
 from .utils import integers, extract_curve_and_test
 
 Edge = Tuple[int, int]
@@ -34,20 +35,25 @@ def ladder() -> bigger.MCG[Edge]:
     #  |/        |
     #  #---n,2---#
 
-    def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
+    def edges() -> Iterable[Edge]:
+        for x in integers():
+            for y in range(6):
+                yield x, y
+
+    def link(edge: Edge) -> tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]:
         n, k = edge
         return {
-            0: ((n, 1), (n, 2), (n - 1, 1), (n - 1, 3)),
-            1: ((n, 2), (n, 0), (n, 3), (n + 1, 0)),
-            2: ((n, 0), (n, 1), (n, 4), (n, 5)),
-            3: ((n + 1, 0), (n, 1), (n, 4), (n, 5)),
-            4: ((n, 5), (n, 3), (n, 5), (n, 2)),
-            5: ((n, 3), (n, 4), (n, 2), (n, 4)),
+            0: ((n - 1, 1), False, (n - 1, 3), True, (n, 1), True, (n, 2), False),
+            1: ((n, 2), False, (n, 0), False, (n, 3), True, (n + 1, 0), True),
+            2: ((n, 4), True, (n, 5), False, (n, 0), False, (n, 1), True),
+            3: ((n + 1, 0), True, (n, 1), False, (n, 4), False, (n, 5), True),
+            4: ((n, 5), False, (n, 2), True, (n, 5), True, (n, 3), False),
+            5: ((n, 3), False, (n, 4), False, (n, 2), True, (n, 4), True),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(6)), link)
+    T = bigger.Triangulation[Edge].from_pos(edges, link)
 
-    shift = T.isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
+    shift = T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
     def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):
@@ -56,16 +62,14 @@ def ladder() -> bigger.MCG[Edge]:
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            isom = lambda edge: (edge[0], [0, 5, 3, 2, 4, 1][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] in {1, 5} and test(edge[0]), lambda edge: edge[1] in {2, 3} and test(edge[0])])
+            return T(lambda edge: 1 if edge[1] in {1, 2, 3, 5} and test(edge[0]) else 0).twist()
         if curve == "b":
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 5, 4][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] == 5 and test(edge[0])])
+            return T(lambda edge: 1 if edge[1] in {4, 5} and test(edge[0]) else 0).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
-    def layout(triangle: Triangle) -> FlatTriangle:
-        n, k = triangle[0]
+    def layout(triangle: Triangle[Edge]) -> FlatTriangle:
+        n, k = triangle[0].edge
         return {
             0: ((n, 2.0), (n, 1.0), (n + 1.0, 2.0)),
             1: ((n + 1.0, 2.0), (n, 1.0), (n + 1.0, 1.0)),
@@ -102,41 +106,42 @@ def spotted_ladder() -> bigger.MCG[Edge]:
     #  |/        |
     #  #--n+1,1--#
 
-    def link(edge: Edge) -> Tuple[Edge, Edge, Edge, Edge]:
+    def edges() -> Iterable[Edge]:
+        for x in integers():
+            for y in range(9):
+                yield x, y
+
+    def link(edge: Edge) -> tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]:
         n, k = edge
         return {
-            0: ((n, 1), (n, 2), (n - 1, 7), (n - 1, 8)),
-            1: ((n - 1, 5), (n - 1, 6), (n, 2), (n, 0)),
-            2: ((n, 0), (n, 1), (n, 3), (n, 4)),
-            3: ((n, 4), (n, 2), (n, 5), (n, 6)),
-            4: ((n, 2), (n, 3), (n, 7), (n, 8)),
-            5: ((n, 6), (n, 3), (n, 6), (n + 1, 1)),
-            6: ((n, 3), (n, 5), (n + 1, 1), (n, 5)),
-            7: ((n, 8), (n, 4), (n, 8), (n + 1, 0)),
-            8: ((n + 1, 0), (n, 7), (n, 4), (n, 7)),
+            0: ((n - 1, 7), False, (n - 1, 8), True, (n, 1), False, (n, 2), True),
+            1: ((n - 1, 5), True, (n - 1, 6), False, (n, 2), True, (n, 0), False),
+            2: ((n, 0), False, (n, 1), False, (n, 3), True, (n, 4), True),
+            3: ((n, 4), True, (n, 2), False, (n, 5), False, (n, 6), True),
+            4: ((n, 2), False, (n, 3), True, (n, 7), True, (n, 8), False),
+            5: ((n, 6), False, (n + 1, 1), True, (n, 6), True, (n, 3), False),
+            6: ((n, 3), False, (n, 5), False, (n + 1, 1), True, (n, 5), True),
+            7: ((n, 8), False, (n, 4), False, (n, 8), True, (n + 1, 0), True),
+            8: ((n + 1, 0), True, (n, 7), False, (n, 4), False, (n, 7), True),
         }[k]
 
-    T = bigger.Triangulation(lambda: ((x, y) for x in integers() for y in range(9)), link)
-
-    shift = T.isometry(lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
+    T = bigger.Triangulation.from_pos(edges, link)
 
     def generator(name: str) -> bigger.Encoding[Edge]:
         if name in ("s", "shift"):
-            return shift
+            return T.isometry(T, lambda edge: (edge[0] + 1, edge[1]), lambda edge: (edge[0] - 1, edge[1]))
 
         curve, test = extract_curve_and_test("ab", name)
 
         if curve == "a":
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 5, 6, 8, 7][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] == 8 and test(edge[0])])
+            return T(lambda edge: 1 if edge[1] in {7, 8} and test(edge[0]) else 0).twist()
         if curve == "b":
-            isom = lambda edge: (edge[0], [0, 1, 2, 3, 4, 6, 5, 7, 8][edge[1]]) if test(edge[0]) else edge
-            return T.encode([(isom, isom), lambda edge: edge[1] == 6 and test(edge[0])])
+            return T(lambda edge: 1 if edge[1] in {5, 6} and test(edge[0]) else 0).twist()
 
         raise ValueError("Unknown mapping class {}".format(name))
 
     def layout(triangle: Triangle) -> FlatTriangle:
-        n, k = triangle[0]
+        n, k = triangle[0].edge
         return {
             0: ((n + 0.25, -0.25), (n, 0.0), (n + 0.25, 0.25)),
             2: ((n + 0.25, -0.25), (n + 0.25, 0.25), (n + 0.5, 0.0)),
