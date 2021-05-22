@@ -27,8 +27,6 @@ def memoize(is_method: bool = True) -> Callable[[F], F]:
                 try:
                     self._cache[key] = function(*args, **kwargs)
                 except Exception as error:  # pylint: disable=broad-except
-                    if isinstance(error, KeyboardInterrupt):
-                        raise
                     self._cache[key] = error
 
             result = self._cache[key]
