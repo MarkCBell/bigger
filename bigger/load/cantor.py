@@ -18,9 +18,11 @@ def spotted_cantor() -> bigger.MCG[Edge]:
     With mapping classes:
 
      - a_n which twists about the curve across square n
-     - a which twists about all a_n curves simultaneously
+     - a{expr(n)} which twists about all a_n curves when expr(n) is True
 
-     - a[start:stop:step] = a{n in range(start, stop, slice)}
+    Shortcuts:
+
+     - a[start:stop:step] = a{n in range(start, stop, step)}
      - a == a[:]
     """
 

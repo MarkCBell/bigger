@@ -63,10 +63,10 @@ Ladder
 Spotted Ladder
 --------------
 
-.. image:: ../figures/ladder.svg
+.. image:: ../figures/spotted_ladder.svg
     :height: 120
     :alt: Ladder
-    :target: ../_images/ladder.svg
+    :target: ../_images/spotted_ladder.svg
     :align: center
 
 .. autofunction:: bigger.load.spotted_ladder

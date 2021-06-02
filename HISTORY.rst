@@ -5,6 +5,9 @@ History
 0.3.0 (2021-XX-YY)
 ------------------
 
+* Memoizing link for efficiency.
+* The support of a lamination is now computed when it is known to be finitely supported.
+* Added ladder and spotted_ladder.
 * Re-engineered triangulations to use oriented edges.
 * Can now perform infinitely supported multitwists.
 
