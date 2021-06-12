@@ -142,7 +142,6 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         assert 0 <= intersection < self(side)  # Sanity.
         while True:
-            yield side, intersection
             corner = self.triangulation.corner(~side)
             x, y, z = corner
             if intersection < self.dual(z):  # Turn right.
@@ -152,6 +151,7 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
             else:  # Turn left.
                 side, intersection = z, self(z) - self(x) + intersection
 
+            yield side, intersection
             if (side, intersection) == start:
                 break
 
@@ -167,12 +167,26 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
         hits: Dict[Edge, int] = defaultdict(int)
         while intersections:
             start_intersection = next(iter(intersections))
+            last = None
             for side, intersection in self.trace(start_side, start_intersection):
+                last = (side, intersection)
                 hits[side.edge] += 1
                 if side == start_side:
                     intersections.remove(intersection)
                 elif side == ~start_side:
                     intersections.remove(num_intersections - 1 - intersection)
+
+            if last != (start_side, start_intersection):
+                # We terminated into a vertex, so we must explore the other direction too.
+                hits[start_side.edge] += 1
+                intersections.remove(start_intersection)
+
+                for side, intersection in self.trace(~start_side, num_intersections - 1 - start_intersection):
+                    hits[side.edge] += 1
+                    if side == start_side:
+                        intersections.remove(intersection)
+                    elif side == ~start_side:
+                        intersections.remove(num_intersections - 1 - intersection)
 
         return self.triangulation(hits)
 
