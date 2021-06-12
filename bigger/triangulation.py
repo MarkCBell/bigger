@@ -381,9 +381,15 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         return self(lambda edge: -1)
 
+    def edge_arc(self, edge: Edge) -> bigger.Lamination[Edge]:
+        """Return the given edge as a Lamination."""
+
+        return self({edge: -1})
+
     def side_arc(self, side: Side[Edge]) -> bigger.Lamination[Edge]:
         """Return the given side as a Lamination."""
-        return self({side.edge: -1})
+
+        return self.edge_arc(side.edge)
 
     def side_curve(self, side: Side[Edge]) -> bigger.Lamination[Edge]:
         """Return the curve \\partial N(side)."""
