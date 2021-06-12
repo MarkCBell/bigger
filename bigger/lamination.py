@@ -471,7 +471,7 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
     def unicorns(self, other: Lamination[Edge]) -> set[Lamination[Edge]]:
         """Return a set of arcs which contains all the unicorn arcs that can be made from self and other.
 
-        Assumes but does not check that self is a multiarc."""
+        Assumes that self is a multiarc."""
 
         short, conjugator = self.shorten()
         inv_conjugator = ~conjugator
@@ -481,14 +481,25 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
         for _, side, is_arc in short.parallel_components().values():
             assert is_arc
             restrict = short_other.meeting(side.edge)  # restrict is finitely supported.
-            full_support = [sidy.edge for triangle in restrict.supporting_triangles() for sidy in triangle]
+            star_support = set(sidy.edge for triangle in restrict.supporting_triangles() for sidy in triangle)
 
+            for edge in star_support:
+                potential_unicorns.add(inv_conjugator(inv_conjugator.source.edge_arc(edge)))
+
+            image = restrict
             _, sequence = restrict.shorten()
             for i in range(len(sequence)):
+                move = sequence[~i]
                 prefix = sequence[:i]
                 inv_prefix = ~prefix
-                for edge in full_support:
-                    potential_unicorns.add(inv_conjugator(inv_prefix(inv_prefix.source.edge_arc(edge))))
+                for edge in star_support:
+                    arc = inv_prefix.source.edge_arc(edge)
+                    # Only actually need to pull back the new edge, that is, the one for which ~move(arc) is not an edge.
+                    potential_unicorns.add(inv_conjugator(inv_prefix(arc)))
+
+                # Try to shrink the star support.
+                image = move(image)
+                star_support = set(sidy.edge for triangle in image.supporting_triangles() for sidy in triangle)
 
         return potential_unicorns
 
