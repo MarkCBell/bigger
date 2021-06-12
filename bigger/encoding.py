@@ -67,7 +67,19 @@ class Encoding(Generic[Edge]):
 
     def __getitem__(self, index: Union[slice, int]) -> Union[bigger.Encoding[Edge], bigger.Move[Edge]]:
         if isinstance(index, slice):
-            return Encoding(self.sequence[index])
+            start = 0 if index.start is None else index.start % len(self)
+            stop = len(self) if index.stop is None else index.stop % len(self)
+            if start == stop:
+                if 0 <= start < len(self):
+                    return self.sequence[start].target.identity()
+                elif start == len(self):
+                    return self.source.identity()
+                else:
+                    raise IndexError('list index out of range')
+            elif stop < start:
+                raise IndexError('list index out of range')
+            else:  # start < stop.
+                return Encoding(self.sequence[index])
         else:
             return self.sequence[index]
 
