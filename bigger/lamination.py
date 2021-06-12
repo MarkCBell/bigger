@@ -231,6 +231,23 @@ class Lamination(Generic[Edge]):
 
         return components
 
+    @memoize()
+    @finite
+    def components(self) -> dict[Lamination[Edge], int]:
+        """Return a dictionary mapping components to their multiplicities."""
+
+        short, conjugator = self.shorten()
+        conjugator_inv = ~conjugator
+
+        components = dict()
+        for component, (multiplicity, _) in short.peripheral_components().items():
+            components[conjugator_inv(component)] = multiplicity
+
+        for component, (multiplicity, _, _) in short.parallel_components().items():
+            components[conjugator_inv(component)] = multiplicity
+
+        return components
+
     @finite
     def peripheral(self) -> Lamination[Edge]:
         """Return the lamination consisting of the peripheral components of this Lamination."""
