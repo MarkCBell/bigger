@@ -13,7 +13,7 @@ from bigger.types import Edge
 from bigger.decorators import memoize, finite
 
 
-class Lamination(Generic[Edge]):
+class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
     """A measured lamination on a :class:`~bigger.triangulation.Triangulation`.
 
     The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure."""
@@ -452,6 +452,31 @@ class Lamination(Generic[Edge]):
                     intersection += multiplicity * (max(short_lamination(p), 0) - 2 * around_v + out_v)
 
         return intersection
+
+    @finite
+    def unicorns(self, other: Lamination[Edge]) -> set[Lamination[Edge]]:
+        """Return a set of arcs which contains all the unicorn arcs that can be made from self and other.
+
+        Assumes but does not check that self is a multiarc."""
+
+        short, conjugator = self.shorten()
+        inv_conjugator = ~conjugator
+        short_other = conjugator(other)
+
+        potential_unicorns = set()
+        for _, side, is_arc in short.parallel_components().values():
+            assert is_arc
+            restrict = short_other.meeting(side.edge)  # restrict is finitely supported.
+            full_support = [sidy.edge for triangle in restrict.supporting_triangles() for sidy in triangle]
+
+            _, sequence = restrict.shorten()
+            for i in range(len(sequence)):
+                prefix = sequence[:i]
+                inv_prefix = ~prefix
+                for edge in full_support:
+                    potential_unicorns.add(inv_conjugator(inv_prefix(inv_prefix.source.edge_arc(edge))))
+
+        return potential_unicorns
 
     def draw(self, edges: Optional[list[Edge]] = None, **options: Any) -> Image:
         """Return a PIL image of this Lamination around the given edges."""
