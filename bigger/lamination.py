@@ -354,21 +354,21 @@ class Lamination(Generic[Edge]):
     def twist(self, power: int = 1) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` that performs a Dehn twist about this Lamination.
 
-        Assumes but does not check that this lamination is a multicurve."""
+        Assumes but does not always check that this lamination is a multicurve."""
 
         if self.is_finitely_supported():
             short, conjugator = self.shorten()
 
             twist = short.triangulation.identity()
-            for component, (multiplicity, a, is_arc) in short.parallel_components().items():
+            for component, (multiplicity, side, is_arc) in short.parallel_components().items():
                 assert not is_arc
-                num_flips = component.complexity() - short.dual(a)
+                num_flips = component.complexity() - short.dual(side)
                 for _ in range(num_flips):
-                    twist = twist.target.flip({twist.target.left(a)}) * twist
+                    twist = twist.target.flip({twist.target.left(side)}) * twist
 
                 isom = dict()
-                x = y = a
-                while x != ~a:
+                x = y = side
+                while x != ~side:
                     isom[y] = x
                     x = ~twist.source.left(x)
                     y = ~twist.target.left(y)
@@ -417,6 +417,7 @@ class Lamination(Generic[Edge]):
     def twisted_by(self, multicurve: Lamination[Edge], power: int = 1) -> Lamination[Edge]:
         """Return multicurve.twist()(self).
 
+        Assumes but does not check that multicurve is a multicurve.
         This is used purely for performance by allowing for memoization in self.twist."""
 
         return multicurve.twist(power)(self)
