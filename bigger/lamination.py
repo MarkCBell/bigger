@@ -30,8 +30,11 @@ class Lamination(Generic[Edge]):
             for orientation in [True, False]:
                 yield bigger.Side(edge, orientation)
 
+    @finite
     def supporting_triangles(self) -> set[bigger.triangulation.Triangle[Edge]]:
         """Return a set of triangles supporting this lamination, useful for debugging."""
+
+        # Note this could return an Iterable and the finite decorator removed, but that would probably be less useful for debugging.
 
         return set(self.triangulation.triangle(side) for side in self.supporting_sides())
 
