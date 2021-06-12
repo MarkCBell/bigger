@@ -75,9 +75,9 @@ class Encoding(Generic[Edge]):
                 elif start == len(self):
                     return self.source.identity()
                 else:
-                    raise IndexError('list index out of range')
+                    raise IndexError("list index out of range")
             elif stop < start:
-                raise IndexError('list index out of range')
+                raise IndexError("list index out of range")
             else:  # start < stop.
                 return Encoding(self.sequence[index])
         else:
