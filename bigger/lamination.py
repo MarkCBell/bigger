@@ -202,7 +202,7 @@ class Lamination(Generic[Edge]):
 
     @finite
     def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge], bool]]:
-        """Return a dictionary mapping component to (multiplicity, edge, is_arc) for each component of self that is parallel to an edge."""
+        """Return a dictionary mapping component to (multiplicity, side, is_arc) for each component of self that is parallel to an edge."""
 
         components = dict()
         sides = set(side for edge in self.support() for side in self.triangulation.star(bigger.Side(edge)))
