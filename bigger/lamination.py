@@ -448,7 +448,7 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
                 for short_lamination in short_laminations:
                     around_v = bigger.utilities.maximin([0], (short_lamination.left(edgy) for edgy in v_edges))
                     out_v = sum(max(-short_lamination.left(edge), 0) for edge in v_edges) + sum(max(-short_lamination(edge), 0) for edge in v_edges[1:])
-                    # around_v > 0 ==> out_v == 0; out_v > 0 ==> around_v == 0.
+                    assert min(around_v, out_v) == 0
                     intersection += multiplicity * (max(short_lamination(p), 0) - 2 * around_v + out_v)
 
         return intersection
