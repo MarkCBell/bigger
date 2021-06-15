@@ -9,7 +9,9 @@ History
 * The support of a lamination is now computed when it is known to be finitely supported.
 * Added ladder and spotted_ladder.
 * Re-engineered triangulations to use oriented edges.
-* Can now perform infinitely supported multitwists.
+* Can now perform multiarcs with infinitely many components.
+* Can now compute unicorn arcs.
+* Added loch_ness_monster surface.
 
 0.2.5 (2020-11-03)
 ------------------
