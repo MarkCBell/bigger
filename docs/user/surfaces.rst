@@ -49,6 +49,17 @@ Spotted Cantor
 
 .. autofunction:: bigger.load.spotted_cantor
 
+Loch Ness Monster
+-----------------
+
+.. image:: ../figures/lochness.svg
+    :height: 120
+    :alt: Ladder
+    :target: ../_images/lochness.svg
+    :align: center
+
+.. autofunction:: bigger.load.loch_ness_monster
+
 Ladder
 ------
 

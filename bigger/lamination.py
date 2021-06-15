@@ -471,6 +471,7 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
     def unicorns(self, other: Lamination[Edge]) -> set[Lamination[Edge]]:
         """Return a set of arcs which contains all the unicorn arcs that can be made from self and other.
 
+        Note that it is possible that the set may also contain other non-unicorn arcs.
         Assumes that self is a multiarc."""
 
         short, conjugator = self.shorten()

@@ -18,6 +18,7 @@ Bigger
     can also use: https://github.com/MarkCBell/bigger/workflows/Build/badge.svg?branch=master
 
 Bigger is a program for computing big mapping classes and their actions on non-compact laminations via ideal triangulation coordinates.
+It's like `flipper`_ and `curver`_, but can handle infinite-type surfaces since it computes things lazily.
 
 Bigger officially supports Python 3.7 -- 3.9.
 
@@ -68,4 +69,6 @@ External Links
 .. _GitHub: https://github.com/MarkCBell/bigger
 .. _PyPI: https://pypi.org/project/bigger
 .. _ReadTheDocs: http://biggermcg.readthedocs.io
+.. _curver: https://curver.readtthedocs.io
+.. _flipper: https://flipper.readtthedocs.io
 

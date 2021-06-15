@@ -85,9 +85,9 @@ Of course, in this case we cannot tell whether two such laminations are equal (o
     >>> a == a
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-      File "/bigger/lamination.py", line 36, in __eq__
-        raise ValueError("Can only determine equality between finitely supported laminations")
-    ValueError: Can only determine equality between finitely supported laminations
+      File "/bigger/decorators.py", line 52, in inner
+        raise ValueError(f"{function.__name__} requires the lamination be finitely supported")
+    ValueError: __eq__ requires the lamination be finitely supported
 
 Visualisations
 --------------
@@ -143,8 +143,15 @@ Bigger also allows us to compose together or take powers of existing mapping cla
 Building new mapping classes
 ----------------------------
 
-Since  it can manipulate curves, bigger can create the Dehn twist about a curve automatically::
+Bigger can create new mapping classes by Dehn twistings about a (multi)curve::
 
-    >>> twist = S.triangulation({1: 1, 2: 1}).encode_twist()
+    >>> twist = S.triangulation({1: 1, 2: 1}).twist()
     >>> twist(c), (twist * twist)(c), (twist**3)(c)
     (Lamination 2: 1, Lamination 1: 1, 2: 2, Lamination 1: 2, 2: 3)
+
+It can even handle multicurves with infinitely many components::
+
+    >>> v = S.triangulation(lambda e: 1 if e % 3 != 0 else 0)
+    >>> v.twist()(a)
+    Infinitely supported lamination 2: -1, 2: -1, 2: -1, 3: -1, 4: 1, 4: 1, 4: 1, 8: -1, 8: -1, 8: -1 ...
+
