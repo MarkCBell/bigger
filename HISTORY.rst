@@ -2,7 +2,7 @@
 History
 =======
 
-0.3.0 (2021-XX-YY)
+0.3.0 (2021-06-16)
 ------------------
 
 * Memoizing link for efficiency.
