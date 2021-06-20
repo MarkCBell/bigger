@@ -1,9 +1,12 @@
 """ A module of useful, generic functions. """
 
+from __future__ import annotations
+
 from fractions import Fraction
 from typing import Iterable, TypeVar
 
 IntFraction = TypeVar("IntFraction", int, Fraction)
+T = TypeVar("T")
 
 
 class Half:
@@ -65,3 +68,12 @@ def maximin(*iterables: Iterable[int]) -> int:
             result = best
 
     return result
+
+
+def lookahead(iterable: Iterable[T], n: int) -> Iterable[tuple[T, T]]:
+    window = []
+    for item in iterable:
+        window.append(item)
+        if len(window) == n:
+            yield (window[0], window[-1])
+            window = window[1:]
