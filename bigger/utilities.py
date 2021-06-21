@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fractions import Fraction
+from itertools import tee
 from typing import Iterable, TypeVar
 
 IntFraction = TypeVar("IntFraction", int, Fraction)
@@ -71,9 +72,13 @@ def maximin(*iterables: Iterable[int]) -> int:
 
 
 def lookahead(iterable: Iterable[T], n: int) -> Iterable[tuple[T, T]]:
-    window = []
-    for item in iterable:
-        window.append(item)
-        if len(window) == n:
-            yield (window[0], window[-1])
-            window = window[1:]
+    """Yield items of iterable together with the item n steps in the future."""
+
+    current, future = tee(iterable)
+    try:
+        for _ in range(n):  # Fast forward.
+            next(future)
+    except StopIteration:
+        return
+
+    yield from zip(current, future)
