@@ -229,24 +229,31 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
                 if multiplicity > 0:
                     components[self.triangulation.side_arc(side)] = (multiplicity, side, True)
 
-            around_v = float('inf')
+            around_v = None
             for sidy in self.triangulation.walk_vertex(side):
                 if sidy == ~side:
                     break
-                around_v = min(around_v, self.left(sidy))
+
+                value = self.left(sidy)
+                if around_v is None or value < around_v:
+                    around_v = value
+
                 if around_v <= 0:
                     break
 
-            if 0 <= around_v < float('inf') and self.left(side) == self.right(side) == around_v:
-                twisting = float('inf')
+            if around_v is not None and around_v > 0 and self.left(side) == self.right(side) == around_v:
+                twisting = None
                 for sidy, nxt in bigger.utilities.lookahead(islice(self.triangulation.walk_vertex(side), 1, None), 2):
                     if nxt == ~side:
-                        multiplicity = twisting
-
-                        if 0 < multiplicity < float('inf'):
+                        if twisting is not None and twisting > 0:
+                            multiplicity = twisting
                             components[self.triangulation.side_curve(side)] = (multiplicity, side, False)
                         break
-                    twisting = min(twisting, self.left(sidy) - around_v)
+
+                    twisting = self.left(sidy) - around_v
+                    if twisting is None or twisting < value:
+                        twisting = value
+
                     if twisting <= 0:
                         break
 
