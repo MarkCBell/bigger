@@ -229,26 +229,22 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
                 if multiplicity > 0:
                     components[self.triangulation.side_arc(side)] = (multiplicity, side, True)
 
-            around_v, twisting = float("inf"), float("inf")
+            around, twisting = float("inf"), float("inf")
             for index, (sidey, nxt) in enumerate(bigger.utilities.lookahead(self.triangulation.walk_vertex(side), 1)):
                 value = self.left(sidey)
 
+                around = min(around, value)  # Always shrink around.
                 if nxt == ~side:
-                    around_v = min(around_v, value)
-                    # Don't shrink twisting for the last value.
-
-                    if index > 1 and 0 <= around_v < twisting and self.left(side) == self.right(side) == around_v:
+                    if 0 <= around < twisting < float('inf') and self.left(side) == self.right(side) == around:
                         assert not isinstance(twisting, float)
-                        assert not isinstance(around_v, float)
-                        multiplicity = twisting - around_v
+                        assert not isinstance(around, float)
+                        multiplicity = twisting - around
                         components[self.triangulation.side_curve(side)] = (multiplicity, side, False)
                     break
-
-                around_v = min(around_v, value)
-                if index:  # Don't shrink twisting for the first value.
+                elif index:  # Only shrink twisting when it's not the first (or last) value.
                     twisting = min(twisting, value)
 
-                if around_v < 0 or twisting <= 0:
+                if around < 0 or twisting <= 0:  # Terminate early.
                     break
 
         return components
@@ -468,10 +464,11 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
                 v_edges = walk[:1]  # The set of edges that come out of v from p round to ~p.
 
                 for short_lamination in short_laminations:
-                    around_v = bigger.utilities.maximin([0], (short_lamination.left(edgy) for edgy in v_edges))
-                    out_v = sum(max(-short_lamination.left(edge), 0) for edge in v_edges) + sum(max(-short_lamination(edge), 0) for edge in v_edges[1:])
-                    assert min(around_v, out_v) == 0
-                    intersection += multiplicity * (max(short_lamination(p), 0) - 2 * around_v + out_v)
+                    # There is probably a slick, one-pass way to get both around and out, like in self.parallel_components().
+                    around = bigger.utilities.maximin([0], (short_lamination.left(edgy) for edgy in v_edges))
+                    out = sum(max(-short_lamination.left(edge), 0) for edge in v_edges) + sum(max(-short_lamination(edge), 0) for edge in v_edges[1:])
+                    assert min(around, out) == 0
+                    intersection += multiplicity * (max(short_lamination(p), 0) - 2 * around + out)
 
         return intersection
 
