@@ -2,6 +2,12 @@
 History
 =======
 
+0.3.1 (2021-06-21)
+------------------
+
+* Fixed bug in computing parallel components.
+* Loch ness monster's triangulation is labelled by integers not tuples.
+
 0.3.0 (2021-06-16)
 ------------------
 
