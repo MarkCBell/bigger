@@ -235,8 +235,9 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
                 if nxt == ~side:
                     around_v = min(around_v, value)
+                    # Don't shrink twisting for the last value.
 
-                    if around_v >= 0 and self.left(side) == self.right(side) == around_v and index > 1 and twisting > around_v:
+                    if index > 1 and around_v >= 0 and twisting > around_v and self.left(side) == self.right(side) == around_v:
                         assert not isinstance(twisting, float)
                         assert not isinstance(around_v, float)
                         multiplicity = twisting - around_v
@@ -244,7 +245,7 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
                     break
 
                 around_v = min(around_v, value)
-                if index:  # Don't compare first.
+                if index:  # Don't shrink twisting for the first value.
                     twisting = min(twisting, value)
 
                 if around_v < 0 or twisting <= 0:
