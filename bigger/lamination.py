@@ -235,13 +235,13 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
                 around = min(around, value)  # Always shrink around.
                 if nxt == ~side:
-                    if 0 <= around < twisting < float('inf') and self.left(side) == self.right(side) == around:
+                    if 0 <= around < twisting < float("inf") and self.left(side) == self.right(side) == around:
                         assert not isinstance(twisting, float)
                         assert not isinstance(around, float)
                         multiplicity = twisting - around
                         components[self.triangulation.side_curve(side)] = (multiplicity, side, False)
                     break
-                elif index:  # Only shrink twisting when it's not the first (or last) value.
+                if index:  # Only shrink twisting when it's not the first (or last) value.
                     twisting = min(twisting, value)
 
                 if around < 0 or twisting <= 0:  # Terminate early.
