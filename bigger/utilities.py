@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections import deque
 from fractions import Fraction
-from itertools import tee
 from typing import Iterable, TypeVar
 
 IntFraction = TypeVar("IntFraction", int, Fraction)
@@ -74,11 +74,33 @@ def maximin(*iterables: Iterable[int]) -> int:
 def lookahead(iterable: Iterable[T], n: int) -> Iterable[tuple[T, T]]:
     """Yield items of iterable together with the item n steps in the future."""
 
-    current, future = tee(iterable)
+    iterable = iter(iterable)
+    queue: deque[T] = deque()
     try:
-        for _ in range(n):  # Fast forward.
-            next(future)
+        queue.extend(next(iterable) for _ in range(n))
     except StopIteration:
         return
 
-    yield from zip(current, future)
+    for item in iterable:
+        queue.append(item)
+        yield queue.popleft(), queue[-1]
+
+
+def tail_enumerate(iterable: Iterable[T], tail: int = 0) -> Iterable[tuple[int, T]]:
+    """Like enumerate but a negative index is used when items are within tail of the end of the iterable."""
+
+    iterable = iter(iterable)
+    queue: deque[T] = deque()
+
+    try:
+        for _ in range(tail):
+            queue.append(next(iterable))
+    except StopIteration:
+        yield from enumerate(queue)
+        return
+
+    for index, item in enumerate(iterable):
+        queue.append(item)
+        yield index, queue.popleft()
+
+    yield from zip(range(-tail, 0), queue)
