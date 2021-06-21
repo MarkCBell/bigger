@@ -229,33 +229,26 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
                 if multiplicity > 0:
                     components[self.triangulation.side_arc(side)] = (multiplicity, side, True)
 
-            around_v = None
-            for sidy in self.triangulation.walk_vertex(side):
-                if sidy == ~side:
+            around_v, twisting = float("inf"), float("inf")
+            for index, (sidey, nxt) in enumerate(bigger.utilities.lookahead(self.triangulation.walk_vertex(side), 1)):
+                value = self.left(sidey)
+
+                if nxt == ~side:
+                    around_v = min(around_v, value)
+
+                    if around_v >= 0 and self.left(side) == self.right(side) == around_v and index > 1 and twisting > around_v:
+                        assert not isinstance(twisting, float)
+                        assert not isinstance(around_v, float)
+                        multiplicity = twisting - around_v
+                        components[self.triangulation.side_curve(side)] = (multiplicity, side, False)
                     break
 
-                value = self.left(sidy)
-                if around_v is None or value < around_v:
-                    around_v = value
+                around_v = min(around_v, value)
+                if index:  # Don't compare first.
+                    twisting = min(twisting, value)
 
-                if around_v <= 0:
+                if around_v < 0 or twisting <= 0:
                     break
-
-            if around_v is not None and around_v > 0 and self.left(side) == self.right(side) == around_v:
-                twisting = None
-                for sidy, nxt in bigger.utilities.lookahead(islice(self.triangulation.walk_vertex(side), 1, None), 2):
-                    if nxt == ~side:
-                        if twisting is not None and twisting > 0:
-                            multiplicity = twisting
-                            components[self.triangulation.side_curve(side)] = (multiplicity, side, False)
-                        break
-
-                    twisting = self.left(sidy) - around_v
-                    if twisting is None or twisting < value:
-                        twisting = value
-
-                    if twisting <= 0:
-                        break
 
         return components
 
