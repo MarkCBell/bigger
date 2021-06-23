@@ -7,9 +7,6 @@ from setuptools import setup, find_packages
 
 requirements = [
     'pillow>=7',
-    'typing>=3.7',
-    'typing_extensions>=3.7',
-    'types-pkg_resources',
 ]
 
 def readme():
