@@ -481,26 +481,29 @@ class Lamination(Generic[Edge]):
         potential_unicorns = set()
         for _, side, is_arc in short.parallel_components().values():
             assert is_arc
-            restrict = short_other.meeting(side.edge)  # restrict is finitely supported.
-            star_support = set(sidy.edge for triangle in restrict.supporting_triangles() for sidy in triangle)
+            image = short_other.meeting(side.edge)  # image is finitely supported.
+            star_support = set(sidy.edge for triangle in image.supporting_triangles() for sidy in triangle)
 
             for edge in star_support:
-                potential_unicorns.add(inv_conjugator(inv_conjugator.source.edge_arc(edge)))
+                arc = inv_conjugator.source.edge_arc(edge)
+                potential_unicorns.add(inv_conjugator(arc))
 
-            image = restrict
-            _, sequence = restrict.shorten()
-            for i in range(len(sequence)):
-                move = sequence[~i]
+            _, sequence = image.shorten()
+            for i in range(1, len(sequence) + 1):
                 prefix = sequence[:i]
                 inv_prefix = ~prefix
-                for edge in star_support:
-                    arc = inv_prefix.source.edge_arc(edge)
-                    # Only actually need to pull back the new edge, that is, the one for which ~move(arc) is not an edge.
-                    potential_unicorns.add(inv_conjugator(inv_prefix(arc)))
 
                 # Try to shrink the star support.
+                move = sequence[-1]
                 image = move(image)
                 star_support = set(sidy.edge for triangle in image.supporting_triangles() for sidy in triangle)
+
+                for edge in star_support:
+                    arc = inv_prefix.source.edge_arc(edge)
+                    arc_premove = (~move)(arc)
+                    # Only actually need to pull back the new edge, that is, the one for which ~move(arc) is not an edge.
+                    if [arc_premove(edgy) for edgy in arc_premove.support()] != [-1]:  # arc_premove.support() is a set, so is unique.
+                        potential_unicorns.add(inv_conjugator(inv_prefix(arc)))
 
         return potential_unicorns
 
