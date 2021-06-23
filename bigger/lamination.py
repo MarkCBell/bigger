@@ -13,7 +13,7 @@ from bigger.types import Edge
 from bigger.decorators import memoize, finite
 
 
-class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
+class Lamination(Generic[Edge]):
     """A measured lamination on a :class:`~bigger.triangulation.Triangulation`.
 
     The lamination is defined via a function mapping the edges of its underlying Triangulation to their corresponding measure."""
@@ -214,6 +214,7 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         return components
 
+    @memoize()
     @finite
     def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge], bool]]:
         """Return a dictionary mapping component to (multiplicity, side, is_arc) for each component of self that is parallel to an edge."""
@@ -271,12 +272,6 @@ class Lamination(Generic[Edge]):  # pylint: disable=too-many-public-methods
         """Return the lamination consisting of the peripheral components of this Lamination."""
 
         return self.triangulation.disjoint_sum(dict((component, multiplicity) for component, (multiplicity, _) in self.peripheral_components().items()))
-
-    @finite
-    def is_short(self) -> bool:
-        """Return whether this Lamination is short."""
-
-        return self == self.triangulation.disjoint_sum(dict((component, multiplicity) for component, (multiplicity, _, _) in self.parallel_components().items()))
 
     @memoize()
     @finite
