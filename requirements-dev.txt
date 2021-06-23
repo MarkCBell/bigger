@@ -8,3 +8,4 @@ pytest
 pytest-cov
 sphinx
 tox
+types-pkg_resources
