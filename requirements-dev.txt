@@ -3,7 +3,6 @@ flake8
 hypothesis
 mypy
 pylint
-pylint_strict_informational
 pytest
 pytest-cov
 sphinx
