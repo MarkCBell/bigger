@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict, Counter
 from collections.abc import Collection
 from itertools import chain, islice
-from typing import Any, Callable, Dict, Generic, Iterable, Union, Optional
+from typing import Any, Callable, Dict, Generic, Iterable, Optional
 from PIL import Image  # type: ignore
 
 import bigger
@@ -39,7 +39,7 @@ class Lamination(Generic[Edge]):
         return set(self.triangulation.triangle(side) for side in self.supporting_sides())
 
     @memoize()
-    def __call__(self, edge: Union[Edge, bigger.Side[Edge]]) -> int:
+    def __call__(self, edge: Edge | bigger.Side[Edge]) -> int:
         if isinstance(edge, bigger.Side):
             return self(edge.edge)
 

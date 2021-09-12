@@ -133,7 +133,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         a, b, c, d = self.link(side)
         return ~side not in (a, b) and side not in (c, d)
 
-    def flip(self, is_flipped: Union[Callable[[Side[Edge]], bool], Container[Side[Edge]]]) -> bigger.Encoding[Edge]:
+    def flip(self, is_flipped: Callable[[Side[Edge]], bool] | Container[Side[Edge]]) -> bigger.Encoding[Edge]:
         """Return an :class:`~bigger.encoding.Encoding` consisting of a single :class:`~bigger.encoding.Move` which flips all edges where :attr:`is_flipped` is True.
 
         Alternatively, this can be given a container of Sides and will use membership of this container to test which edges flip.
@@ -348,7 +348,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
                 return
 
     def __call__(
-        self, weight: Union[dict[Edge, int], Callable[[Edge], int]], support: Optional[Callable[[], Iterable[Edge]]] = None, is_finitely_supported: bool = False
+        self, weight: dict[Edge, int] | Callable[[Edge], int], support: Optional[Callable[[], Iterable[Edge]]] = None, is_finitely_supported: bool = False
     ) -> bigger.Lamination[Edge]:
 
         if isinstance(weight, dict):

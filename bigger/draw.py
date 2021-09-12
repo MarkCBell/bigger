@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from copy import deepcopy
 from math import sin, cos, pi, ceil
-from typing import Any, Generic, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar
 
 from PIL import Image, ImageDraw, ImageFont  # type: ignore
 
@@ -254,7 +254,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         for key, value in options.items():
             setattr(self, key, value)
 
-    def __call__(self, *objs: Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]], **options: Any) -> Union[DrawStructure, Image]:
+    def __call__(self, *objs: bigger.Lamination[Edge] | bigger.MCG[Edge] | bigger.Triangulation[Edge], **options: Any) -> DrawStructure | Image:
         draw_structure = deepcopy(self)
         draw_structure.set_options(**options)
 
@@ -268,7 +268,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
 
         return draw_structure.draw_objs(*objs)
 
-    def draw_objs(self, *objs: Union[bigger.Triangulation[Edge], bigger.Lamination[Edge], bigger.MCG[Edge]]) -> Image:  # pylint: disable=too-many-statements, too-many-branches
+    def draw_objs(self, *objs: bigger.Triangulation[Edge] | bigger.Lamination[Edge] | bigger.MCG[Edge]) -> Image:  # pylint: disable=too-many-statements, too-many-branches
         """Return an image of these objects.
 
         This method assumes that:
@@ -377,7 +377,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         return image
 
 
-def draw(*objs: Union[bigger.Lamination[Edge], bigger.MCG[Edge], bigger.Triangulation[Edge]], edges: Optional[list[Edge]] = None, **options: Any) -> Union[DrawStructure, Image]:
+def draw(*objs: bigger.Lamination[Edge] | bigger.MCG[Edge] | bigger.Triangulation[Edge], edges: Optional[list[Edge]] = None, **options: Any) -> DrawStructure | Image:
     """Draw the given object with the provided options."""
 
     # This is only really here so we can provide "edges" as a keyword argument to users.
