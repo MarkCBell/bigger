@@ -158,7 +158,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         def link(e: Side[Edge]) -> Square[Edge]:
             a, b, c, d = self.link(e)
             for x in [a, b, c, d, e]:
-                assert not (flipped(x) and flipped(~x)), "Flipping both {} and {}".format(x, ~x)
+                assert not (flipped(x) and flipped(~x)), f"Flipping both {x} and {~x}"
 
             if flipped(+e):
                 assert self.is_flippable(e), f"Flipping unflippable side {e}"

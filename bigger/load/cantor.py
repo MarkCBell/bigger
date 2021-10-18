@@ -67,7 +67,7 @@ def spotted_cantor() -> bigger.MCG[Edge]:
         if curve == "a":
             return T(lambda edge: 1 if edge[1] in {0, 1} and test(edge[0]) else 0).twist()
 
-        raise ValueError("Unknown mapping class {}".format(name))
+        raise ValueError(f"Unknown mapping class {name}")
 
     return bigger.MCG(T, generator)
 
@@ -185,6 +185,6 @@ def cantor() -> bigger.MCG[Edge]:  # pylint: disable=too-many-statements
 
             return T.encode([(-1, isom, isom)])
 
-        raise ValueError("Unknown mapping class {}".format(name))
+        raise ValueError(f"Unknown mapping class {name}")
 
     return bigger.MCG(T, generator)

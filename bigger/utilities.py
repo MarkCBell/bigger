@@ -16,11 +16,11 @@ class Half:
     def __mul__(self, other: IntFraction) -> IntFraction:
         if isinstance(other, int):
             int_result = other // 2
-            assert 2 * int_result == other, "{} is not halvable in its field".format(other)
+            assert 2 * int_result == other, f"{other} is not halvable in its field"
             return int_result
         else:  # isinstance(other, Fraction):
             frac_result = other / 2
-            assert 2 * frac_result == other, "{} is not halvable in its field".format(other)
+            assert 2 * frac_result == other, f"{other} is not halvable in its field"
             return frac_result
 
     def __str__(self) -> str:

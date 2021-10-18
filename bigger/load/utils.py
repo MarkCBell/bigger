@@ -22,10 +22,10 @@ def integers(start: Optional[int] = None, stop: Optional[int] = None) -> Iterabl
 def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[Any], bool]]:
     """Return a curve and a test to apply for which of it's components to twist."""
 
-    twist_match = re.match(r"(?P<curve>[%s])_(?P<n>-?\d+)$" % (curve_names), name)
-    twist_index_match = re.match(r"(?P<curve>[%s])\[ *(?P<n>-?\d+) *\]$" % (curve_names), name)
-    twist_slice_match = re.match(r"(?P<curve>[%s])(\[ *(?P<start>-?\d*) *: *(?P<stop>-?\d*) *(: *(?P<step>-?\d*) *)?\])?$" % (curve_names), name)
-    twist_expr_match = re.match(r"(?P<curve>[%s])\{(?P<expr>.*)\}$" % (curve_names), name)
+    twist_match = re.match(rf"(?P<curve>[{curve_names}])_(?P<n>-?\d+)$", name)
+    twist_index_match = re.match(rf"(?P<curve>[{curve_names}])\[ *(?P<n>-?\d+) *\]$", name)
+    twist_slice_match = re.match(rf"(?P<curve>[{curve_names}])(\[ *(?P<start>-?\d*) *: *(?P<stop>-?\d*) *(: *(?P<step>-?\d*) *)?\])?$", name)
+    twist_expr_match = re.match(rf"(?P<curve>[{curve_names}])\{{(?P<expr>.*)\}}$", name)
 
     if twist_match is not None:
         parameters = twist_match.groupdict()
@@ -49,6 +49,6 @@ def extract_curve_and_test(curve_names: str, name: str) -> Tuple[str, Callable[[
         curve = parameters["curve"]
         test = lambda n: eval(parameters["expr"], {"n": n, **globals()})  # pylint: disable=eval-used
     else:
-        raise ValueError("Unknown mapping class {}".format(name))
+        raise ValueError(f"Unknown mapping class {name}")
 
     return curve, test

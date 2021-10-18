@@ -82,7 +82,7 @@ def flute() -> bigger.MCG[Edge]:
 
             return T(weight).twist()
 
-        raise ValueError("Unknown mapping class {}".format(name))
+        raise ValueError(f"Unknown mapping class {name}")
 
     def layout(triangle: Triangle[Edge]) -> FlatTriangle:
         if triangle[0].edge == -1:
@@ -164,7 +164,7 @@ def biflute() -> bigger.MCG[Edge]:
 
             return T(weight).twist()
 
-        raise ValueError("Unknown mapping class {}".format(name))
+        raise ValueError(f"Unknown mapping class {name}")
 
     def layout(triangle: Triangle[Edge]) -> FlatTriangle:
         n, k = divmod(triangle[0].edge, 3)

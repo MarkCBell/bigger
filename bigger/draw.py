@@ -25,7 +25,7 @@ VERTEX_BUFFER = 0.2
 
 LAMINATION_COLOUR = "#555555"
 VERTEX_COLOUR = "#404040"
-TRIANGLE_COLOURS = {"bw": ["#b5b5b5", "#c0c0c0", "#c7c7c7", "#cfcfcf"], "rainbow": ["hsl({}, 50%, 50%)".format(i) for i in range(0, 360, 10)]}
+TRIANGLE_COLOURS = {"bw": ["#b5b5b5", "#c0c0c0", "#c7c7c7", "#cfcfcf"], "rainbow": [f"hsl({i}, 50%, 50%)" for i in range(0, 360, 10)]}
 
 T = TypeVar("T")
 
@@ -264,7 +264,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
             raise TypeError("draw() missing 1 required positional argument: 'edges'")
         for obj in objs:
             if not isinstance(obj, (bigger.Triangulation, bigger.Lamination, bigger.MCG)):
-                raise TypeError("Unable to draw objects of type: {}".format(type(obj)))
+                raise TypeError(f"Unable to draw objects of type: {type(obj)}")
 
         return draw_structure.draw_objs(*objs)
 
@@ -289,7 +289,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         elif isinstance(objs[0], bigger.MCG):
             triangulation = objs[0].triangulation
         else:
-            raise TypeError("Unable to draw objects of type: {}".format(type(objs[0])))
+            raise TypeError(f"Unable to draw objects of type: {type(objs[0])}")
 
         # Draw these triangles.
         components, interior = connected_components(triangulation, self.edges)

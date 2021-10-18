@@ -74,7 +74,7 @@ def loch_ness_monster() -> bigger.MCG[Edge]:
 
             return T(c).twist()
 
-        raise ValueError("Unknown mapping class {}".format(name))
+        raise ValueError(f"Unknown mapping class {name}")
 
     def layout(triangle: Triangle[Edge]) -> FlatTriangle:
         n, k = divmod(triangle[0].edge, 6)

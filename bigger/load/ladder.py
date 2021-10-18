@@ -78,7 +78,7 @@ def spotted_ladder() -> bigger.MCG[Edge]:
         if curve == "b":
             return T(lambda edge: 1 if edge[1] in {5, 6} and test(edge[0]) else 0).twist()
 
-        raise ValueError("Unknown mapping class {}".format(name))
+        raise ValueError(f"Unknown mapping class {name}")
 
     def layout(triangle: Triangle) -> FlatTriangle:
         n, k = triangle[0].edge

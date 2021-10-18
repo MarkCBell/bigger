@@ -76,7 +76,7 @@ class Lamination(Generic[Edge]):
     def describe(self, edges: Iterable[Edge]) -> str:
         """Return a string describing this Lamination on the given edges."""
 
-        return ", ".join("{}: {}".format(edge, self(edge)) for edge in edges)
+        return ", ".join(f"{edge}: {self(edge)}" for edge in edges)
 
     def is_finitely_supported(self) -> bool:
         """Return whether this lamination is supported on finitely many edges of the underlying Triangulation."""
@@ -97,9 +97,9 @@ class Lamination(Generic[Edge]):
 
     def __str__(self) -> str:
         if not self.is_finitely_supported():
-            return "Infinitely supported lamination {} ...".format(self.describe(islice(self.support(), 10)))
+            return f"Infinitely supported lamination {self.describe(islice(self.support(), 10))} ..."
 
-        return "Lamination {}".format(self.describe(self.support()))
+        return f"Lamination {self.describe(self.support())}"
 
     def __repr__(self) -> str:
         return str(self)
