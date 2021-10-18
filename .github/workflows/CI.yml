@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        tox: [lint, py37, py38, py39]
+        tox: [lint, py37, py38, py39, py310, pypy37, pypy38]
         include:
         - tox: lint
           python-version: 3.8
@@ -18,6 +18,12 @@ jobs:
           python-version: 3.8
         - tox: py39
           python-version: 3.9
+        - tox: py310
+          python-version: 3.10
+        - tox: pypy37
+          python-version: pypy-3.7
+        - tox: pypy38
+          python-version: pypy-3.8
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout branch
