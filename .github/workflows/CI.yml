@@ -24,6 +24,10 @@ jobs:
           python-version: pypy-3.7
         - tox: pypy38
           python-version: pypy-3.8
+        exclude:
+        # Pillow does not work in PyPy3.8 on Windows due to an issue with zlib.
+        - os: windows-latest
+          tox: pypy38
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout branch
