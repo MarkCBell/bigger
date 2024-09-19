@@ -387,9 +387,9 @@ class Lamination(Generic[Edge]):
                     y = ~twist.target.left(y)
 
                 twist = twist.target.relabel_from_dict(isom) * twist
-                twist = twist ** multiplicity
+                twist = twist**multiplicity
 
-            return (twist ** power).conjugate_by(conjugator)
+            return (twist**power).conjugate_by(conjugator)
 
         def action(lamination: bigger.Lamination[Edge]) -> bigger.Lamination[Edge]:
             def weight(edge: Edge) -> int:

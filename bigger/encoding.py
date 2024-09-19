@@ -58,12 +58,10 @@ class Encoding(Generic[Edge]):
         return len(self.sequence)
 
     @overload
-    def __getitem__(self, index: slice) -> bigger.Encoding[Edge]:
-        ...
+    def __getitem__(self, index: slice) -> bigger.Encoding[Edge]: ...
 
     @overload
-    def __getitem__(self, index: int) -> bigger.Move[Edge]:
-        ...
+    def __getitem__(self, index: int) -> bigger.Move[Edge]: ...
 
     def __getitem__(self, index: slice | int) -> bigger.Encoding[Edge] | bigger.Move[Edge]:
         if isinstance(index, slice):

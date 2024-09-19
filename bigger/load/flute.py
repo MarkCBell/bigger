@@ -36,15 +36,19 @@ def flute() -> bigger.MCG[Edge]:
 
     T = bigger.Triangulation.from_pos(
         lambda: integers(-1),
-        lambda edge: (0, True, -1, False, -1, True, 0, True)
-        if edge == -1
-        else (-1, False, -1, True, 1, True, 2, False)
-        if edge == 0
-        else [
-            (edge - 2, False, edge - 1, True, edge + 1, True, edge + 2, False),
-            (edge + 1, False, edge - 1, False, edge + 1, True, edge + 2, True),
-            (edge + 1, True, edge - 1, False, edge - 2, False, edge - 1, True),
-        ][edge % 3],
+        lambda edge: (
+            (0, True, -1, False, -1, True, 0, True)
+            if edge == -1
+            else (
+                (-1, False, -1, True, 1, True, 2, False)
+                if edge == 0
+                else [
+                    (edge - 2, False, edge - 1, True, edge + 1, True, edge + 2, False),
+                    (edge + 1, False, edge - 1, False, edge + 1, True, edge + 2, True),
+                    (edge + 1, True, edge - 1, False, edge - 2, False, edge - 1, True),
+                ][edge % 3]
+            )
+        ),
     )
 
     def generator(name: str) -> bigger.Encoding[Edge]:
