@@ -2,9 +2,11 @@
 History
 =======
 
-0.3.2 (2021-XX-YY)
+0.4.0 (2024-09-20)
 ------------------
 
+* Modern CI.
+* Drop support for Python <= 3.8.
 * Fixed bug in unicorn arc construction.
 
 0.3.1 (2021-06-21)

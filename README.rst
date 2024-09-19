@@ -17,7 +17,7 @@ Bigger
 Bigger is a program for computing big mapping classes and their actions on non-compact laminations via ideal triangulation coordinates.
 It's like `flipper`_ and `curver`_, but can handle infinite-type surfaces by being lazy about the computations it performs.
 
-Bigger officially supports Python 3.8 -- 3.12.
+Bigger officially supports Python 3.9 -- 3.12.
 
 .. image:: images/ladder.png
    :scale: 75 %
