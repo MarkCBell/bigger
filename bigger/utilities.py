@@ -63,7 +63,7 @@ def maximin(*iterables: Iterable[int]) -> int:
         for item in iterable:
             if item <= result:
                 break
-            if item < best:
+            if item < best:  # pylint: disable=consider-using-min-builtin
                 best = item
         else:  # We never broke out, so best > result
             result = best

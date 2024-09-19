@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from functools import partial
 from itertools import chain
 from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, Union, Optional, Tuple, cast
-from PIL import Image  # type: ignore
+from PIL.Image import Image
 
 import bigger
 from bigger.types import Edge
@@ -319,6 +319,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         h = self.identity()
         for term in reversed(sequence):
             if callable(term) or isinstance(term, Container):
+                term = cast(Union[Callable[[Side[Edge]], bool], Container[Side[Edge]]], term)
                 move = h.target.flip(term)
             elif isinstance(term, tuple):
                 if len(term) == 2:  # and len(term) == 2 and all(callable(item) for item in term):
@@ -434,7 +435,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
 
         return self(weight, support, all(lamination.is_finitely_supported() for lamination in laminations))
 
-    def draw(self, edges: list[Edge], **options: Any) -> Image:
+    def draw(self, edges: list[Edge], **options: Any) -> bigger.DrawStructure | Image:
         """Return a PIL image of this Triangulation around the given edges."""
 
         return bigger.draw(self, edges=edges, **options)

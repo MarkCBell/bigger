@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Generic, Iterable, Optional
-from PIL import Image  # type: ignore
+from PIL.Image import Image
 
 import bigger
 from .types import Edge, FlatTriangle
@@ -76,7 +76,7 @@ class MappingClassGroup(Generic[Edge]):
     def __call__(self, strn: str) -> bigger.Encoding[Edge]:
         return bigger.Encoding([item for name in splitter(strn) for item in self._helper(name).sequence])
 
-    def draw(self, edges: list[Edge], **options: Any) -> Image:
+    def draw(self, edges: list[Edge], **options: Any) -> bigger.DrawStructure | Image:
         """Return a PIL image of the triangulation of this MCG around the given edges."""
 
         return bigger.draw(self, edges=edges, **options)

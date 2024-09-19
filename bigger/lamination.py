@@ -6,7 +6,7 @@ from collections import defaultdict, Counter
 from collections.abc import Collection
 from itertools import chain, islice
 from typing import Any, Callable, Dict, Generic, Iterable, Optional
-from PIL import Image  # type: ignore
+from PIL.Image import Image
 
 import bigger
 from bigger.types import Edge
@@ -507,7 +507,7 @@ class Lamination(Generic[Edge]):
 
         return potential_unicorns
 
-    def draw(self, edges: Optional[list[Edge]] = None, **options: Any) -> Image:
+    def draw(self, edges: Optional[list[Edge]] = None, **options: Any) -> bigger.DrawStructure | Image:
         """Return a PIL image of this Lamination around the given edges."""
 
         if edges is None:

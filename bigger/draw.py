@@ -7,7 +7,9 @@ from copy import deepcopy
 from math import sin, cos, pi, ceil
 from typing import Any, Generic, Optional, TypeVar
 
-from PIL import Image, ImageDraw, ImageFont  # type: ignore
+from PIL.Image import new as new_image, Image
+from PIL.ImageDraw import ImageDraw, Draw
+from PIL.ImageFont import truetype
 
 import bigger
 from bigger.types import Edge, Coord, FlatTriangle
@@ -254,7 +256,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         for key, value in options.items():
             setattr(self, key, value)
 
-    def __call__(self, *objs: bigger.Lamination[Edge] | bigger.MCG[Edge] | bigger.Triangulation[Edge], **options: Any) -> DrawStructure | Image:
+    def __call__(self, *objs: bigger.Lamination[Edge] | bigger.MCG[Edge] | bigger.Triangulation[Edge], **options: Any) -> bigger.DrawStructure | Image:
         draw_structure = deepcopy(self)
         draw_structure.set_options(**options)
 
@@ -276,9 +278,9 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
          - that all objects exist on the first triangulation, and
          - self.edges has been set."""
 
-        image = Image.new("RGB", (self.w, self.h), color="White")
-        font = ImageFont.truetype(os.path.join(os.path.dirname(__file__), "fonts", "FreeMonoBold.ttf"), self.textsize)
-        canvas = ImageDraw.Draw(image)
+        image = new_image("RGB", (self.w, self.h), color="White")
+        font = truetype(os.path.join(os.path.dirname(__file__), "fonts", "FreeMonoBold.ttf"), self.textsize)
+        canvas = Draw(image)
 
         assert self.edges is not None
 
@@ -361,13 +363,10 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
                 else:
                     text = ""
                 point = interpolate(vertices[index - 0], vertices[index - 2])
-                # For some reason anchor="mm" does not work. So we will have to manually center the text ourselves.
-                w, h = canvas.textsize(text, font=font)
-                point = (point[0] - w / 2, point[1] - h / 2)
                 for offset in OFFSETS:
-                    canvas.text(add(point, offset), text, fill="White", font=font)
+                    canvas.text(add(point, offset), text, fill="White", font=font, anchor="mm")
 
-                canvas.text(point, text, fill="Black", font=font)
+                canvas.text(point, text, fill="Black", font=font, anchor="mm")
 
         # Draw vertices.
         for vertices in layout4.values():
@@ -377,7 +376,7 @@ class DrawStructure(Generic[Edge]):  # pylint: disable=too-many-instance-attribu
         return image
 
 
-def draw(*objs: bigger.Lamination[Edge] | bigger.MCG[Edge] | bigger.Triangulation[Edge], edges: Optional[list[Edge]] = None, **options: Any) -> DrawStructure | Image:
+def draw(*objs: bigger.Lamination[Edge] | bigger.MCG[Edge] | bigger.Triangulation[Edge], edges: Optional[list[Edge]] = None, **options: Any) -> bigger.DrawStructure | Image:
     """Draw the given object with the provided options."""
 
     # This is only really here so we can provide "edges" as a keyword argument to users.
