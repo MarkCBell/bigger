@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bigger"
+version = "0.3.2"
+description = "For studying big mapping classes"
+readme = "README.rst"
+requires-python = ">=3.12"
+license = { text = "MIT License" }
+
+authors = [
+    { name = "Mark Bell", email = "mcbell@illinois.edu" }
+]
+
+dependencies = [
+    "pillow>=7",
+]
+
+keywords = ["infinite surface", "MCG"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+Homepage = "https://github.com/MarkCBell/bigger"
+
+[tool.setuptools.packages.find]
+include = ["*"]
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
