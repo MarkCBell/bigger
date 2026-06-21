@@ -65,7 +65,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         # It could also return Side[Edge] or Tuples[Edge, bool].
 
         self.edges = edges
-        self.link = cache(link)
+        self.link = bigger.decorators.memoize(is_method=False)(link)
 
     @classmethod
     def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]]) -> Triangulation[Edge]:
