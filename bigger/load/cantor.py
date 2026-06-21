@@ -1,4 +1,4 @@
-""" Example cantor surfaces. """
+"""Example cantor surfaces."""
 
 from __future__ import annotations
 

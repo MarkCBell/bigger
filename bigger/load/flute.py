@@ -1,4 +1,4 @@
-""" Example flute surfaces. """
+"""Example flute surfaces."""
 
 from __future__ import annotations
 

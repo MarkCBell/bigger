@@ -1,4 +1,4 @@
-""" A module for representing triangulations along with laminations and mapping classes on them. """
+"""A module for representing triangulations along with laminations and mapping classes on them."""
 
 from __future__ import annotations
 

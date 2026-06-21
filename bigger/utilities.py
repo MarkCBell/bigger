@@ -1,4 +1,4 @@
-""" A module of useful, generic functions. """
+"""A module of useful, generic functions."""
 
 from __future__ import annotations
 

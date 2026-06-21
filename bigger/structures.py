@@ -1,4 +1,4 @@
-""" A module of data structures. """
+"""A module of data structures."""
 
 from collections import defaultdict
 from typing import Generic, Iterable, Iterator, List, TypeVar

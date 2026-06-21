@@ -1,4 +1,4 @@
-""" Bigger is a program for studying mapping classes and laminations on infinite type surfaces. """
+"""Bigger is a program for studying mapping classes and laminations on infinite type surfaces."""
 
 import sys
 import importlib.metadata

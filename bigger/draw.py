@@ -1,4 +1,4 @@
-""" A module for making images of laminations. """
+"""A module for making images of laminations."""
 
 from __future__ import annotations
 

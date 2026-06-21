@@ -1,4 +1,4 @@
-""" Example ladder surfaces. """
+"""Example ladder surfaces."""
 
 from __future__ import annotations
 

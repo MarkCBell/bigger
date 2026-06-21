@@ -1,4 +1,4 @@
-""" Utilities used in building example surfaces. """
+"""Utilities used in building example surfaces."""
 
 from itertools import count as naturals
 from math import inf

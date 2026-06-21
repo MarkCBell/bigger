@@ -1,4 +1,4 @@
-""" Example lochness surfaces. """
+"""Example lochness surfaces."""
 
 from __future__ import annotations
 

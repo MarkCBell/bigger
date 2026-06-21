@@ -1,4 +1,4 @@
-""" A module for representing a triangulation of a punctured surface. """
+"""A module for representing a triangulation of a punctured surface."""
 
 from __future__ import annotations
 
