@@ -5,12 +5,13 @@ from __future__ import annotations
 from collections import defaultdict, Counter
 from collections.abc import Collection
 from itertools import chain, islice
+from functools import cache
 from typing import Any, Callable, Dict, Generic, Iterable, Optional
 from PIL.Image import Image
 
 import bigger
 from bigger.types import Edge
-from bigger.decorators import memoize, finite
+from bigger.decorators import finite
 
 
 class Lamination(Generic[Edge]):
@@ -38,7 +39,7 @@ class Lamination(Generic[Edge]):
 
         return set(self.triangulation.triangle(side) for side in self.supporting_sides())
 
-    @memoize()
+    @cache
     def __call__(self, edge: Edge | bigger.Side[Edge]) -> int:
         if isinstance(edge, bigger.Side):
             return self(edge.edge)
@@ -53,7 +54,7 @@ class Lamination(Generic[Edge]):
     def __bool__(self) -> bool:
         return any(self(edge) for edge in self.support())
 
-    @memoize()
+    @cache
     def dual(self, side: bigger.Side[Edge]) -> int:
         """Return the weight of this lamination dual to the given side."""
 
@@ -190,7 +191,7 @@ class Lamination(Generic[Edge]):
 
         return self.triangulation(hits)
 
-    @memoize()
+    @cache
     @finite
     def peripheral_components(self) -> dict[Lamination[Edge], tuple[int, list[bigger.Side[Edge]]]]:
         """Return a dictionary mapping component to (multiplicity, vertex) for each component of self that is peripheral around a vertex."""
@@ -214,7 +215,7 @@ class Lamination(Generic[Edge]):
 
         return components
 
-    @memoize()
+    @cache
     @finite
     def parallel_components(self) -> dict[Lamination[Edge], tuple[int, bigger.Side[Edge], bool]]:
         """Return a dictionary mapping component to (multiplicity, side, is_arc) for each component of self that is parallel to an edge."""
@@ -250,7 +251,7 @@ class Lamination(Generic[Edge]):
 
         return components
 
-    @memoize()
+    @cache
     @finite
     def components(self) -> dict[Lamination[Edge], int]:
         """Return a dictionary mapping components to their multiplicities."""
@@ -273,7 +274,7 @@ class Lamination(Generic[Edge]):
 
         return self.triangulation.disjoint_sum(dict((component, multiplicity) for component, (multiplicity, _) in self.peripheral_components().items()))
 
-    @memoize()
+    @cache
     @finite
     def shorten(self) -> tuple[bigger.Lamination[Edge], bigger.Encoding[Edge]]:  # pylint: disable=too-many-branches
         """Return an :class:`~bigger.encoding.Encoding` that maps self to a short lamination."""
@@ -426,7 +427,7 @@ class Lamination(Generic[Edge]):
 
         return bigger.Move(self.triangulation, self.triangulation, action, inv_action).encode()
 
-    @memoize()
+    @cache
     def twisted_by(self, multicurve: Lamination[Edge], power: int = 1) -> Lamination[Edge]:
         """Return multicurve.twist()(self).
 

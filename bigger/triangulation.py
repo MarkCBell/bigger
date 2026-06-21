@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Container, Collection
 from dataclasses import dataclass
-from functools import partial
+from functools import partial, cache
 from itertools import chain
 from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, Union, Optional, Tuple, cast
 from PIL.Image import Image
@@ -65,7 +65,7 @@ class Triangulation(Generic[Edge]):  # pylint: disable=too-many-public-methods
         # It could also return Side[Edge] or Tuples[Edge, bool].
 
         self.edges = edges
-        self.link = bigger.decorators.memoize(is_method=False)(link)
+        self.link = cache(link)
 
     @classmethod
     def from_pos(cls, edges: Callable[[], Iterable[Edge]], ulink: Callable[[Edge], tuple[Edge, bool, Edge, bool, Edge, bool, Edge, bool]]) -> Triangulation[Edge]:
